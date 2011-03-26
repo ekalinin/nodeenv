@@ -11,7 +11,6 @@
         - install npm
         - no newline in logs
         - check g++ libssl-dev
-        - create helloworld.js for node.js install test 
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
@@ -132,19 +131,13 @@ def writefile(dest, content, overwrite=True):
             logger.info('Content %s already in place', dest)
 
 # ---------------------------------------------------------
-# Create env functions
-
-def path_locations(env_dir, version):
-    """
-        Returns the path locations for the environment 
-        (where libraries are, where scripts go, etc)
-    """
-    dirs = {}
-    dirs["src"] = abspath(join(env_dir, 'src'))
-    return dirs
-
+# Virtual environment functions
 
 def install_node(env_dir, src_dir, opt):
+    """
+    Download source code for node.js, unpack it
+    and install it in virtual environment.
+    """
     node_name = 'node-v%s'%(opt.node)
     tar_name = '%s.tar.gz'%(node_name)
     node_url = 'http://nodejs.org/dist/%s'%(tar_name)
@@ -185,11 +178,15 @@ def install_npm(env_dir, src_dir):
     pass
 
 
-def install_activate(env_dir, prompt=None):
+def install_activate(env_dir, opt):
+    """
+    Install virtual environment activation script
+    """
     files = {'activate': ACTIVATE_SH}
     bin_dir = join(env_dir, 'bin')
+    prompt = opt.prompt or '(env-%s)'%opt.node 
     for name, content in files.items():
-        content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
+        content = content.replace('__VIRTUAL_PROMPT__', prompt)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
@@ -199,13 +196,14 @@ def create_environment(env_dir, opt):
     """
     Creates a new environment in ``env_dir``.
     """
-    dirs = path_locations(env_dir, opt.node)
+    dirs = {}
+    dirs["src"] = abspath(join(env_dir, 'src'))
     for dir_name, dir_path in dirs.items():
         mkdir(dir_path)
 
     install_node(env_dir, dirs["src"], opt)
     #install_npm(env_dir, dirs["src"])
-    install_activate(env_dir, opt.prompt)
+    install_activate(env_dir, opt)
 
 
 def main():

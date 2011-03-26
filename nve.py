@@ -4,13 +4,12 @@
 """
     nve
     ~~~
-    nve - Node.js virtual environment.
+    nve - Node.js virtual environment
 
     TODO:
-        - set exec bit for activate
         - install npm
-        - no newline in logs
-        - check g++ libssl-dev
+        - add setup.py
+        - add README
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
@@ -36,16 +35,23 @@ def create_logger():
     Create logger for diagnostic
     """
     # create logger
-    logger = logging.getLogger("simple_example")
+    logger = logging.getLogger("node-venv")
     logger.setLevel(logging.DEBUG)
+
+    # monkey patch
+    def emit(self, record):
+        msg = self.format(record)
+        fs = "%s" if getattr(record, "continued", False) else "%s\n"
+        self.stream.write(fs % msg)
+        self.flush()
+    logging.StreamHandler.emit = emit
 
     # create console handler and set level to debug
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
 
     # create formatter
-    formatter = logging.Formatter(fmt="%(asctime)s :: %(message)s",
-                    datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(fmt="%(message)s")
 
     # add formatter to ch
     ch.setFormatter(formatter)
@@ -101,19 +107,20 @@ def mkdir(path):
     Create directory
     """
     if not os.path.exists(path):
-        logger.info('Creating %s ...', path)
+        logger.info(' * Creating: %s ... ', path, extra=dict(continued=True))
         os.makedirs(path)
-        logger.info(' ... done')
+        logger.info('done.')
     else:
-        logger.info('Directory %s already exists', path)
+        logger.info(' * Directory %s already exists', path)
 
 
 def writefile(dest, content, overwrite=True):
     if not os.path.exists(dest):
-        logger.info('Writing %s', dest)
+        logger.info(' * Writing %s ... ', dest, extra=dict(continued=True))
         f = open(dest, 'wb')
         f.write(content.encode('utf-8'))
         f.close()
+        logger.info('done.')
         return
     else:
         f = open(dest, 'rb')
@@ -121,14 +128,14 @@ def writefile(dest, content, overwrite=True):
         f.close()
         if c != content:
             if not overwrite:
-                logger.notify('File %s exists with different content; not overwriting', dest)
+                logger.notify(' * File %s exists with different content; not overwriting', dest)
                 return
-            logger.notify('Overwriting %s with new content', dest)
+            logger.notify(' * Overwriting %s with new content', dest)
             f = open(dest, 'wb')
             f.write(content.encode('utf-8'))
             f.close()
         else:
-            logger.info('Content %s already in place', dest)
+            logger.info(' * Content %s already in place', dest)
 
 # ---------------------------------------------------------
 # Virtual environment functions
@@ -144,17 +151,17 @@ def install_node(env_dir, src_dir, opt):
     node_tar = join(src_dir, tar_name)
 
     if not os.path.exists(node_tar):
-        logger.info('Retrieve URL: %s ...'%(node_url))
+        logger.info(' * Retrieve: %s ... ', node_url, extra=dict(continued=True))
         urllib.urlretrieve(node_url, node_tar)
-        logger.info(' ... done.')
+        logger.info('done.')
     else:
-        logger.info('Source for %s exists: %s'%(node_name, node_tar))
+        logger.info(' * Source for %s exists: %s'%(node_name, node_tar))
 
-    logger.info('Unpack file: %s'%(node_tar))
+    logger.info(' * Unpack: %s ... ', node_tar, extra=dict(continued=True))
     tar = tarfile.open(node_tar)
     tar.extractall(src_dir)
     tar.close()
-    logger.info(' ... done.')
+    logger.info('done.')
 
     src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
@@ -163,12 +170,12 @@ def install_node(env_dir, src_dir, opt):
     if opt.without_ssl:
         conf_cmd += ' --without-ssl'
     try:
-        logger.info('Compile: %s ...'%(src_dir))
+        logger.info(' * Compile: %s ...', src_dir)
         os.chdir(src_dir)
         os.system(conf_cmd)
         os.system('make')
         os.system('make install')
-        logger.info(' ... done.')
+        logger.info(' * Compile: %s ... done', src_dir)
     finally:
         if os.getcwd() != old_chdir:
             os.chdir(old_chdir)

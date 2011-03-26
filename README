@@ -25,3 +25,22 @@ The basic usage is::
     $ python nve.py ENV
 
 If you install it you can also just do ``nve ENV``.
+
+Alternatives
+------------
+
+There are several alternatives that create isolated environments:
+
+* `nave <https://github.com/isaacs/nave>`_ - Virtual Environments for Node.
+  Nave stores all environments in one directory ``~/.nave``. Thus not possible
+  to create different environments for one version of node.js.
+  Can not pass additional arguments into configure (for example --without-ssl)
+
+* `nvm <https://github.com/creationix/nvm/blob/master/nvm.sh>`_ - Node Version
+  Manager. It is necessarily to do `nvm sync` for caching available node.js
+  version.
+  Can not pass additional arguments into configure (for example --without-ssl)
+
+* `virtualenv <https://github.com/pypa/virtualenv>`_ Virtual Python Environment
+  builder. For python only.
+

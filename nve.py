@@ -7,9 +7,8 @@
     nve - Node.js virtual environment
 
     TODO:
-        - replace os.system
+        - list available node.js versions
         - compile log only for verbose mode
-        - install npm
         - add setup.py
 
     :copyright: (c) 2011 by Eugene Kalinin
@@ -21,7 +20,6 @@ nve_version = '0.1'
 import sys
 import os
 import optparse
-import urllib
 import tarfile
 import logging
 
@@ -73,7 +71,8 @@ def parse_args():
 
     parser.add_option('-n', '--node', dest='node', 
         metavar='NODE_VER', default="0.2.6",
-        help='The node.js version to use, e.g., --version=0.4.3 will use the node-v0.4.3 '
+        help='The node.js version to use, e.g., '
+        '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is 0.2.6')
 
     parser.add_option('--prompt', dest='prompt',
@@ -82,6 +81,10 @@ def parse_args():
     parser.add_option( '--without-ssl', dest='without_ssl',
         action='store_true', default=False, 
         help='Build node.js without SSL support')
+
+    parser.add_option( '--with-npm', dest='with_npm',
+        action='store_true', default=False, 
+        help='Install npm in new virtual environment')
 
     options, args = parser.parse_args()
 
@@ -146,40 +149,38 @@ def install_node(env_dir, src_dir, opt):
     tar_name = '%s.tar.gz'%(node_name)
     node_url = 'http://nodejs.org/dist/%s'%(tar_name)
     node_tar = join(src_dir, tar_name)
-
-    if not os.path.exists(node_tar):
-        logger.info(' * Retrieve: %s ... ', node_url, extra=dict(continued=True))
-        urllib.urlretrieve(node_url, node_tar)
-        logger.info('done.')
-    else:
-        logger.info(' * Source for %s exists: %s'%(node_name, node_tar))
-
-    logger.info(' * Unpack: %s ... ', node_tar, extra=dict(continued=True))
-    tar = tarfile.open(node_tar)
-    tar.extractall(src_dir)
-    tar.close()
-    logger.info('done.')
-
-    src_dir = join(src_dir, node_name)
+    node_src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
     old_chdir = os.getcwd()
+
+    if not os.path.exists(node_src_dir):
+        logger.info(' * Retrieve: %s ... ', node_url)
+        os.system('curl -# -L "%s" | tar xzf - -C "%s" '%
+            (node_url, src_dir))
+        logger.info('done.')
+    else:
+        logger.info(' * Source exists: %s'%(node_src_dir))
+
     conf_cmd = './configure --prefix=%s'%(env_dir)
     if opt.without_ssl:
         conf_cmd += ' --without-ssl'
     try:
-        logger.info(' * Compile: %s ...', src_dir)
-        os.chdir(src_dir)
+        logger.info(' * Compile: %s ...', node_src_dir)
+        os.chdir(node_src_dir)
         os.system(conf_cmd)
         os.system('make')
         os.system('make install')
-        logger.info(' * Compile: %s ... done', src_dir)
+        logger.info(' * Compile: %s ... done', node_src_dir)
     finally:
         if os.getcwd() != old_chdir:
             os.chdir(old_chdir)
 
 
 def install_npm(env_dir, src_dir):
-    pass
+    logger.info(' * Install node.js package manager ... ')
+    os.system('. %s && '%(join(env_dir, 'bin', 'activate'))+
+        'curl http://npmjs.org/install.sh|bash && deactivate')
+    logger.info(' * Install node.js package manager ... done.')
 
 
 def install_activate(env_dir, opt):
@@ -206,7 +207,8 @@ def create_environment(env_dir, opt):
         mkdir(dir_path)
 
     install_node(env_dir, dirs["src"], opt)
-    #install_npm(env_dir, dirs["src"])
+    if opt.with_npm:
+        install_npm(env_dir, dirs["src"])
     install_activate(env_dir, opt)
 
 

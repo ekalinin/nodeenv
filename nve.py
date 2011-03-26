@@ -7,15 +7,16 @@
     nve - Node.js virtual environment
 
     TODO:
+        - replace os.system
+        - compile log only for verbose mode
         - install npm
         - add setup.py
-        - add README
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.1'
+nve_version = '0.1'
 
 import sys
 import os
@@ -67,23 +68,19 @@ def parse_args():
     Parses command line arguments
     """
     parser = optparse.OptionParser(
-        version=nodeenv_version ,
+        version=nve_version,
         usage="%prog [OPTIONS] DEST_DIR")
 
-    parser.add_option(
-        '-n', '--node', dest='node', 
+    parser.add_option('-n', '--node', dest='node', 
         metavar='NODE_VER', default="0.2.6",
         help='The node.js version to use, e.g., --version=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is 0.2.6')
 
-    parser.add_option(
-        '--prompt',
-        dest='prompt',
+    parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
-    parser.add_option( '--without-ssl', 
+    parser.add_option( '--without-ssl', dest='without_ssl',
         action='store_true', default=False, 
-        dest='without_ssl',
         help='Build node.js without SSL support')
 
     options, args = parser.parse_args()

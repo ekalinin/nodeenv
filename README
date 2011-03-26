@@ -1,0 +1,27 @@
+Node.js virtual environment
+===========================
+
+``nve`` (node.js virtual environment) is a tool to create 
+isolated node.js environments.
+
+It creates an environment that has its own installation directories, 
+that doesn't share libraries with other node.js virtual environments.
+
+
+Install
+-------
+
+You can install nve with ``easy_install nve``, or from the `git
+repository <https://github.com/ekalinin/nve>`_ or from a `tarball
+<https://github.com/ekalinin/nve/tarball/master#egg=env-dev>`_
+``easy_install nve==dev``.
+
+
+Usage
+-----
+
+The basic usage is::
+
+    $ python nve.py ENV
+
+If you install it you can also just do ``nve ENV``.

@@ -8,6 +8,7 @@
 
     TODO:
         - list available node.js versions
+        - popen with stdout to quite compile
         - add option --debug
         - add option --profile
         - compile log only for verbose mode
@@ -21,7 +22,6 @@ nve_version = '0.1'
 
 import sys
 import os
-import stat
 import optparse
 import logging
 
@@ -222,7 +222,7 @@ def create_environment(env_dir, opt):
         install_npm(env_dir, dirs["src"])
 
 
-def print_node_versiions():
+def print_node_versions():
     os.system("curl -s http://nodejs.org/dist/ | "
               "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
               "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ")
@@ -231,7 +231,7 @@ def print_node_versiions():
 def main():
     opt, args = parse_args()
     if opt.list:
-        print_node_versiions()
+        print_node_versions()
     else:
         env_dir = args[0]
         create_environment(env_dir, opt)

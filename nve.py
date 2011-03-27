@@ -8,6 +8,8 @@
 
     TODO:
         - list available node.js versions
+        - add option --debug
+        - add option --profile
         - compile log only for verbose mode
         - add setup.py
 
@@ -20,7 +22,6 @@ nve_version = '0.1'
 import sys
 import os
 import optparse
-import tarfile
 import logging
 
 join = os.path.join
@@ -178,8 +179,9 @@ def install_node(env_dir, src_dir, opt):
 
 def install_npm(env_dir, src_dir):
     logger.info(' * Install node.js package manager ... ')
-    os.system('. %s && '%(join(env_dir, 'bin', 'activate'))+
-        'curl http://npmjs.org/install.sh|bash && deactivate')
+    os.system('. %s && curl %s|bash && deactivate'%(
+            join(env_dir, 'bin', 'activate'), 
+            'http://npmjs.org/install.sh'))
     logger.info(' * Install node.js package manager ... done.')
 
 
@@ -207,9 +209,9 @@ def create_environment(env_dir, opt):
         mkdir(dir_path)
 
     install_node(env_dir, dirs["src"], opt)
+    install_activate(env_dir, opt)
     if opt.with_npm:
         install_npm(env_dir, dirs["src"])
-    install_activate(env_dir, opt)
 
 
 def main():

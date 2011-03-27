@@ -22,7 +22,19 @@ Usage
 
 The basic usage is::
 
-    $ python nve.py ENV
+    $ python nve.py env-2.6
+    $ . env-2.6/bin/activate
+    (env-0.2.6) $ node -v
+    v0.2.6
+    (env-0.2.6) $ deactivate
+
+    $ python nve.py --node "0.4.3" --without-ssl --with-npm env-4.3
+    $ . env-4.3/bin/activate
+    (env-0.4.3) $ node -v
+    v0.4.3
+    (env-0.4.3) $ npm -v
+    0.3.17
+    (env-0.4.3) $ deactivate
 
 If you install it you can also just do ``nve ENV``.
 

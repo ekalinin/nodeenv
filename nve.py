@@ -21,6 +21,7 @@ nve_version = '0.1'
 
 import sys
 import os
+import stat
 import optparse
 import logging
 
@@ -79,6 +80,10 @@ def parse_args():
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
+    parser.add_option('-l', '--list', dest='list',
+        action='store_true', default=False,
+        help='Lists available node.js versions')
+
     parser.add_option( '--without-ssl', dest='without_ssl',
         action='store_true', default=False, 
         help='Build node.js without SSL support')
@@ -89,16 +94,17 @@ def parse_args():
 
     options, args = parser.parse_args()
 
-    if not args:
-        print('You must provide a DEST_DIR')
-        parser.print_help()
-        sys.exit(2)
+    if not options.list:
+        if not args:
+            print('You must provide a DEST_DIR')
+            parser.print_help()
+            sys.exit(2)
 
-    if len(args) > 1:
-        print('There must be only one argument: DEST_DIR (you gave %s)' % (
-            ' '.join(args)))
-        parser.print_help()
-        sys.exit(2)
+        if len(args) > 1:
+            print('There must be only one argument: DEST_DIR (you gave %s)' % (
+                ' '.join(args)))
+            parser.print_help()
+            sys.exit(2)
 
     return options, args
 
@@ -193,10 +199,12 @@ def install_activate(env_dir, opt):
     bin_dir = join(env_dir, 'bin')
     prompt = opt.prompt or '(env-%s)'%opt.node 
     for name, content in files.items():
+        file_path = join(bin_dir, name)
         content = content.replace('__VIRTUAL_PROMPT__', prompt)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content)
+        writefile(file_path, content)
+        os.chmod(file_path, 0755)
  
 
 def create_environment(env_dir, opt):
@@ -214,10 +222,19 @@ def create_environment(env_dir, opt):
         install_npm(env_dir, dirs["src"])
 
 
+def print_node_versiions():
+    os.system("curl -s http://nodejs.org/dist/ | "
+              "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
+              "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ")
+
+
 def main():
     opt, args = parse_args()
-    env_dir = args[0]
-    create_environment(env_dir, opt)
+    if opt.list:
+        print_node_versiions()
+    else:
+        env_dir = args[0]
+        create_environment(env_dir, opt)
 
 
 # ---------------------------------------------------------

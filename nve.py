@@ -7,8 +7,12 @@
     nve - Node.js virtual environment
 
     TODO:
-        - list available node.js versions
-        - popen with stdout to quite compile
+        - local installation:
+            * add nve.sh:
+                functions nve() {
+                    NVE_HOME=$(cd $(dirname $0); pwd)
+                    python $NVE_HOME/nve.py --передать параметры извне "$*" ??--
+                }
         - add option --debug
         - add option --profile
         - compile log only for verbose mode
@@ -22,6 +26,7 @@ nve_version = '0.1'
 
 import sys
 import os
+import subprocess
 import optparse
 import logging
 
@@ -72,10 +77,14 @@ def parse_args():
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option('-n', '--node', dest='node', 
-        metavar='NODE_VER', default="0.2.6",
+        metavar='NODE_VER', default=get_last_stable_node_version(),
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
-        'to create the new environment. The default is 0.2.6')
+        'to create the new environment. The default is last stable version.')
+
+    parser.add_option('-d', '--debug',
+        action='store_true', dest='debug', default=False,
+        help="Increase verbosity")
 
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
@@ -164,7 +173,7 @@ def install_node(env_dir, src_dir, opt):
         logger.info(' * Retrieve: %s ... ', node_url)
         os.system('curl -# -L "%s" | tar xzf - -C "%s" '%
             (node_url, src_dir))
-        logger.info('done.')
+        logger.info(' * Retrieve: %s ... done.', node_url)
     else:
         logger.info(' * Source exists: %s'%(node_src_dir))
 
@@ -172,12 +181,25 @@ def install_node(env_dir, src_dir, opt):
     if opt.without_ssl:
         conf_cmd += ' --without-ssl'
     try:
-        logger.info(' * Compile: %s ...', node_src_dir)
         os.chdir(node_src_dir)
-        os.system(conf_cmd)
-        os.system('make')
-        os.system('make install')
-        logger.info(' * Compile: %s ... done', node_src_dir)
+        if opt.debug:
+            logger.info(' * Compile: %s ...', node_src_dir)
+            os.system(conf_cmd)
+            os.system('make')
+            os.system('make install')
+            logger.info(' * Compile: %s ... done', node_src_dir)
+        else:
+            logger.info(' * Compile: %s ... ', node_src_dir, extra=dict(continued=True))
+            c = subprocess.Popen(conf_cmd, shell=True, 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            c.communicate()
+            m = subprocess.Popen('make', shell=True, 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            m.communicate()
+            mi= subprocess.Popen('make install', shell=True, 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            mi.communicate()
+            logger.info('done.')
     finally:
         if os.getcwd() != old_chdir:
             os.chdir(old_chdir)
@@ -223,9 +245,35 @@ def create_environment(env_dir, opt):
 
 
 def print_node_versions():
-    os.system("curl -s http://nodejs.org/dist/ | "
-              "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
-              "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ")
+    p = subprocess.Popen(
+        "curl -s http://nodejs.org/dist/ | "
+        "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
+        "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ",
+        shell=True, stdout=subprocess.PIPE)
+    #out, err = p.communicate()
+    pos = 0
+    rowx = []
+    while 1:
+        row = p.stdout.readline()
+        pos += 1
+        if not row:
+            logger.info('\t'.join(rowx))
+            break
+        if pos%8 == 0:
+            logger.info('\t'.join(rowx))
+            rowx =[]
+        else:
+            rowx.append(row.replace('\n', ''))
+
+
+def get_last_stable_node_version():
+    p = subprocess.Popen(
+        "curl -s http://nodejs.org/dist/ | "
+        "egrep -o '[0-9]+\.[2468]+\.[0-9]+' | "
+        "sort -u -k 1,1n -k 2,2n -k 3,3n -t . | "
+        "tail -n1",
+        shell=True, stdout=subprocess.PIPE)
+    return p.stdout.readline().replace("\n", "")
 
 
 def main():

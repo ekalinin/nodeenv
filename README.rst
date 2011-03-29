@@ -13,8 +13,7 @@ Install
 
 You can install nve with ``easy_install nodeenv``, or from the `git
 repository <https://github.com/ekalinin/nodeenv>`_ or from a `tarball
-<https://github.com/ekalinin/nodeenv/tarball/master>`_
-``easy_install nve==dev``.
+<https://github.com/ekalinin/nodeenv/tarball/master>`_.
 
 
 Usage

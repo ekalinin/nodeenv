@@ -7,15 +7,9 @@
     nve - Node.js virtual environment
 
     TODO:
-        - local installation:
-            * add nve.sh:
-                functions nve() {
-                    NVE_HOME=$(cd $(dirname $0); pwd)
-                    python $NVE_HOME/nve.py --передать параметры извне "$*" ??--
-                }
-        - add option --debug
-        - add option --profile
-        - compile log only for verbose mode
+        - local installation (without setup.py, package install)
+        - add option --debug for compile
+        - add option --profile for compile
         - add setup.py
 
     :copyright: (c) 2011 by Eugene Kalinin
@@ -205,12 +199,23 @@ def install_node(env_dir, src_dir, opt):
             os.chdir(old_chdir)
 
 
-def install_npm(env_dir, src_dir):
-    logger.info(' * Install node.js package manager ... ')
-    os.system('. %s && curl %s|bash && deactivate'%(
-            join(env_dir, 'bin', 'activate'), 
-            'http://npmjs.org/install.sh'))
-    logger.info(' * Install node.js package manager ... done.')
+def install_npm(env_dir, src_dir, opt):
+    if opt.debug:
+        logger.info(' * Install node.js package manager ... ')
+        os.system('. %s && curl %s|bash && deactivate'%(
+                join(env_dir, 'bin', 'activate'), 
+                'http://npmjs.org/install.sh'))
+        logger.info(' * Install node.js package manager ... done.')
+    else:
+        logger.info(' * Install node.js package manager ... ', 
+            extra=dict(continued=True))
+        npm = subprocess.Popen('. %s && curl %s|bash && deactivate'%(
+                join(env_dir, 'bin', 'activate'), 
+                'http://npmjs.org/install.sh'), shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        npm.communicate()
+        logger.info('done.')
+    
 
 
 def install_activate(env_dir, opt):
@@ -241,7 +246,7 @@ def create_environment(env_dir, opt):
     install_node(env_dir, dirs["src"], opt)
     install_activate(env_dir, opt)
     if opt.with_npm:
-        install_npm(env_dir, dirs["src"])
+        install_npm(env_dir, dirs["src"], opt)
 
 
 def print_node_versions():

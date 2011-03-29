@@ -50,11 +50,11 @@ The basic usage is::
     0.4.1   0.4.2   0.4.3   0.4.4
 
     $ ./nve.py --without-ssl --node "0.4.3" --with-npm env-4.3
-     * Creating: /home/shorrty/projects/my/nodeenv/env-4.3/src ... done.
+     * Creating: ~/nodeenv/env-4.3/src ... done.
      * Retrieve: http://nodejs.org/dist/node-v0.4.3.tar.gz ...
     ######################################################################## 100,0%
      * Retrieve: http://nodejs.org/dist/node-v0.4.3.tar.gz ... done.
-     * Compile: /home/shorrty/projects/my/nodeenv/env-4.3/src/node-v0.4.3 ... done.
+     * Compile: ~/nodeenv/env-4.3/src/node-v0.4.3 ... done.
      * Writing env-4.3/bin/activate ... done.
      * Install node.js package manager ... done.
 

@@ -11,9 +11,9 @@ that doesn't share libraries with other node.js virtual environments.
 Install
 -------
 
-You can install nve with ``easy_install nve``, or from the `git
-repository <https://github.com/ekalinin/nve>`_ or from a `tarball
-<https://github.com/ekalinin/nve/tarball/master#egg=env-dev>`_
+You can install nve with ``easy_install nodeenv``, or from the `git
+repository <https://github.com/ekalinin/nodeenv>`_ or from a `tarball
+<https://github.com/ekalinin/nodeenv/tarball/master>`_
 ``easy_install nve==dev``.
 
 

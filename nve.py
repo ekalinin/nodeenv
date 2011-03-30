@@ -13,7 +13,6 @@
         - add quete
         - save command line at creation
         - save/load installed package state (freeze)
-        - activate env after install
         - add setup.py
 
     :copyright: (c) 2011 by Eugene Kalinin
@@ -160,14 +159,13 @@ def callit(cmd, show_stdout=True, cwd=None):
         stdout = None
     else:
         stdout = subprocess.PIPE
-    logger.debug("Running command %s", cmd)
+    logger.debug(" * Running command %s", cmd)
     try:
         proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT,
             stdin=None, stdout=stdout, cwd=cwd)
     except Exception:
         e = sys.exc_info()[1]
-        logger.fatal(
-            "Error %s while executing command %s" % (e, cmd_desc))
+        logger.fatal("Error %s while executing command %s"%(e, cmd))
         raise
 
 

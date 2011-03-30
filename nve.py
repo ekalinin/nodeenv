@@ -8,8 +8,6 @@
 
     TODO:
         - local installation (without setup.py, package install)
-        - add option --debug for compile
-        - add option --profile for compile
         - add quete
         - save command line at creation
         - save/load installed package state (freeze)
@@ -26,6 +24,7 @@ import os
 import subprocess
 import optparse
 import logging
+import ConfigParser
 
 join = os.path.join
 abspath = os.path.abspath
@@ -94,6 +93,14 @@ def parse_args():
         action='store_true', default=False, 
         help='Build node.js without SSL support')
 
+    parser.add_option( '--debug', dest='debug',
+        action='store_true', default=False, 
+        help='Build debug variant of the node.js')
+
+    parser.add_option( '--profile', dest='profile',
+        action='store_true', default=False, 
+        help='Enable profiling for node.js')
+
     parser.add_option( '--without-npm', dest='without_npm',
         action='store_true', default=False, 
         help='Install npm in new virtual environment')
@@ -151,24 +158,6 @@ def writefile(dest, content, overwrite=True):
             logger.info(' * Content %s already in place', dest)
 
 
-def callit(cmd, show_stdout=True, cwd=None):
-    """
-    Execute cmd
-    """
-    if show_stdout:
-        stdout = None
-    else:
-        stdout = subprocess.PIPE
-    logger.debug(" * Running command %s", cmd)
-    try:
-        proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT,
-            stdin=None, stdout=stdout, cwd=cwd)
-    except Exception:
-        e = sys.exc_info()[1]
-        logger.fatal("Error %s while executing command %s"%(e, cmd))
-        raise
-
-
 # ---------------------------------------------------------
 # Virtual environment functions
 
@@ -196,6 +185,10 @@ def install_node(env_dir, src_dir, opt):
     conf_cmd = './configure --prefix=%s'%(env_dir)
     if opt.without_ssl:
         conf_cmd += ' --without-ssl'
+    if opt.debug:
+        conf_cmd += ' --debug'
+    if opt.profile:
+        conf_cmd += ' --profile'
     try:
         os.chdir(node_src_dir)
         if opt.verbose:

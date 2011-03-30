@@ -10,18 +10,17 @@
         - local installation (without setup.py, package install)
         - add option --debug for compile
         - add option --profile for compile
-        - debug to verbose
         - add quete
-        - delete --with-npm, add --without-npm
         - save command line at creation
-        - 
+        - save/load installed package state (freeze)
+        - activate env after install
         - add setup.py
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
 """
 
-nve_version = '0.1'
+nve_version = '0.2'
 
 import sys
 import os
@@ -81,9 +80,9 @@ def parse_args():
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version.')
 
-    parser.add_option('-d', '--debug',
-        action='store_true', dest='debug', default=False,
-        help="Increase verbosity")
+    parser.add_option('-v', '--verbose',
+        action='store_true', dest='verbose', default=False,
+        help="Verbose mode")
 
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
@@ -96,7 +95,7 @@ def parse_args():
         action='store_true', default=False, 
         help='Build node.js without SSL support')
 
-    parser.add_option( '--with-npm', dest='with_npm',
+    parser.add_option( '--without-npm', dest='without_npm',
         action='store_true', default=False, 
         help='Install npm in new virtual environment')
 
@@ -152,6 +151,26 @@ def writefile(dest, content, overwrite=True):
         else:
             logger.info(' * Content %s already in place', dest)
 
+
+def callit(cmd, show_stdout=True, cwd=None):
+    """
+    Execute cmd
+    """
+    if show_stdout:
+        stdout = None
+    else:
+        stdout = subprocess.PIPE
+    logger.debug("Running command %s", cmd)
+    try:
+        proc = subprocess.Popen(cmd, stderr=subprocess.STDOUT,
+            stdin=None, stdout=stdout, cwd=cwd)
+    except Exception:
+        e = sys.exc_info()[1]
+        logger.fatal(
+            "Error %s while executing command %s" % (e, cmd_desc))
+        raise
+
+
 # ---------------------------------------------------------
 # Virtual environment functions
 
@@ -181,7 +200,7 @@ def install_node(env_dir, src_dir, opt):
         conf_cmd += ' --without-ssl'
     try:
         os.chdir(node_src_dir)
-        if opt.debug:
+        if opt.verbose:
             logger.info(' * Compile: %s ...', node_src_dir)
             os.system(conf_cmd)
             os.system('make')
@@ -205,7 +224,11 @@ def install_node(env_dir, src_dir, opt):
 
 
 def install_npm(env_dir, src_dir, opt):
-    if opt.debug:
+    """
+    Download source code for npm, unpack it
+    and install it in virtual environment.
+    """
+    if opt.verbose:
         logger.info(' * Install node.js package manager ... ')
         os.system('. %s && curl %s|bash && deactivate'%(
                 join(env_dir, 'bin', 'activate'), 
@@ -220,7 +243,6 @@ def install_npm(env_dir, src_dir, opt):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         npm.communicate()
         logger.info('done.')
-    
 
 
 def install_activate(env_dir, opt):
@@ -237,24 +259,31 @@ def install_activate(env_dir, opt):
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(file_path, content)
         os.chmod(file_path, 0755)
- 
+
 
 def create_environment(env_dir, opt):
     """
     Creates a new environment in ``env_dir``.
     """
-    dirs = {}
-    dirs["src"] = abspath(join(env_dir, 'src'))
-    for dir_name, dir_path in dirs.items():
-        mkdir(dir_path)
+    if os.path.exists(env_dir):
+        logger.info(' * Environment is allready exists: %s', env_dir)
+        sys.exit(2)
+    src_dir = abspath(join(env_dir, 'src'))
+    mkdir(src_dir)
 
-    install_node(env_dir, dirs["src"], opt)
+    install_node(env_dir, src_dir, opt)
+    # activate script install must be
+    # before npm install, npm use activate
+    # for install
     install_activate(env_dir, opt)
-    if opt.with_npm:
-        install_npm(env_dir, dirs["src"], opt)
+    if not opt.without_npm:
+        install_npm(env_dir, src_dir, opt)
 
 
 def print_node_versions():
+    """
+    Prints into stdout all available node.js versions
+    """
     p = subprocess.Popen(
         "curl -s http://nodejs.org/dist/ | "
         "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
@@ -277,6 +306,9 @@ def print_node_versions():
 
 
 def get_last_stable_node_version():
+    """
+    Return last stable node.js version
+    """
     p = subprocess.Popen(
         "curl -s http://nodejs.org/dist/ | "
         "egrep -o '[0-9]+\.[2468]+\.[0-9]+' | "

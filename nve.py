@@ -8,7 +8,6 @@
 
     TODO:
         - local installation (without setup.py, package install)
-        - add quete
         - save/load installed package state (freeze)
         - add setup.py
 
@@ -16,13 +15,14 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nve_version = '0.2'
+nve_version = '0.2.1'
 
 import sys
 import os
-import subprocess
-import optparse
+import time
 import logging
+import optparse
+import subprocess
 import ConfigParser
 
 join = os.path.join
@@ -36,7 +36,7 @@ def create_logger():
     Create logger for diagnostic
     """
     # create logger
-    logger = logging.getLogger("node-venv")
+    logger = logging.getLogger("nodeenv")
     logger.setLevel(logging.DEBUG)
 
     # monkey patch
@@ -69,7 +69,7 @@ def parse_args():
     """
     parser = optparse.OptionParser(
         version=nve_version,
-        usage="%prog [OPTIONS] DEST_DIR")
+        usage="%prog [OPTIONS] ENV_DIR")
 
     parser.add_option('-n', '--node', dest='node', 
         metavar='NODE_VER', default=get_last_stable_node_version(),
@@ -77,9 +77,17 @@ def parse_args():
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version.')
 
+    parser.add_option('-j', '--jobs', dest='jobs', default=2,
+        help='Sets number of parallel commands at node.js compilation. '
+        'The default is 2 jobs.')
+
     parser.add_option('-v', '--verbose',
         action='store_true', dest='verbose', default=False,
         help="Verbose mode")
+
+    parser.add_option('-q', '--quiet',
+        action='store_true', dest='quiet', default=False,
+        help="Quete mode")
 
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
@@ -157,6 +165,70 @@ def writefile(dest, content, overwrite=True):
             logger.info(' * Content %s already in place', dest)
 
 
+def callit(cmd, show_stdout=True, in_shell=False, 
+        cwd=None, extra_env=None):
+    """
+    Execute cmd line in sub-shell
+    """
+    all_output = []
+    cmd_parts = []
+
+    for part in cmd:
+        if len(part) > 45:
+            part = part[:20]+"..."+part[-20:]
+        if ' ' in part or '\n' in part or '"' in part or "'" in part:
+            part = '"%s"' % part.replace('"', '\\"')
+        cmd_parts.append(part)
+    cmd_desc = ' '.join(cmd_parts)
+    logger.debug(" ** Running command %s" % cmd_desc)
+
+    if in_shell:
+        cmd = ' '.join(cmd)
+
+    # output
+    if show_stdout:
+        stdout = None
+    else:
+        stdout = subprocess.PIPE
+
+    # env
+    if extra_env:
+        env = os.environ.copy()
+        if extra_env:
+            env.update(extra_env)
+    else:
+        env = None
+
+    # execute
+    try:
+        proc = subprocess.Popen(
+            cmd, stderr=subprocess.STDOUT, stdin=None, stdout=stdout,
+            cwd=cwd, env=env, shell=in_shell)
+    except Exception:
+        e = sys.exc_info()[1]
+        logger.fatal(" ** Error %s while executing command %s" % (e, cmd_desc))
+        raise
+
+    if show_stdout:
+        stdout = proc.stdout
+        while stdout:
+            line = stdout.readline()
+            if not line:
+                break
+            line = line.rstrip()
+            logger.info(line)
+    else:
+        proc.communicate()
+    proc.wait()
+
+    # error handler
+    if proc.returncode:
+        raise OSError(" * Command %s failed with error code %s"
+            % (cmd_desc, proc.returncode))
+
+    return proc.returncode, all_output 
+
+
 # ---------------------------------------------------------
 # Virtual environment functions
 
@@ -175,42 +247,32 @@ def install_node(env_dir, src_dir, opt):
 
     if not os.path.exists(node_src_dir):
         logger.info(' * Retrieve: %s ... ', node_url)
-        os.system('curl -# -L "%s" | tar xzf - -C "%s" '%
-            (node_url, src_dir))
+        cmd_progress = '-#'
+        if opt.quiet:
+            cmd_progress = '--silent'
+        cmd = 'curl %s -L "%s" | tar xzf - -C "%s" '%\
+            (cmd_progress, node_url, src_dir)
+        os.system(cmd)
         logger.info(' * Retrieve: %s ... done.', node_url)
     else:
         logger.info(' * Source exists: %s'%(node_src_dir))
 
-    conf_cmd = './configure --prefix=%s'%(env_dir)
+    env = {'JOBS': str(opt.jobs) }
+    conf_cmd = []
+    conf_cmd.append('./configure')
+    conf_cmd.append('--prefix=%s'%(env_dir))
     if opt.without_ssl:
-        conf_cmd += ' --without-ssl'
+        conf_cmd.append('--without-ssl')
     if opt.debug:
-        conf_cmd += ' --debug'
+        conf_cmd.append('--debug') 
     if opt.profile:
-        conf_cmd += ' --profile'
-    try:
-        os.chdir(node_src_dir)
-        if opt.verbose:
-            logger.info(' * Compile: %s ...', node_src_dir)
-            os.system(conf_cmd)
-            os.system('make')
-            os.system('make install')
-            logger.info(' * Compile: %s ... done', node_src_dir)
-        else:
-            logger.info(' * Compile: %s ... ', node_src_dir, extra=dict(continued=True))
-            c = subprocess.Popen(conf_cmd, shell=True, 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            c.communicate()
-            m = subprocess.Popen('make', shell=True, 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            m.communicate()
-            mi= subprocess.Popen('make install', shell=True, 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            mi.communicate()
-            logger.info('done.')
-    finally:
-        if os.getcwd() != old_chdir:
-            os.chdir(old_chdir)
+        conf_cmd.append('--profile')
+
+    logger.info(' * Compile: %s ...', node_src_dir)
+    callit(conf_cmd         , opt.verbose, True, node_src_dir, env)
+    callit(['make']         , opt.verbose, True, node_src_dir, env)
+    callit(['make install'] , opt.verbose, True, node_src_dir, env)
+    logger.info(' * Compile: %s ... done' % (node_src_dir) )
 
 
 def install_npm(env_dir, src_dir, opt):
@@ -322,12 +384,15 @@ def save_env_options(env_dir, opt, file_path='install.cfg'):
     with open(join(env_dir, file_path), 'wb') as configfile:
         config.write(configfile)
 
+
 def main():
     opt, args = parse_args()
     if opt.list:
         print_node_versions()
     else:
         env_dir = args[0]
+        if opt.quiet:
+            logger.setLevel(logging.CRITICAL)
         create_environment(env_dir, opt)
 
 
@@ -344,11 +409,6 @@ deactivate () {
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
-    fi
-    if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
-        PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
-        export PYTHONHOME
-        unset _OLD_VIRTUAL_PYTHONHOME
     fi
 
     # This should detect bash and zsh, which have a hash command that must

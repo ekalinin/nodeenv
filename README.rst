@@ -11,31 +11,44 @@ that doesn't share libraries with other node.js virtual environments.
 Install
 -------
 
-You can install nve with ``easy_install nodeenv``, or from the `git
-repository <https://github.com/ekalinin/nodeenv>`_ or from a `tarball
-<https://github.com/ekalinin/nodeenv/tarball/master>`_.
+You can install nodeenv from the `git repository <https://github.com/ekalinin/nodeenv>`::
 
+    $ git clone https://github.com/ekalinin/nodeenv.git
+    $ ./nodeenv/nve.py --help
 
 Usage
 -----
 
-The basic usage is::
+Install new environment::
 
-
-    $ ./nve.py --without-ssl env
+    $ ./nve.py env
      * Creating: ~/nodeenv/env/src ... done.
-     * Retrieve: http://nodejs.org/dist/node-v0.4.4.tar.gz ...
+     * Retrieve: http://nodejs.org/dist/node-v0.4.5.tar.gz ...
     ######################################################################## 100,0%
-     * Retrieve: http://nodejs.org/dist/node-v0.4.4.tar.gz ... done.
-     * Compile: ~/nodeenv/env/src/node-v0.4.4 ... done.
+     * Retrieve: http://nodejs.org/dist/node-v0.4.5.tar.gz ... done.
+     * Compile: ~/nodeenv/env/src/node-v0.4.5 ...
+     ** Running command ./configure --prefix=~/nodeenv/env
+     ** Running command make
+     ** Running command "make install"
+     * Compile: ~/nodeenv/env/src/node-v0.4.5 ... done
      * Writing env/bin/activate ... done.
+     * Install node.js package manager ... done.
+
+Activate new environment::
 
     $ . env/bin/activate
 
-    (env-0.4.4) $ node -v
-    v0.4.4
+    (env-0.4.5) $ node -v
+    v0.4.5
+
+    (env-0.4.5) $ npm -v
+    0.3.18
+
+Deactivate environment::
 
     (env-0.4.4) $ deactivate
+
+Get available node.js versions::
 
     $ ./nve.py --list
     0.0.1   0.0.2   0.0.3   0.0.4   0.0.5   0.0.6   0.1.0
@@ -47,26 +60,64 @@ The basic usage is::
     0.1.98  0.1.99  0.1.100 0.1.101 0.1.102 0.1.103 0.1.104
     0.2.1   0.2.2   0.2.3   0.2.4   0.2.5   0.2.6   0.3.0
     0.3.2   0.3.3   0.3.4   0.3.5   0.3.6   0.3.7   0.3.8
-    0.4.1   0.4.2   0.4.3   0.4.4
+    0.4.1   0.4.2   0.4.3   0.4.4   0.4.5
+
+Install node.js "0.4.3" without ssl support with 4 parallel commands 
+for compilation::
 
     $ ./nve.py --without-ssl --node "0.4.3" --jobs 4 env-4.3
      * Creating: ~/nodeenv/env-4.3/src ... done.
      * Retrieve: http://nodejs.org/dist/node-v0.4.3.tar.gz ...
     ######################################################################## 100,0%
      * Retrieve: http://nodejs.org/dist/node-v0.4.3.tar.gz ... done.
+     * Compile: ~/nodeenv/env-4.3/src/node-v0.4.3 ...
+     ** Running command ./configure --prefix=~/nodeenv/env
+     ** Running command make
+     ** Running command "make install"
      * Compile: ~/nodeenv/env-4.3/src/node-v0.4.3 ... done.
      * Writing env-4.3/bin/activate ... done.
      * Install node.js package manager ... done.
 
     $ . env-4.3/bin/activate
 
-    (env-0.4.3) $ node -v
-    v0.4.3
+Saving into the file versions of all installed packages::
 
-    (env-0.4.3) $ npm -v
-    0.3.18
+    (env-0.4.3)$ freeze ../prod-requirements.txt
 
-    (env-0.4.3) $ deactivate
+Create environment copy from requirements file::
+
+    $ ./nve.py -r ../prod-requirements.txt --jobs 4 env-copy
+     * Creating: ~/nodeenv/env-copy/src ... done.
+     * Retrieve: http://nodejs.org/dist/node-v0.4.6.tar.gz ... 
+    ######################################################################## 100,0%
+     * Retrieve: http://nodejs.org/dist/node-v0.4.6.tar.gz ... done.
+     * Compile: ~/nodeenv/env-copy/src/node-v0.4.6 ...
+     ** Running command ./configure --prefix=~/nodeenv/env-copy
+     ** Running command make
+     ** Running command "make install"
+     * Compile: ~/nodeenv/env-copy/src/node-v0.4.6 ... done
+     * Writing env-copy/bin/activate ... done.
+     * Install node.js package manager ... done.
+     * Install node.js packages ... 
+     ** Running command ". env-copy/bin/activ...tivate connect@1.3.0"
+     ** Running command ". env-copy/bin/activ...tivate express@2.2.2"
+     ** Running command ". env-copy/bin/activ...activate jade@0.10.4"
+     ** Running command ". env-copy/bin/activ... activate mime@1.2.1"
+     ** Running command ". env-copy/bin/activ... activate npm@0.3.17"
+     ** Running command ". env-copy/bin/activ...pm activate qs@0.0.7"
+     * Install node.js packages ... done.
+
+Requirements files are plain text files that contain a list of packages 
+to be installed. These text files allow you to create repeatable installations.
+Requirement file example::
+
+    $ cat ../prod-requirements.txt
+    connect@1.3.0
+    express@2.2.2
+    jade@0.10.4
+    mime@1.2.1
+    npm@0.3.17
+    qs@0.0.7
 
 
 Alternatives
@@ -75,8 +126,8 @@ Alternatives
 There are several alternatives that create isolated environments:
 
 * `nave <https://github.com/isaacs/nave>`_ - Virtual Environments for Node.
-  Nave stores all environments in one directory ``~/.nave``. Thus not possible
-  to create different environments for one version of node.js.
+  Nave stores all environments in one directory ``~/.nave``. Thus it is not 
+  possible to create different environments for one version of node.js.
   Can not pass additional arguments into configure (for example --without-ssl)
 
 * `nvm <https://github.com/creationix/nvm/blob/master/nvm.sh>`_ - Node Version

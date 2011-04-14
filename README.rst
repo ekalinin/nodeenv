@@ -80,10 +80,12 @@ for compilation::
      * Writing env-4.3/bin/activate ... done.
      * Install node.js package manager ... done.
 
-    $ . env-4.3/bin/activate
 
 Saving into the file versions of all installed packages::
 
+    $ . env-4.3/bin/activate
+    (env-0.4.3)$ npm install express
+    (env-0.4.3)$ npm install jade
     (env-0.4.3)$ freeze ../prod-requirements.txt
 
 Create environment copy from requirements file::

@@ -113,7 +113,7 @@ Create environment copy from requirements file::
 
 Requirements files are plain text files that contain a list of packages 
 to be installed. These text files allow you to create repeatable installations.
-Requirement file example::
+Requirements file example::
 
     $ cat ../prod-requirements.txt
     connect@1.3.0

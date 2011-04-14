@@ -8,14 +8,13 @@
 
     TODO:
         - local installation (without setup.py, package install)
-        - save/load installed package state (freeze)
         - add setup.py
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
 """
 
-nve_version = '0.2.1'
+nve_version = '0.2.2'
 
 import sys
 import os
@@ -89,6 +88,11 @@ def parse_args():
         action='store_true', dest='quiet', default=False,
         help="Quete mode")
 
+    parser.add_option('-r', '--requirement',
+        dest='requirements', default='',  metavar='FILENAME',
+        help='Install all the packages listed in the given requirements file. '
+             'Not compatible with --without-npm option.')
+
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
@@ -125,6 +129,12 @@ def parse_args():
                 ' '.join(args)))
             parser.print_help()
             sys.exit(2)
+
+        if options.requirements and options.without_npm:
+            print('These options are not compatible: --requirements, --without-npm')
+            parser.print_help()
+            sys.exit(2)
+
 
     return options, args
 
@@ -297,6 +307,18 @@ def install_npm(env_dir, src_dir, opt):
         logger.info('done.')
 
 
+def install_packages(env_dir, opt):
+    logger.info(' * Install node.js packages ... ')
+    packages = [ package.replace('\n', '') for package in 
+                    open(opt.requirements).readlines() ]
+    activate_path = join(env_dir, 'bin', 'activate')
+    for package in packages:
+        callit(cmd=['. '+ activate_path + 
+                    ' && ' + 'npm install ' + package +
+                    ' && ' + 'npm activate ' + package],
+                show_stdout=opt.verbose, in_shell=True)
+    logger.info(' * Install node.js packages ... done.')
+
 def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
@@ -331,6 +353,8 @@ def create_environment(env_dir, opt):
     install_activate(env_dir, opt)
     if not opt.without_npm:
         install_npm(env_dir, src_dir, opt)
+    if opt.requirements:
+        install_packages(env_dir, opt)
 
 
 def print_node_versions():
@@ -429,6 +453,10 @@ deactivate () {
     # Self destruct!
         unset -f deactivate
     fi
+}
+
+freeze () {
+    npm list installed active | cut -d ' ' -f 1 > $@
 }
 
 # unset irrelavent variables

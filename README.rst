@@ -11,10 +11,12 @@ that doesn't share libraries with other node.js virtual environments.
 Install
 -------
 
-You can install nodeenv from the `git repository <https://github.com/ekalinin/nodeenv>`::
+You can install nodeenv from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nve.py --help
+
+.. _repository: https://github.com/ekalinin/nodeenv
 
 Usage
 -----

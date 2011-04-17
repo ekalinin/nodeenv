@@ -12,7 +12,7 @@ Install
 -------
 You can install nodeenv with `easy_install`_::
 
-    $ sudo easy_install install nodeenv
+    $ sudo easy_install nodeenv
 
 or `pip`_::
 
@@ -31,6 +31,9 @@ install it from the github `repository`_::
 
 Usage
 -----
+
+Basic
+^^^^^
 
 Install new environment::
 
@@ -61,6 +64,9 @@ Deactivate environment::
 
     (env-0.4.4) $ deactivate
 
+Advanced
+^^^^^^^^
+
 Get available node.js versions::
 
     $ ./nodeenv.py --list
@@ -90,7 +96,6 @@ for compilation::
      * Compile: ~/nodeenv/env-4.3/src/node-v0.4.3 ... done.
      * Writing env-4.3/bin/activate ... done.
      * Install node.js package manager ... done.
-
 
 Saving into the file versions of all installed packages::
 

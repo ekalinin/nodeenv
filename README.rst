@@ -10,13 +10,24 @@ that doesn't share libraries with other node.js virtual environments.
 
 Install
 -------
+You can install nodeenv with `easy_install`_::
 
-You can install nodeenv from the github `repository`_::
+    $ sudo easy_install install nodeenv
+
+or `pip`_::
+
+    $ sudo pip install nodeenv
+
+If you want to work with the latest version of the nodeenv you can 
+install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nodeenv.py --help
 
 .. _repository: https://github.com/ekalinin/nodeenv
+.. _pip: http://pypi.python.org/pypi/pip
+.. _easy_install: http://pypi.python.org/pypi/setuptools
+
 
 Usage
 -----

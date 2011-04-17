@@ -1,7 +1,7 @@
 Node.js virtual environment
 ===========================
 
-``nve`` (node.js virtual environment) is a tool to create 
+``nodeenv`` (node.js virtual environment) is a tool to create 
 isolated node.js environments.
 
 It creates an environment that has its own installation directories, 
@@ -14,7 +14,7 @@ Install
 You can install nodeenv from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
-    $ ./nodeenv/nve.py --help
+    $ ./nodeenv/nodeenv.py --help
 
 .. _repository: https://github.com/ekalinin/nodeenv
 
@@ -23,7 +23,7 @@ Usage
 
 Install new environment::
 
-    $ ./nve.py env
+    $ ./nodeenv.py env
      * Creating: ~/nodeenv/env/src ... done.
      * Retrieve: http://nodejs.org/dist/node-v0.4.5.tar.gz ...
     ######################################################################## 100,0%
@@ -52,7 +52,7 @@ Deactivate environment::
 
 Get available node.js versions::
 
-    $ ./nve.py --list
+    $ ./nodeenv.py --list
     0.0.1   0.0.2   0.0.3   0.0.4   0.0.5   0.0.6   0.1.0
     0.1.2   0.1.3   0.1.4   0.1.5   0.1.6   0.1.7   0.1.8
     0.1.10  0.1.11  0.1.12  0.1.13  0.1.14  0.1.15  0.1.16
@@ -67,7 +67,7 @@ Get available node.js versions::
 Install node.js "0.4.3" without ssl support with 4 parallel commands 
 for compilation::
 
-    $ ./nve.py --without-ssl --node "0.4.3" --jobs 4 env-4.3
+    $ ./nodeenv.py --without-ssl --node "0.4.3" --jobs 4 env-4.3
      * Creating: ~/nodeenv/env-4.3/src ... done.
      * Retrieve: http://nodejs.org/dist/node-v0.4.3.tar.gz ...
     ######################################################################## 100,0%
@@ -90,7 +90,7 @@ Saving into the file versions of all installed packages::
 
 Create environment copy from requirements file::
 
-    $ ./nve.py -r ../prod-requirements.txt --jobs 4 env-copy
+    $ ./nodeenv.py -r ../prod-requirements.txt --jobs 4 env-copy
      * Creating: ~/nodeenv/env-copy/src ... done.
      * Retrieve: http://nodejs.org/dist/node-v0.4.6.tar.gz ... 
     ######################################################################## 100,0%

@@ -2,19 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-    nve
-    ~~~
-    nve - Node.js virtual environment
-
-    TODO:
-        - local installation (without setup.py, package install)
-        - add setup.py
+    nodeenv
+    ~~~~~~~
+    Node.js virtual environment
 
     :copyright: (c) 2011 by Eugene Kalinin
     :license: BSD, see LICENSE for more details.
 """
 
-nve_version = '0.2.2'
+nodeenv_version = '0.3.0'
 
 import sys
 import os
@@ -67,7 +63,7 @@ def parse_args():
     Parses command line arguments
     """
     parser = optparse.OptionParser(
-        version=nve_version,
+        version=nodeenv_version,
         usage="%prog [OPTIONS] ENV_DIR")
 
     parser.add_option('-n', '--node', dest='node', 

@@ -62,7 +62,7 @@ Activate new environment::
 
 Deactivate environment::
 
-    (env-0.4.4) $ deactivate
+    (env-0.4.5) $ deactivate
 
 Advanced
 ^^^^^^^^

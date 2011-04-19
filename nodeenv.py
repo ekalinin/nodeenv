@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.1'
+nodeenv_version = '0.3.2'
 
 import sys
 import os
@@ -32,7 +32,7 @@ def create_logger():
     """
     # create logger
     logger = logging.getLogger("nodeenv")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     # monkey patch
     def emit(self, record):
@@ -140,11 +140,11 @@ def mkdir(path):
     Create directory
     """
     if not os.path.exists(path):
-        logger.info(' * Creating: %s ... ', path, extra=dict(continued=True))
+        logger.debug(' * Creating: %s ... ', path, extra=dict(continued=True))
         os.makedirs(path)
-        logger.info('done.')
+        logger.debug('done.')
     else:
-        logger.info(' * Directory %s already exists', path)
+        logger.debug(' * Directory %s already exists', path)
 
 
 def writefile(dest, content, overwrite=True):
@@ -152,11 +152,11 @@ def writefile(dest, content, overwrite=True):
     Create file and write content in it
     """
     if not os.path.exists(dest):
-        logger.info(' * Writing %s ... ', dest, extra=dict(continued=True))
+        logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         f = open(dest, 'wb')
         f.write(content.encode('utf-8'))
         f.close()
-        logger.info('done.')
+        logger.debug('done.')
         return
     else:
         f = open(dest, 'rb')
@@ -171,7 +171,7 @@ def writefile(dest, content, overwrite=True):
             f.write(content.encode('utf-8'))
             f.close()
         else:
-            logger.info(' * Content %s already in place', dest)
+            logger.debug(' * Content %s already in place', dest)
 
 
 def callit(cmd, show_stdout=True, in_shell=False, 
@@ -215,7 +215,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
             cwd=cwd, env=env, shell=in_shell)
     except Exception:
         e = sys.exc_info()[1]
-        logger.fatal(" ** Error %s while executing command %s" % (e, cmd_desc))
+        logger.fatal("Error %s while executing command %s" % (e, cmd_desc))
         raise
 
     if show_stdout:
@@ -232,7 +232,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
     # error handler
     if proc.returncode:
-        raise OSError(" * Command %s failed with error code %s"
+        raise OSError("Command %s failed with error code %s"
             % (cmd_desc, proc.returncode))
 
     return proc.returncode, all_output 
@@ -246,6 +246,8 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
+    logger.info(' * Install node.js ', extra=dict(continued=True))
+
     node_name = 'node-v%s'%(opt.node)
     tar_name = '%s.tar.gz'%(node_name)
     node_url = 'http://nodejs.org/dist/%s'%(tar_name)
@@ -254,17 +256,19 @@ def install_node(env_dir, src_dir, opt):
     env_dir = abspath(env_dir)
     old_chdir = os.getcwd()
 
-    if not os.path.exists(node_src_dir):
-        logger.info(' * Retrieve: %s ... ', node_url)
-        cmd_progress = '-#'
-        if opt.quiet:
-            cmd_progress = '--silent'
-        cmd = 'curl %s -L "%s" | tar xzf - -C "%s" '%\
-            (cmd_progress, node_url, src_dir)
-        os.system(cmd)
-        logger.info(' * Retrieve: %s ... done.', node_url)
-    else:
-        logger.info(' * Source exists: %s'%(node_src_dir))
+    cmd = []
+    cmd.append('curl')
+    cmd.append('--silent')
+    cmd.append('-L')
+    cmd.append(node_url)
+    cmd.append('|')
+    cmd.append('tar')
+    cmd.append('xzf')
+    cmd.append('-')
+    cmd.append('-C')
+    cmd.append(src_dir)
+    callit(cmd, opt.verbose, True, env_dir)
+    logger.info('.', extra=dict(continued=True))
 
     env = {'JOBS': str(opt.jobs) }
     conf_cmd = []
@@ -277,11 +281,13 @@ def install_node(env_dir, src_dir, opt):
     if opt.profile:
         conf_cmd.append('--profile')
 
-    logger.info(' * Compile: %s ...', node_src_dir)
     callit(conf_cmd         , opt.verbose, True, node_src_dir, env)
+    logger.info('.', extra=dict(continued=True))
     callit(['make']         , opt.verbose, True, node_src_dir, env)
+    logger.info('.', extra=dict(continued=True))
     callit(['make install'] , opt.verbose, True, node_src_dir, env)
-    logger.info(' * Compile: %s ... done' % (node_src_dir) )
+
+    logger.info(' done.')
 
 
 def install_npm(env_dir, src_dir, opt):
@@ -289,28 +295,21 @@ def install_npm(env_dir, src_dir, opt):
     Download source code for npm, unpack it
     and install it in virtual environment.
     """
-    if opt.verbose:
-        logger.info(' * Install node.js package manager ... ')
-        os.system('. %s && curl %s|bash && deactivate'%(
-                join(env_dir, 'bin', 'activate'), 
-                'http://npmjs.org/install.sh'))
-        logger.info(' * Install node.js package manager ... done.')
-    else:
-        logger.info(' * Install node.js package manager ... ', 
-            extra=dict(continued=True))
-        npm = subprocess.Popen('. %s && curl %s|bash && deactivate'%(
-                join(env_dir, 'bin', 'activate'), 
-                'http://npmjs.org/install.sh'), shell=True,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        npm.communicate()
-        logger.info('done.')
+    logger.info(' * Install node.js package manager ... ', 
+        extra=dict(continued=True))
+    cmd = ['. %s && curl %s|bash && deactivate'%(
+            join(env_dir, 'bin', 'activate'), 
+            'http://npmjs.org/install.sh')]
+    callit(cmd, opt.verbose, True)
+    logger.info('done.')
 
 
 def install_packages(env_dir, opt):
     """
     Install node.js packages via npm
     """
-    logger.info(' * Install node.js packages ... ')
+    logger.info(' * Install node.js packages ... ', 
+        extra=dict(continued=True))
     packages = [ package.replace('\n', '') for package in 
                     open(opt.requirements).readlines() ]
     activate_path = join(env_dir, 'bin', 'activate')
@@ -319,7 +318,7 @@ def install_packages(env_dir, opt):
                     ' && ' + 'npm install ' + package +
                     ' && ' + 'npm activate ' + package],
                 show_stdout=opt.verbose, in_shell=True)
-    logger.info(' * Install node.js packages ... done.')
+    logger.info('done.')
 
 
 def install_activate(env_dir, opt):

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.0'
+nodeenv_version = '0.3.1'
 
 import sys
 import os
@@ -148,6 +148,9 @@ def mkdir(path):
 
 
 def writefile(dest, content, overwrite=True):
+    """
+    Create file and write content in it
+    """
     if not os.path.exists(dest):
         logger.info(' * Writing %s ... ', dest, extra=dict(continued=True))
         f = open(dest, 'wb')
@@ -304,6 +307,9 @@ def install_npm(env_dir, src_dir, opt):
 
 
 def install_packages(env_dir, opt):
+    """
+    Install node.js packages via npm
+    """
     logger.info(' * Install node.js packages ... ')
     packages = [ package.replace('\n', '') for package in 
                     open(opt.requirements).readlines() ]
@@ -315,13 +321,14 @@ def install_packages(env_dir, opt):
                 show_stdout=opt.verbose, in_shell=True)
     logger.info(' * Install node.js packages ... done.')
 
+
 def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
     """
     files = {'activate': ACTIVATE_SH}
     bin_dir = join(env_dir, 'bin')
-    prompt = opt.prompt or '(env-%s)'%opt.node 
+    prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__VIRTUAL_PROMPT__', prompt)
@@ -406,6 +413,9 @@ def save_env_options(env_dir, opt, file_path='install.cfg'):
 
 
 def main():
+    """
+    Entry point
+    """
     opt, args = parse_args()
     if opt.list:
         print_node_versions()

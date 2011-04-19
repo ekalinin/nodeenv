@@ -1,11 +1,21 @@
 """
-    nodeenv
-    ~~~~~~~
-    Node.js virtual environment
-"""
+nodeenv
+~~~~~~~
 
+Node.js Virtual Environment builder.
+"""
+import os
 from setuptools import setup
 from nodeenv import nodeenv_version
+
+ldesc = open(
+            os.path.join(
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
+                'README.rst'
+            )
+        ).read()
 
 setup(
     name='nodeenv',
@@ -15,7 +25,7 @@ setup(
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
     description="Node.js virtual environment builder",
-    long_description=__doc__,
+    long_description=ldesc,
     py_modules=['nodeenv'],
     entry_points={
         'console_scripts': ['nodeenv = nodeenv:main']

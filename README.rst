@@ -60,7 +60,7 @@ Advanced
 
 Get available node.js versions::
 
-    $ ./nodeenv.py --list
+    $ nodeenv --list
     0.0.1   0.0.2   0.0.3   0.0.4   0.0.5   0.0.6   0.1.0
     0.1.2   0.1.3   0.1.4   0.1.5   0.1.6   0.1.7   0.1.8
     0.1.10  0.1.11  0.1.12  0.1.13  0.1.14  0.1.15  0.1.16
@@ -75,7 +75,7 @@ Get available node.js versions::
 Install node.js "0.4.3" without ssl support with 4 parallel commands 
 for compilation::
 
-    $ ./nodeenv.py --without-ssl --node "0.4.3" --jobs 4 env-4.3
+    $ nodeenv --without-ssl --node "0.4.3" --jobs 4 env-4.3
 
 Saving into the file versions of all installed packages::
 
@@ -86,7 +86,7 @@ Saving into the file versions of all installed packages::
 
 Create environment copy from requirement file::
 
-    $ ./nodeenv.py -r ../prod-requirements.txt --jobs 4 env-copy
+    $ nodeenv -r ../prod-requirements.txt --jobs 4 env-copy
 
 Requirements files are plain text files that contain a list of packages 
 to be installed. These text files allow you to create repeatable installations.

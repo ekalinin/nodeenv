@@ -1,0 +1,2 @@
+include *.py README README.rst LICENSE
+exclude *.pyc *.swp

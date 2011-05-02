@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.3'
+nodeenv_version = '0.3.4'
 
 import sys
 import os
@@ -97,20 +97,24 @@ def parse_args():
         help='Lists available node.js versions')
 
     parser.add_option( '--without-ssl', dest='without_ssl',
-        action='store_true', default=False, 
+        action='store_true', default=False,
         help='Build node.js without SSL support')
 
     parser.add_option( '--debug', dest='debug',
-        action='store_true', default=False, 
+        action='store_true', default=False,
         help='Build debug variant of the node.js')
 
     parser.add_option( '--profile', dest='profile',
-        action='store_true', default=False, 
+        action='store_true', default=False,
         help='Enable profiling for node.js')
 
     parser.add_option( '--without-npm', dest='without_npm',
-        action='store_true', default=False, 
+        action='store_true', default=False,
         help='Install npm in new virtual environment')
+
+    parser.add_option( '--no-npm-clean', dest='no_npm_clean',
+        action='store_true', default=False,
+        help='Skip the npm 0.x cleanup. Do cleanup by default.')
 
     options, args = parser.parse_args()
 
@@ -297,9 +301,10 @@ def install_npm(env_dir, src_dir, opt):
     """
     logger.info(' * Install node.js package manager ... ', 
         extra=dict(continued=True))
-    cmd = ['. %s && curl %s|bash && deactivate'%(
+    cmd = ['. %s && curl %s | clean=%s bash && deactivate'%(
             join(env_dir, 'bin', 'activate'), 
-            'http://npmjs.org/install.sh')]
+            'http://npmjs.org/install.sh',
+            'no' if opt.no_npm_clean else 'yes')]
     callit(cmd, opt.verbose, True)
     logger.info('done.')
 

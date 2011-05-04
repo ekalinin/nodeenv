@@ -1,2 +1,2 @@
-include *.py README README.rst LICENSE
+include *.py README README.rst LICENSE CHANGES
 exclude *.pyc *.swp

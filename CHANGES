@@ -4,14 +4,16 @@ Nodeenv changelog
 Version 0.3.4
 -------------
 
-- Fixed `problem #2`_ with new npm installation script
+- Fixed `problem #2`_ with new npm installation script. Added
+  ``--no-npm-clean`` option. The default to the npm 0.x cleanup.
 
 .. _problem #2: https://github.com/ekalinin/nodeenv/issues/2
 
 Version 0.3.3
 -------------
 
-- Fixed `problem #1`_ with installation from PyPI via easy_install
+- Fixed `problem #1`_ with installation from PyPI via easy_install.
+  Added ``MANIFEST.in`` file.
 
 .. _problem #1: https://github.com/ekalinin/nodeenv/issues/1
 
@@ -29,4 +31,4 @@ Version 0.3.1
 Version 0.3.0
 --------------
 
-- renameed nve to nodeenv
+- renamed nve to nodeenv

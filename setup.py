@@ -8,14 +8,16 @@ import os
 from setuptools import setup
 from nodeenv import nodeenv_version
 
-ldesc = open(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                'README.rst'
-            )
-        ).read()
+def read_file(file_name):
+    return open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            file_name
+        )
+    ).read()
+
+ldesc = read_file('README.rst')
+ldesc += "\n\n" + read_file('CHANGES')
 
 setup(
     name='nodeenv',

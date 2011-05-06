@@ -1,4 +1,4 @@
-.PHONY: doc deploy deploy-github deploy-pypi clean
+.PHONY: deploy deploy-github deploy-pypi clean
 
 deploy-github:
 	git push --tags origin master

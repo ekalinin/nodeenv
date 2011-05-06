@@ -73,9 +73,9 @@ Get available node.js versions::
     0.4.1   0.4.2   0.4.3   0.4.4   0.4.5   0.4.6
 
 Install node.js "0.4.3" without ssl support with 4 parallel commands 
-for compilation::
+for compilation and npm.js "0.3.17"::
 
-    $ nodeenv --without-ssl --node "0.4.3" --jobs 4 env-4.3
+    $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --jobs=4 env-4.3
 
 Saving into the file versions of all installed packages::
 
@@ -86,7 +86,7 @@ Saving into the file versions of all installed packages::
 
 Create environment copy from requirement file::
 
-    $ nodeenv -r ../prod-requirements.txt --jobs 4 env-copy
+    $ nodeenv --requirement=../prod-requirements.txt --jobs=4 env-copy
 
 Requirements files are plain text files that contain a list of packages 
 to be installed. These text files allow you to create repeatable installations.

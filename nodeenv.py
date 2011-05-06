@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.4'
+nodeenv_version = '0.3.5'
 
 import sys
 import os
@@ -111,6 +111,12 @@ def parse_args():
     parser.add_option( '--without-npm', dest='without_npm',
         action='store_true', default=False,
         help='Install npm in new virtual environment')
+
+    parser.add_option('--npm', dest='npm',
+        metavar='NODE_VER', default='latest',
+        help='The npm version to use, e.g., '
+        '--npm=0.3.18 will use the npm-0.3.18.tgz '
+        'tarball to install. The default is last available version.')
 
     parser.add_option( '--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
@@ -250,7 +256,8 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js ', extra=dict(continued=True))
+    logger.info(' * Install node.js (%s) ' % opt.node,
+                         extra=dict(continued=True))
 
     node_name = 'node-v%s'%(opt.node)
     tar_name = '%s.tar.gz'%(node_name)
@@ -299,12 +306,13 @@ def install_npm(env_dir, src_dir, opt):
     Download source code for npm, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js package manager ... ', 
-        extra=dict(continued=True))
-    cmd = ['. %s && curl %s | clean=%s bash && deactivate'%(
+    logger.info(' * Install npm.js (%s) ... ' % opt.npm,
+                    extra=dict(continued=True))
+    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate'%(
             join(env_dir, 'bin', 'activate'), 
             'http://npmjs.org/install.sh',
-            'no' if opt.no_npm_clean else 'yes')]
+            'no' if opt.no_npm_clean else 'yes',
+            opt.npm)]
     callit(cmd, opt.verbose, True)
     logger.info('done.')
 
@@ -333,11 +341,17 @@ def install_activate(env_dir, opt):
     files = {'activate': ACTIVATE_SH}
     bin_dir = join(env_dir, 'bin')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
+    if opt.npm == 'latest' or opt.npm[0] == '1':
+        freeze_cmd = "npm ls -g | grep -o -e '\w*@[[:digit:]]\.[[:digit:]]\.[[:digit:]]' "
+    else:
+        freeze_cmd = "npm list installed active | cut -d ' ' -f 1"
+
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__VIRTUAL_PROMPT__', prompt)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
+        content = content.replace('__FREEZE_CMD__', freeze_cmd)
         writefile(file_path, content)
         os.chmod(file_path, 0755)
 
@@ -466,7 +480,11 @@ deactivate () {
 }
 
 freeze () {
-    npm list installed active | cut -d ' ' -f 1 > $@
+    if [ -z "$@" ]; then
+        __FREEZE_CMD__
+    else
+        __FREEZE_CMD__ > $@
+    fi
 }
 
 # unset irrelavent variables

@@ -361,7 +361,7 @@ def create_environment(env_dir, opt):
     Creates a new environment in ``env_dir``.
     """
     if os.path.exists(env_dir):
-        logger.info(' * Environment is allready exists: %s', env_dir)
+        logger.info(' * Environment already exists: %s', env_dir)
         sys.exit(2)
     src_dir = abspath(join(env_dir, 'src'))
     mkdir(src_dir)

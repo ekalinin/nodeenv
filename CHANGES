@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.3.6
+-------------
+- Fixed ``freeze`` output command. See `request # 5`_
+- Diagnostic message fixed. See `pull # 4`
+
+.. _request # 5 : https://github.com/ekalinin/nodeenv/issues/5
+.. _pull # 4 : https://github.com/ekalinin/nodeenv/pull/4
+
 Version 0.3.5
 -------------
 - Added option ``--npm`` to install certain npm.js version. Request_ .

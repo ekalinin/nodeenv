@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.5'
+nodeenv_version = '0.3.6'
 
 import sys
 import os
@@ -341,17 +341,12 @@ def install_activate(env_dir, opt):
     files = {'activate': ACTIVATE_SH}
     bin_dir = join(env_dir, 'bin')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
-    if opt.npm == 'latest' or opt.npm[0] == '1':
-        freeze_cmd = "npm ls -g | grep -o -e '\w*@[[:digit:]]\.[[:digit:]]\.[[:digit:]]' "
-    else:
-        freeze_cmd = "npm list installed active | cut -d ' ' -f 1"
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__VIRTUAL_PROMPT__', prompt)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        content = content.replace('__FREEZE_CMD__', freeze_cmd)
         writefile(file_path, content)
         os.chmod(file_path, 0755)
 
@@ -480,10 +475,17 @@ deactivate () {
 }
 
 freeze () {
-    if [ -z "$@" ]; then
-        __FREEZE_CMD__
+    NPM_VER=`npm -v | cut -d '.' -f 1`
+    if [ "$NPM_VER" != '1' ]; then
+        NPM_LIST=`npm list installed active 2>/dev/null | cut -d ' ' -f 1`
     else
-        __FREEZE_CMD__ > $@
+        NPM_LIST=`npm ls -g | grep -o -E '\w*@[0-9]+\.[0-9]+\.[0-9]+'`
+    fi
+
+    if [ -z "$@" ]; then
+        echo "$NPM_LIST"
+    else
+        echo "$NPM_LIST" > $@
     fi
 }
 

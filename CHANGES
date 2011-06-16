@@ -4,7 +4,7 @@ Nodeenv changelog
 Version 0.3.6
 -------------
 - Fixed ``freeze`` output command. See `request # 5`_
-- Diagnostic message fixed. See `pull # 4`
+- Diagnostic message fixed. See `pull # 4`_
 
 .. _request # 5 : https://github.com/ekalinin/nodeenv/issues/5
 .. _pull # 4 : https://github.com/ekalinin/nodeenv/pull/4

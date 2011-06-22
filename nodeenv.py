@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.6'
+nodeenv_version = '0.3.7'
 
 import sys
 import os
@@ -205,10 +205,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
         cmd = ' '.join(cmd)
 
     # output
-    if show_stdout:
-        stdout = None
-    else:
-        stdout = subprocess.PIPE
+    stdout = subprocess.PIPE
 
     # env
     if extra_env:
@@ -225,27 +222,28 @@ def callit(cmd, show_stdout=True, in_shell=False,
             cwd=cwd, env=env, shell=in_shell)
     except Exception:
         e = sys.exc_info()[1]
-        logger.fatal("Error %s while executing command %s" % (e, cmd_desc))
+        logger.error("Error %s while executing command %s" % (e, cmd_desc))
         raise
 
-    if show_stdout:
-        stdout = proc.stdout
-        while stdout:
-            line = stdout.readline()
-            if not line:
-                break
-            line = line.rstrip()
+    stdout = proc.stdout
+    while stdout:
+        line = stdout.readline()
+        if not line:
+            break
+        line = line.rstrip()
+        all_output.append(line)
+        if show_stdout:
             logger.info(line)
-    else:
-        proc.communicate()
     proc.wait()
 
     # error handler
     if proc.returncode:
+        for s in all_output:
+            logger.critical(s)
         raise OSError("Command %s failed with error code %s"
             % (cmd_desc, proc.returncode))
 
-    return proc.returncode, all_output 
+    return proc.returncode, all_output
 
 
 # ---------------------------------------------------------
@@ -323,14 +321,22 @@ def install_packages(env_dir, opt):
     """
     logger.info(' * Install node.js packages ... ', 
         extra=dict(continued=True))
-    packages = [ package.replace('\n', '') for package in 
+
+    packages = [ package.replace('\n', '') for package in
                     open(opt.requirements).readlines() ]
     activate_path = join(env_dir, 'bin', 'activate')
+    if opt.npm == 'latest':
+        cmd = '. ' + activate_path + \
+                ' && npm install -g %(pack)s'
+    else:
+        cmd = '. ' + activate_path + \
+                ' && npm install %(pack)s' + \
+                ' && npm activate %(pack)s'
+
     for package in packages:
-        callit(cmd=['. '+ activate_path + 
-                    ' && ' + 'npm install ' + package +
-                    ' && ' + 'npm activate ' + package],
+        callit(cmd=[ cmd % {"pack": package} ],
                 show_stdout=opt.verbose, in_shell=True)
+
     logger.info('done.')
 
 
@@ -477,9 +483,9 @@ deactivate () {
 freeze () {
     NPM_VER=`npm -v | cut -d '.' -f 1`
     if [ "$NPM_VER" != '1' ]; then
-        NPM_LIST=`npm list installed active 2>/dev/null | cut -d ' ' -f 1`
+        NPM_LIST=`npm list installed active 2>/dev/null | cut -d ' ' -f 1 | grep -v npm`
     else
-        NPM_LIST=`npm ls -g | grep -o -E '\w*@[0-9]+\.[0-9]+\.[0-9]+'`
+        NPM_LIST=`npm ls -g | grep -E '^.{4}\w{1}' | grep -o -E '[a-zA-Z\-]+@[0-9]+\.[0-9]+\.[0-9]+' | grep -v npm`
     fi
 
     if [ -z "$@" ]; then

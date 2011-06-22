@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.3.7
+-------------
+- Shows command output when error occurs
+- Excluded 'npm' from `freeze` list
+- Fixed bug with 'not only letter' names in `freeze` list
+- Added global installation for npm >= 1.0 (when install
+  soft from requirement file)
+
 Version 0.3.6
 -------------
 - Fixed ``freeze`` output command. See `request # 5`_

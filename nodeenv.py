@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.7'
+nodeenv_version = '0.3.8'
 
 import sys
 import os
@@ -346,6 +346,7 @@ def install_activate(env_dir, opt):
     """
     files = {'activate': ACTIVATE_SH}
     bin_dir = join(env_dir, 'bin')
+    mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
     for name, content in files.items():
@@ -353,6 +354,7 @@ def install_activate(env_dir, opt):
         content = content.replace('__VIRTUAL_PROMPT__', prompt)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
+        content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content)
         os.chmod(file_path, 0755)
 
@@ -458,6 +460,10 @@ deactivate () {
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
+
+        NODE_PATH="$_OLD_NODE_PATH"
+        export NODE_PATH
+        unset _OLD_NODE_PATH
     fi
 
     # This should detect bash and zsh, which have a hash command that must
@@ -504,6 +510,10 @@ export VIRTUAL_ENV
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
+
+_OLD_NODE_PATH="NODE_PATH"
+NODE_PATH="$VIRTUAL_ENV/__MOD_NAME__"
+export NODE_PATH
 
 if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     _OLD_VIRTUAL_PS1="$PS1"

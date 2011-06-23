@@ -1,6 +1,11 @@
 Nodeenv changelog
 =================
 
+Version 0.3.8
+-------------
+- Added `NODE_PATH` variable export (for correct module
+  search after installation via npm)
+
 Version 0.3.7
 -------------
 - Shows command output when error occurs

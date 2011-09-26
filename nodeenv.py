@@ -26,6 +26,7 @@ abspath = os.path.abspath
 # ---------------------------------------------------------
 # Utils
 
+
 def create_logger():
     """
     Create logger for diagnostic
@@ -54,7 +55,7 @@ def create_logger():
 
     # add ch to logger
     logger.addHandler(ch)
-    return logger 
+    return logger
 logger = create_logger()
 
 
@@ -66,7 +67,7 @@ def parse_args():
         version=nodeenv_version,
         usage="%prog [OPTIONS] ENV_DIR")
 
-    parser.add_option('-n', '--node', dest='node', 
+    parser.add_option('-n', '--node', dest='node',
         metavar='NODE_VER', default=get_last_stable_node_version(),
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
@@ -85,7 +86,7 @@ def parse_args():
         help="Quete mode")
 
     parser.add_option('-r', '--requirement',
-        dest='requirements', default='',  metavar='FILENAME',
+        dest='requirements', default='', metavar='FILENAME',
         help='Install all the packages listed in the given requirements file. '
              'Not compatible with --without-npm option.')
 
@@ -96,19 +97,19 @@ def parse_args():
         action='store_true', default=False,
         help='Lists available node.js versions')
 
-    parser.add_option( '--without-ssl', dest='without_ssl',
+    parser.add_option('--without-ssl', dest='without_ssl',
         action='store_true', default=False,
         help='Build node.js without SSL support')
 
-    parser.add_option( '--debug', dest='debug',
+    parser.add_option('--debug', dest='debug',
         action='store_true', default=False,
         help='Build debug variant of the node.js')
 
-    parser.add_option( '--profile', dest='profile',
+    parser.add_option('--profile', dest='profile',
         action='store_true', default=False,
         help='Enable profiling for node.js')
 
-    parser.add_option( '--without-npm', dest='without_npm',
+    parser.add_option('--without-npm', dest='without_npm',
         action='store_true', default=False,
         help='Install npm in new virtual environment')
 
@@ -118,7 +119,7 @@ def parse_args():
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
         'tarball to install. The default is last available version.')
 
-    parser.add_option( '--no-npm-clean', dest='no_npm_clean',
+    parser.add_option('--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
         help='Skip the npm 0.x cleanup. Do cleanup by default.')
 
@@ -184,7 +185,7 @@ def writefile(dest, content, overwrite=True):
             logger.debug(' * Content %s already in place', dest)
 
 
-def callit(cmd, show_stdout=True, in_shell=False, 
+def callit(cmd, show_stdout=True, in_shell=False,
         cwd=None, extra_env=None):
     """
     Execute cmd line in sub-shell
@@ -194,7 +195,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
     for part in cmd:
         if len(part) > 45:
-            part = part[:20]+"..."+part[-20:]
+            part = part[:20] + "..." + part[-20:]
         if ' ' in part or '\n' in part or '"' in part or "'" in part:
             part = '"%s"' % part.replace('"', '\\"')
         cmd_parts.append(part)
@@ -249,6 +250,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
 # ---------------------------------------------------------
 # Virtual environment functions
 
+
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
@@ -257,9 +259,12 @@ def install_node(env_dir, src_dir, opt):
     logger.info(' * Install node.js (%s) ' % opt.node,
                          extra=dict(continued=True))
 
-    node_name = 'node-v%s'%(opt.node)
-    tar_name = '%s.tar.gz'%(node_name)
-    node_url = 'http://nodejs.org/dist/%s'%(tar_name)
+    node_name = 'node-v%s' % (opt.node)
+    tar_name = '%s.tar.gz' % (node_name)
+    if node_name > "0.5.0":
+        node_url = 'http://nodejs.org/dist/v%s/%s' % (opt.node, tar_name)
+    else:
+        node_url = 'http://nodejs.org/dist/%s' % (tar_name)
     node_tar = join(src_dir, tar_name)
     node_src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
@@ -279,22 +284,22 @@ def install_node(env_dir, src_dir, opt):
     callit(cmd, opt.verbose, True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
-    env = {'JOBS': str(opt.jobs) }
+    env = {'JOBS': str(opt.jobs)}
     conf_cmd = []
     conf_cmd.append('./configure')
-    conf_cmd.append('--prefix=%s'%(env_dir))
+    conf_cmd.append('--prefix=%s' % (env_dir))
     if opt.without_ssl:
         conf_cmd.append('--without-ssl')
     if opt.debug:
-        conf_cmd.append('--debug') 
+        conf_cmd.append('--debug')
     if opt.profile:
         conf_cmd.append('--profile')
 
-    callit(conf_cmd         , opt.verbose, True, node_src_dir, env)
+    callit(conf_cmd, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make']         , opt.verbose, True, node_src_dir, env)
+    callit(['make'], opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make install'] , opt.verbose, True, node_src_dir, env)
+    callit(['make install'], opt.verbose, True, node_src_dir, env)
 
     logger.info(' done.')
 
@@ -306,8 +311,8 @@ def install_npm(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                     extra=dict(continued=True))
-    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate'%(
-            join(env_dir, 'bin', 'activate'), 
+    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate' % (
+            join(env_dir, 'bin', 'activate'),
             'http://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
             opt.npm)]
@@ -319,11 +324,11 @@ def install_packages(env_dir, opt):
     """
     Install node.js packages via npm
     """
-    logger.info(' * Install node.js packages ... ', 
+    logger.info(' * Install node.js packages ... ',
         extra=dict(continued=True))
 
-    packages = [ package.replace('\n', '') for package in
-                    open(opt.requirements).readlines() ]
+    packages = [package.replace('\n', '') for package in
+                    open(opt.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
     if opt.npm == 'latest':
         cmd = '. ' + activate_path + \
@@ -334,7 +339,7 @@ def install_packages(env_dir, opt):
                 ' && npm activate %(pack)s'
 
     for package in packages:
-        callit(cmd=[ cmd % {"pack": package} ],
+        callit(cmd=[cmd % {"pack": package}],
                 show_stdout=opt.verbose, in_shell=True)
 
     logger.info('done.')
@@ -399,9 +404,9 @@ def print_node_versions():
         if not row:
             logger.info('\t'.join(rowx))
             break
-        if pos%8 == 0:
+        if pos % 8 == 0:
             logger.info('\t'.join(rowx))
-            rowx =[]
+            rowx = []
         else:
             rowx.append(row.replace('\n', ''))
 
@@ -541,4 +546,3 @@ fi
 
 if __name__ == '__main__':
     main()
-

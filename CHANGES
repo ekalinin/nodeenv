@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.3.9
+-------------
+- Deleted notify method calls. See `pull # 7`_
+- Updated tar url for node.js > 0.5.0. See `pull # 8`
+
+.. _pull # 7: https://github.com/ekalinin/nodeenv/pull/7
+.. _pull # 8: https://github.com/ekalinin/nodeenv/pull/8
+
 Version 0.3.8
 -------------
 - Added `NODE_PATH` variable export (for correct module

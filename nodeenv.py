@@ -54,7 +54,7 @@ def create_logger():
 
     # add ch to logger
     logger.addHandler(ch)
-    return logger 
+    return logger
 logger = create_logger()
 
 
@@ -66,7 +66,7 @@ def parse_args():
         version=nodeenv_version,
         usage="%prog [OPTIONS] ENV_DIR")
 
-    parser.add_option('-n', '--node', dest='node', 
+    parser.add_option('-n', '--node', dest='node',
         metavar='NODE_VER', default=get_last_stable_node_version(),
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
@@ -184,7 +184,7 @@ def writefile(dest, content, overwrite=True):
             logger.debug(' * Content %s already in place', dest)
 
 
-def callit(cmd, show_stdout=True, in_shell=False, 
+def callit(cmd, show_stdout=True, in_shell=False,
         cwd=None, extra_env=None):
     """
     Execute cmd line in sub-shell
@@ -259,7 +259,10 @@ def install_node(env_dir, src_dir, opt):
 
     node_name = 'node-v%s'%(opt.node)
     tar_name = '%s.tar.gz'%(node_name)
-    node_url = 'http://nodejs.org/dist/%s'%(tar_name)
+    if node_name > "0.5.0":
+        node_url = 'http://nodejs.org/dist/v%s/%s' % (opt.node, tar_name)
+    else:
+        node_url = 'http://nodejs.org/dist/%s' % (tar_name)
     node_tar = join(src_dir, tar_name)
     node_src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
@@ -286,7 +289,7 @@ def install_node(env_dir, src_dir, opt):
     if opt.without_ssl:
         conf_cmd.append('--without-ssl')
     if opt.debug:
-        conf_cmd.append('--debug') 
+        conf_cmd.append('--debug')
     if opt.profile:
         conf_cmd.append('--profile')
 
@@ -307,7 +310,7 @@ def install_npm(env_dir, src_dir, opt):
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                     extra=dict(continued=True))
     cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate'%(
-            join(env_dir, 'bin', 'activate'), 
+            join(env_dir, 'bin', 'activate'),
             'http://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
             opt.npm)]
@@ -319,7 +322,7 @@ def install_packages(env_dir, opt):
     """
     Install node.js packages via npm
     """
-    logger.info(' * Install node.js packages ... ', 
+    logger.info(' * Install node.js packages ... ',
         extra=dict(continued=True))
 
     packages = [ package.replace('\n', '') for package in

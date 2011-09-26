@@ -174,9 +174,9 @@ def writefile(dest, content, overwrite=True):
         f.close()
         if c != content:
             if not overwrite:
-                logger.notify(' * File %s exists with different content; not overwriting', dest)
+                logger.info(' * File %s exists with different content; not overwriting', dest)
                 return
-            logger.notify(' * Overwriting %s with new content', dest)
+            logger.info(' * Overwriting %s with new content', dest)
             f = open(dest, 'wb')
             f.write(content.encode('utf-8'))
             f.close()

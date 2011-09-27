@@ -1,6 +1,10 @@
 Nodeenv changelog
 =================
 
+Version 0.3.10
+--------------
+- Fixed bug in url detection for node.js download
+
 Version 0.3.9
 -------------
 - Deleted notify method calls. See `pull # 7`_

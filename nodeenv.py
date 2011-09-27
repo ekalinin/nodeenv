@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.3.9'
+nodeenv_version = '0.3.10'
 
 import sys
 import os
@@ -261,7 +261,7 @@ def install_node(env_dir, src_dir, opt):
 
     node_name = 'node-v%s' % (opt.node)
     tar_name = '%s.tar.gz' % (node_name)
-    if node_name > "0.5.0":
+    if opt.node > "0.5.0":
         node_url = 'http://nodejs.org/dist/v%s/%s' % (opt.node, tar_name)
     else:
         node_url = 'http://nodejs.org/dist/%s' % (tar_name)

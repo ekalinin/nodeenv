@@ -311,7 +311,7 @@ def install_npm(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                     extra=dict(continued=True))
-    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate' % (
+    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate_node' % (
             join(env_dir, 'bin', 'activate'),
             'http://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
@@ -356,8 +356,8 @@ def install_activate(env_dir, opt):
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
-        content = content.replace('__VIRTUAL_PROMPT__', prompt)
-        content = content.replace('__VIRTUAL_ENV__', os.path.abspath(env_dir))
+        content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
+        content = content.replace('__NODE_VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content)
@@ -459,12 +459,12 @@ ACTIVATE_SH = """
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 
-deactivate () {
+deactivate_node () {
     # reset old environment variables
-    if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
-        PATH="$_OLD_VIRTUAL_PATH"
+    if [ -n "$_OLD_NODE_VIRTUAL_PATH" ] ; then
+        PATH="$_OLD_NODE_VIRTUAL_PATH"
         export PATH
-        unset _OLD_VIRTUAL_PATH
+        unset _OLD_NODE_VIRTUAL_PATH
 
         NODE_PATH="$_OLD_NODE_PATH"
         export NODE_PATH
@@ -478,16 +478,16 @@ deactivate () {
         hash -r
     fi
 
-    if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
-        PS1="$_OLD_VIRTUAL_PS1"
+    if [ -n "$_OLD_NODE_VIRTUAL_PS1" ] ; then
+        PS1="$_OLD_NODE_VIRTUAL_PS1"
         export PS1
-        unset _OLD_VIRTUAL_PS1
+        unset _OLD_NODE_VIRTUAL_PS1
     fi
 
-    unset VIRTUAL_ENV
+    unset NODE_VIRTUAL_ENV
     if [ ! "$1" = "nondestructive" ] ; then
     # Self destruct!
-        unset -f deactivate
+        unset -f deactivate_node
     fi
 }
 
@@ -507,30 +507,30 @@ freeze () {
 }
 
 # unset irrelavent variables
-deactivate nondestructive
+deactivate_node nondestructive
 
-VIRTUAL_ENV="__VIRTUAL_ENV__"
-export VIRTUAL_ENV
+NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+export NODE_VIRTUAL_ENV
 
-_OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
+_OLD_NODE_VIRTUAL_PATH="$PATH"
+PATH="$NODE_VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
 _OLD_NODE_PATH="NODE_PATH"
-NODE_PATH="$VIRTUAL_ENV/__MOD_NAME__"
+NODE_PATH="$NODE_VIRTUAL_ENV/__MOD_NAME__"
 export NODE_PATH
 
-if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
-    _OLD_VIRTUAL_PS1="$PS1"
-    if [ "x__VIRTUAL_PROMPT__" != x ] ; then
-    PS1="__VIRTUAL_PROMPT__$PS1"
+if [ -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
+    _OLD_NODE_VIRTUAL_PS1="$PS1"
+    if [ "x__NODE_VIRTUAL_PROMPT__" != x ] ; then
+    PS1="__NODE_VIRTUAL_PROMPT__$PS1"
     else
-    if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
+    if [ "`basename \"$NODE_VIRTUAL_ENV\"`" = "__" ] ; then
         # special case for Aspen magic directories
         # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
+        PS1="[`basename \`dirname \"$NODE_VIRTUAL_ENV\"\``] $PS1"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+        PS1="(`basename \"$NODE_VIRTUAL_ENV\"`)$PS1"
     fi
     fi
     export PS1

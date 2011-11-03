@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.4.0
+-------------
+- Compatibility with virtualenv (renmaed deactivate to deactivate_node).
+  See `pull # 9`_, `issue # 6`_
+
+.. _pull # 9: https://github.com/ekalinin/nodeenv/pull/9
+.. _issue # 6: https://github.com/ekalinin/nodeenv/issues/6
+
 Version 0.3.10
 --------------
 - Fixed bug in url detection for node.js download

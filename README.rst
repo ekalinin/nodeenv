@@ -53,7 +53,7 @@ Chek versions of main packages::
 
 Deactivate environment::
 
-    (env) $ deactivate
+    (env) $ deactivate_node
 
 Advanced
 ^^^^^^^^

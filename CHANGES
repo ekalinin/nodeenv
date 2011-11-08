@@ -3,7 +3,7 @@ Nodeenv changelog
 
 Version 0.4.0
 -------------
-- Compatibility with virtualenv (renmaed deactivate to deactivate_node).
+- Compatibility with virtualenv (renamed deactivate to deactivate_node).
   See `pull # 9`_, `issue # 6`_
 
 .. _pull # 9: https://github.com/ekalinin/nodeenv/pull/9

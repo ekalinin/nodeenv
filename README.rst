@@ -24,6 +24,12 @@ install it from the github `repository`_::
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nodeenv.py --help
 
+Or you can just download raw nodeenv.py and use it::
+
+    $ wget https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py
+    $ python nodeenv.py --version
+    0.4.0
+
 .. _repository: https://github.com/ekalinin/nodeenv
 .. _pip: http://pypi.python.org/pypi/pip
 .. _easy_install: http://pypi.python.org/pypi/setuptools

@@ -270,18 +270,17 @@ def install_node(env_dir, src_dir, opt):
     env_dir = abspath(env_dir)
     old_chdir = os.getcwd()
 
-    cmd = []
-    cmd.append('curl')
-    cmd.append('--silent')
-    cmd.append('-L')
-    cmd.append(node_url)
-    cmd.append('|')
-    cmd.append('tar')
-    cmd.append('xzf')
-    cmd.append('-')
-    cmd.append('-C')
-    cmd.append(src_dir)
-    callit(cmd, opt.verbose, True, env_dir)
+    cmd = ['curl', '--silent', '-L', node_url,
+           '|', 'tar', 'xzf', '-', '-C', src_dir 
+          ]
+    try:
+        callit(cmd, opt.verbose, True, env_dir)
+    except OSError:
+        new_node_url = node_url.replace('.tar.gz', '-RC1.tar.gz')
+        cmd[cmd.index(node_url)] = new_node_url
+        logger.info('Retry curl with new url: %s' % new_node_url)
+        callit(cmd, opt.verbose, True, env_dir)
+
     logger.info('.', extra=dict(continued=True))
 
     env = {'JOBS': str(opt.jobs)}

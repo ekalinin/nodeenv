@@ -404,11 +404,10 @@ def print_node_versions():
         if not row:
             logger.info('\t'.join(rowx))
             break
+        rowx.append(row.replace('\n', ''))
         if pos % 8 == 0:
             logger.info('\t'.join(rowx))
             rowx = []
-        else:
-            rowx.append(row.replace('\n', ''))
 
 
 def get_last_stable_node_version():

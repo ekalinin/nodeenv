@@ -10,6 +10,7 @@ that doesn't share libraries with other node.js virtual environments.
 
 Install
 -------
+
 You can install nodeenv with `easy_install`_::
 
     $ sudo easy_install nodeenv
@@ -34,6 +35,25 @@ Or you can just download raw nodeenv.py and use it::
 .. _pip: http://pypi.python.org/pypi/pip
 .. _easy_install: http://pypi.python.org/pypi/setuptools
 
+
+Dependency
+----------
+
+For nodeenv
+^^^^^^^^^^^
+
+* make
+* curl
+* egrep
+* sort
+* tail
+* tar
+
+For node.js
+^^^^^^^^^^^
+
+* python
+* libssl-dev
 
 Usage
 -----

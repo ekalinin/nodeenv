@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.4.2'
+nodeenv_version = '0.4.3'
 
 import sys
 import os
@@ -114,7 +114,7 @@ def parse_args():
         help='Install npm in new virtual environment')
 
     parser.add_option('--npm', dest='npm',
-        metavar='NODE_VER', default='latest',
+        metavar='NPM_VER', default='latest',
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
         'tarball to install. The default is last available version.')
@@ -330,7 +330,8 @@ def install_packages(env_dir, opt):
     packages = [package.replace('\n', '') for package in
                     open(opt.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
-    if opt.npm == 'latest':
+    real_npm_ver = opt.npm if opt.npm.count(".") == 2 else opt.npm + ".0"
+    if opt.npm == "latest" or real_npm_ver >= "1.0.0":
         cmd = '. ' + activate_path + \
                 ' && npm install -g %(pack)s'
     else:

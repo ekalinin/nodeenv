@@ -1,6 +1,11 @@
 Nodeenv changelog
 =================
 
+Version 0.4.3
+-------------
+- Fixed metavar for ``--npm``
+- ``npm install -g`` used for npm >=1.0, not noly for `latest`
+
 Version 0.4.2
 -------------
 - Added README.ru.rst

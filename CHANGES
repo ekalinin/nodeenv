@@ -1,6 +1,17 @@
 Nodeenv changelog
 =================
 
+Version 0.4.2
+-------------
+- Added README.ru.rst
+
+Version 0.4.1
+-------------
+- Fixed bug in print_node_versions. See `pull # 11`_
+- Added deps in README
+
+.. _pull # 11: https://github.com/ekalinin/nodeenv/pull/11
+
 Version 0.4.0
 -------------
 - Compatibility with virtualenv (renamed deactivate to deactivate_node).

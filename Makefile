@@ -1,4 +1,4 @@
-.PHONY: deploy deploy-github deploy-pypi update-pypi clean
+.PHONY: deploy deploy-github deploy-pypi update-pypi clean test
 
 deploy-github:
 	git tag `grep "nodeenv_version =" nodeenv.py | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
@@ -16,3 +16,11 @@ clean:
 	@rm -rf nodeenv.egg-info/
 	@rm -rf dist/
 	@rm -rf build/
+
+test:
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		rm -rf nodeenv                    && \
+		nodeenv -j 4 nodeenv

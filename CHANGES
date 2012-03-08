@@ -1,6 +1,13 @@
 Nodeenv changelog
 =================
 
+Version 0.5.0
+-------------
+- The virtual environment's path is no longer hardcoded into the
+  activation script. See `pull # 13`_
+
+.. _pull # 13: https://github.com/ekalinin/nodeenv/pull/13
+
 Version 0.4.3
 -------------
 - Fixed metavar for ``--npm``

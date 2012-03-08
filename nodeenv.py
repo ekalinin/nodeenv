@@ -358,7 +358,6 @@ def install_activate(env_dir, opt):
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
-        content = content.replace('__NODE_VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content)
@@ -509,7 +508,14 @@ freeze () {
 # unset irrelavent variables
 deactivate_node nondestructive
 
-NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+# find the directory of this script
+# http://stackoverflow.com/a/246128
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+# NODE_VIRTUAL_ENV is the parent of the directory where this script is
+NODE_VIRTUAL_ENV="$(dirname "$DIR")"
 export NODE_VIRTUAL_ENV
 
 _OLD_NODE_VIRTUAL_PATH="$PATH"

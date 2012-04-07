@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Nodeenv by ekalinin</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Nodeenv</h1>
+        <p>Node.js virtual environment builder</p>
+        <p class="view"><a href="https://github.com/ekalinin/nodeenv">View the Project on GitHub <small>ekalinin/nodeenv</small></a></p>
+        <ul>
+          <li><a href="https://github.com/ekalinin/nodeenv/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/ekalinin/nodeenv/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/ekalinin/nodeenv">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>nodeenv</h3>
+
+<p><code>nodeenv</code> (node.js virtual environment) is a tool to create 
+isolated node.js environments.</p>
+
+<p>It creates an environment that has its own installation directories, 
+that doesn't share libraries with other node.js virtual environments.</p>
+
+<h3>Install</h3>
+
+<p>You can install nodeenv with <a href="http://pypi.python.org/pypi/setuptools">easy_install</a>:</p>
+
+<pre><code>$ sudo easy_install nodeenv
+</code></pre>
+
+<p>or <a href="http://pypi.python.org/pypi/pip">pip</a>:</p>
+
+<pre><code>$ sudo pip install nodeenv
+</code></pre>
+
+<p>If you want to work with the latest version of the nodeenv you can 
+install it from the github <a href="https://github.com/ekalinin/nodeenv">repository</a>:</p>
+
+<pre><code>$ git clone <a href="https://github.com/ekalinin/nodeenv.git">https://github.com/ekalinin/nodeenv.git</a>
+$ ./nodeenv/nodeenv.py --help
+</code></pre>
+
+<p>Or you can just download raw nodeenv.py and use it::</p>
+
+<pre><code>$ wget <a href="https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py">https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py</a>
+$ python nodeenv.py --version
+0.4.0
+</code></pre>
+
+<h3>Usage</h3>
+
+<p>Install new environment:</p>
+
+<pre><code>$ nodeenv env
+</code></pre>
+
+<p>Activate new environment:</p>
+
+<pre><code>$ . env/bin/activate
+</code></pre>
+
+<p>Chek versions of main packages:</p>
+
+<pre><code>(env) $ node -v
+v0.4.6
+
+(env) $ npm -v
+0.3.18
+</code></pre>
+
+<p>Deactivate environment:</p>
+
+<pre><code>(env) $ deactivate_node
+</code></pre>
+
+<p>Saving into the file versions of all installed packages:</p>
+
+<pre><code>$ . env/bin/activate
+(env) $ npm install express
+(env) $ npm install jade
+(env) $ freeze ../prod-requirements.txt
+</code></pre>
+
+<p>Create environment copy from requirement file:</p>
+
+<pre><code>$ nodeenv --requirement=../prod-requirements.txt --jobs=4 env-copy
+</code></pre>
+
+<p>Requirements files are plain text files that contain a list of packages 
+to be installed. These text files allow you to create repeatable installations.
+Requirements file example:</p>
+
+<pre><code>$ cat ../prod-requirements.txt
+connect@1.3.0
+express@2.2.2
+jade@0.10.4
+mime@1.2.1
+npm@0.3.17
+qs@0.0.7
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/ekalinin">ekalinin</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+  </body>
+</html>

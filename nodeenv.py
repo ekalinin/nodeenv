@@ -111,7 +111,7 @@ def parse_args():
 
     parser.add_option('--without-npm', dest='without_npm',
         action='store_true', default=False,
-        help='Install npm in new virtual environment')
+        help='Build without installing npm into the new virtual environment')
 
     parser.add_option('--npm', dest='npm',
         metavar='NPM_VER', default='latest',

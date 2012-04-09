@@ -1,6 +1,19 @@
 Nodeenv changelog
 =================
 
+Version 0.5.2
+-------------
+- Improved installation logic for release candidate versions. See `pull # 10`
+
+.. _pull # 10: https://github.com/ekalinin/nodeenv/pull/10
+
+Version 0.5.1
+-------------
+- Improved logic for the option '--without-npm'. See `pull # 14`_, `pull # 15`_
+
+.. _pull # 14: https://github.com/ekalinin/nodeenv/pull/14
+.. _pull # 15: https://github.com/ekalinin/nodeenv/pull/15
+
 Version 0.5.0
 -------------
 - The virtual environment's path is no longer hardcoded into the

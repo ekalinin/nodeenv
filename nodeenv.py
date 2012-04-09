@@ -268,7 +268,7 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js (%s) ' % opt.node,
+    logger.info(' * Install node.js (%s' % opt.node,
                          extra=dict(continued=True))
 
     node_name = 'node-v%s' % (opt.node)
@@ -292,13 +292,15 @@ def install_node(env_dir, src_dir, opt):
     cmd.append(src_dir)
     try:
         callit(cmd, opt.verbose, True, env_dir)
+        logger.info(') ', extra=dict(continued=True))
     except OSError:
         postfix = '-RC1'
-        logger.info('.%s.'%(opt.node+postfix), extra=dict(continued=True))
+        logger.info('%s) ' % postfix, extra=dict(continued=True))
         new_node_url = get_node_src_url(opt.node, postfix)
         cmd[cmd.index(node_url)] = new_node_url
         callit(cmd, opt.verbose, True, env_dir)
 
+    logger.info('.', extra=dict(continued=True))
 
     env = {'JOBS': str(opt.jobs)}
     conf_cmd = []

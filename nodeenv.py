@@ -242,8 +242,9 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
     # error handler
     if proc.returncode:
-        for s in all_output:
-            logger.critical(s)
+        if show_stdout:
+            for s in all_output:
+                logger.critical(s)
         raise OSError("Command %s failed with error code %s"
             % (cmd_desc, proc.returncode))
 

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.5.1'
+nodeenv_version = '0.5.2'
 
 import sys
 import os
@@ -250,6 +250,15 @@ def callit(cmd, show_stdout=True, in_shell=False,
     return proc.returncode, all_output
 
 
+def get_node_src_url(version, postfix=''):
+    node_name = 'node-v%s%s' % (version, postfix)
+    tar_name = '%s.tar.gz' % (node_name)
+    if version > "0.5.0":
+        node_url = 'http://nodejs.org/dist/v%s/%s' % (version, tar_name)
+    else:
+        node_url = 'http://nodejs.org/dist/%s' % (tar_name)
+    return node_url
+
 # ---------------------------------------------------------
 # Virtual environment functions
 
@@ -263,10 +272,7 @@ def install_node(env_dir, src_dir, opt):
 
     node_name = 'node-v%s' % (opt.node)
     tar_name = '%s.tar.gz' % (node_name)
-    if opt.node > "0.5.0":
-        node_url = 'http://nodejs.org/dist/v%s/%s' % (opt.node, tar_name)
-    else:
-        node_url = 'http://nodejs.org/dist/%s' % (tar_name)
+    node_url = get_node_src_url(opt.node)
     node_tar = join(src_dir, tar_name)
     node_src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
@@ -283,8 +289,15 @@ def install_node(env_dir, src_dir, opt):
     cmd.append('-')
     cmd.append('-C')
     cmd.append(src_dir)
-    callit(cmd, opt.verbose, True, env_dir)
-    logger.info('.', extra=dict(continued=True))
+    try:
+        callit(cmd, opt.verbose, True, env_dir)
+    except OSError:
+        postfix = '-RC1'
+        logger.info('.%s.'%(opt.node+postfix), extra=dict(continued=True))
+        new_node_url = get_node_src_url(opt.node, postfix)
+        cmd[cmd.index(node_url)] = new_node_url
+        callit(cmd, opt.verbose, True, env_dir)
+
 
     env = {'JOBS': str(opt.jobs)}
     conf_cmd = []

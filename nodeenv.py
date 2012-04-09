@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.5.0'
+nodeenv_version = '0.5.1'
 
 import sys
 import os
@@ -111,7 +111,7 @@ def parse_args():
 
     parser.add_option('--without-npm', dest='without_npm',
         action='store_true', default=False,
-        help='Build without installing npm into the new virtual environment')
+        help='Build without installing npm into the new virtual environment (works for node.js < 0.6.3)')
 
     parser.add_option('--npm', dest='npm',
         metavar='NPM_VER', default='latest',
@@ -142,6 +142,9 @@ def parse_args():
             parser.print_help()
             sys.exit(2)
 
+    if options.node < "0.6.3" and options.without_npm:
+        print("Option --without-npm works only for node.js < 0.6.3. See --help.")
+        sys.exit(2)
 
     return options, args
 
@@ -249,7 +252,6 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 # ---------------------------------------------------------
 # Virtual environment functions
-
 
 def install_node(env_dir, src_dir, opt):
     """
@@ -380,7 +382,7 @@ def create_environment(env_dir, opt):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, opt)
-    if not opt.without_npm:
+    if opt.node < "0.6.3" or not opt.without_npm:
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)

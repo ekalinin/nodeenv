@@ -329,9 +329,9 @@ def install_npm(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                     extra=dict(continued=True))
-    cmd = ['. %s && curl %s | clean=%s npm_install=%s bash && deactivate_node' % (
+    cmd = ['. %s && curl --insecure --silent %s | clean=%s npm_install=%s bash && deactivate_node' % (
             join(env_dir, 'bin', 'activate'),
-            'http://npmjs.org/install.sh',
+            'https://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
             opt.npm)]
     callit(cmd, opt.verbose, True)

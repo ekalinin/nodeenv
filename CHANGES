@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.5.3
+-------------
+- Bug fix. Used https, /dist/latest/. See `pull # 16`_
+
+.. _pull # 16: https://github.com/ekalinin/nodeenv/pull/16
+
 Version 0.5.2
 -------------
 - Improved installation logic for release candidate versions. See `pull # 10`_

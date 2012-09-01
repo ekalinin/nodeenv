@@ -402,6 +402,8 @@ def create_environment(env_dir, opt):
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)
+    # Cleanup
+    callit(['rm -rf', src_dir], opt.verbose, True, env_dir)
 
 
 def print_node_versions():

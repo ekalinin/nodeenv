@@ -67,7 +67,7 @@ Install new environment::
 
 Activate new environment::
 
-    $ . env/bin/activate
+    $ ~/.nodeenvs/env/bin/activate
 
 Chek versions of main packages::
 
@@ -105,7 +105,7 @@ for compilation and npm.js "0.3.17"::
 
 Saving into the file versions of all installed packages::
 
-    $ . env-4.3/bin/activate
+    $ ~/.nodeenvs/env-4.3/bin/activate
     (env-4.3)$ npm install express
     (env-4.3)$ npm install jade
     (env-4.3)$ freeze ../prod-requirements.txt

@@ -68,7 +68,7 @@ Nodeenv установить с помощью `easy_install`_::
 
 Активация окружения::
 
-    $ . env/bin/activate
+    $ ~/.nodeenvs/env/bin/activate
 
 Проверка версий основных пакетов::
 
@@ -106,7 +106,7 @@ Nodeenv установить с помощью `easy_install`_::
 
 Сохранение в файл «зависимостей» версий всех установленных пакетов::
 
-    $ . env-4.3/bin/activate
+    $ ~/.nodeenvs/env-4.3/bin/activate
     (env-4.3)$ npm install express
     (env-4.3)$ npm install jade
     (env-4.3)$ freeze ../prod-requirements.txt

@@ -464,7 +464,11 @@ def main():
     if opt.list:
         print_node_versions()
     else:
-        env_dir = args[0]
+        env_path = "%s/.nodeenvs" % os.getenv("HOME")
+        if not os.path.exists(env_path):
+            os.makedirs(env_path)
+
+        env_dir = "%s/%s" % (env_path, args[0])
         if opt.quiet:
             logger.setLevel(logging.CRITICAL)
         create_environment(env_dir, opt)

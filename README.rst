@@ -130,7 +130,7 @@ If you're already have python virtualenv tool, and want to use nodeenv and
 virtualenv in conjunction, then you should create (or activate) python virtual
 environment::
 
-    $ mkvirtualenv my_venv # in case of using virtualenv_wrapper
+    $ mkvirtualenv my_env # in case of using virtualenv_wrapper
 
 and add node virtual environment to this existing new_venv::
 

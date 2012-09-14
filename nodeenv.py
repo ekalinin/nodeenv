@@ -123,11 +123,15 @@ def parse_args():
         action='store_true', default=False,
         help='Skip the npm 0.x cleanup. Do cleanup by default.')
 
+    parser.add_option('--python-virtualenv', '-p', dest='python_virtualenv',
+        action='store_true', default=False,
+        help='Use current python virtualenv')
+
     options, args = parser.parse_args()
 
-    if not options.list:
+    if not options.list and not options.python_virtualenv:
         if not args:
-            print('You must provide a DEST_DIR')
+            print('You must provide a DEST_DIR or use current python virtualenv')
             parser.print_help()
             sys.exit(2)
 
@@ -161,7 +165,7 @@ def mkdir(path):
         logger.debug(' * Directory %s already exists', path)
 
 
-def writefile(dest, content, overwrite=True):
+def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
@@ -179,6 +183,12 @@ def writefile(dest, content, overwrite=True):
         if c != content:
             if not overwrite:
                 logger.info(' * File %s exists with different content; not overwriting', dest)
+                return
+            if append:
+                logger.info(' * Appending nodeenv settings to %s', dest)
+                f = open(dest, 'a')
+                f.write(content.encode('utf-8'))
+                f.close()
                 return
             logger.info(' * Overwriting %s with new content', dest)
             f = open(dest, 'wb')
@@ -378,7 +388,7 @@ def install_activate(env_dir, opt):
         content = content.replace('__NODE_VIRTUAL_ENV__', os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
-        writefile(file_path, content)
+        writefile(file_path, content, append=opt.python_virtualenv)
         os.chmod(file_path, 0755)
 
 
@@ -386,7 +396,7 @@ def create_environment(env_dir, opt):
     """
     Creates a new environment in ``env_dir``.
     """
-    if os.path.exists(env_dir):
+    if os.path.exists(env_dir) and not opt.python_virtualenv:
         logger.info(' * Environment already exists: %s', env_dir)
         sys.exit(2)
     src_dir = abspath(join(env_dir, 'src'))
@@ -464,9 +474,16 @@ def main():
     if opt.list:
         print_node_versions()
     else:
-        env_dir = args[0]
         if opt.quiet:
             logger.setLevel(logging.CRITICAL)
+        if opt.python_virtualenv:
+            try:
+                env_dir = os.environ['VIRTUAL_ENV']
+            except KeyError, e:
+                logger.error('No python virtualenv is available')
+                sys.exit(2)
+        else:
+            env_dir = args[0]
         create_environment(env_dir, opt)
 
 
@@ -474,6 +491,7 @@ def main():
 # Shell scripts content
 
 ACTIVATE_SH = """
+
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 

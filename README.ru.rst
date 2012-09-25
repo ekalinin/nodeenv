@@ -127,6 +127,25 @@ Nodeenv установить с помощью `easy_install`_::
     npm@0.3.17
     qs@0.0.7
 
+Если вы используете оригинальную версию утилиты virtualenv (для python'а), то 
+возможно вы захотите использовать nodeenv и virtualenv вместе. В этом случае,
+сперва вы должны создать (или активировать) виртуальное окружение для
+python'а::
+
+    $ mkvirtualenv my_env # если вы используете утилиту virtualenv_wrapper
+
+и затем добавить node.js в это окружение::
+
+    $ nodeenv -p
+
+Теперь все модули node.js будут устанавливаться в созданное виртуальное
+окружение::
+
+    $ workon my_env
+    $ npm install -g coffee-script
+    $ which coffee
+    /home/monty/virtualenvs/my_env/bin/coffee
+
 
 Альтернативы
 ------------

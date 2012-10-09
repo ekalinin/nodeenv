@@ -126,6 +126,24 @@ Requirements file example::
     npm@0.3.17
     qs@0.0.7
 
+If you're already have python virtualenv tool, and want to use nodeenv and
+virtualenv in conjunction, then you should create (or activate) python virtual
+environment::
+
+    $ mkvirtualenv my_env # in case of using virtualenv_wrapper
+
+and add node virtual environment to this existing new_venv::
+
+    $ nodeenv -p
+
+That's all. Now, all your node.js modules will be installed into your virtual
+environment::
+
+    $ workon my_env
+    $ npm install -g coffee-script
+    $ which coffee
+    /home/monty/virtualenvs/my_env/bin/coffee
+
 
 Alternatives
 ------------

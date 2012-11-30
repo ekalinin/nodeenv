@@ -127,6 +127,10 @@ def parse_args():
         action='store_true', default=False,
         help='Use current python virtualenv')
 
+    parser.add_option('--clean-src', '-c', dest='clean_src',
+        action='store_true', default=False,
+        help='Remove "src" directory after installation')
+
     options, args = parser.parse_args()
 
     if not options.list and not options.python_virtualenv:
@@ -413,7 +417,8 @@ def create_environment(env_dir, opt):
     if opt.requirements:
         install_packages(env_dir, opt)
     # Cleanup
-    callit(['rm -rf', src_dir], opt.verbose, True, env_dir)
+    if opt.clean_src:
+        callit(['rm -rf', src_dir], opt.verbose, True, env_dir)
 
 
 def print_node_versions():

@@ -1,6 +1,19 @@
 Nodeenv changelog
 =================
 
+Version 0.6.0
+-------------
+- Fixed typo in deactive command. See `pull 20`_
+- Not used "--insecure" to download npm. See `pull 21`_
+- Removed "src" directory after installation. See `pull 22`_
+- Added option "--clean-src"
+- Added integration with python's virtualenv. See `pull 23`_
+
+.. _pull # 20: https://github.com/ekalinin/nodeenv/pull/20
+.. _pull # 21: https://github.com/ekalinin/nodeenv/pull/21
+.. _pull # 22: https://github.com/ekalinin/nodeenv/pull/22
+.. _pull # 23: https://github.com/ekalinin/nodeenv/pull/23
+
 Version 0.5.3
 -------------
 - Bug fix. Used https, /dist/latest/. See `pull # 16`_

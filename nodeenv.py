@@ -20,6 +20,8 @@ import optparse
 import subprocess
 import ConfigParser
 
+from pkg_resources import parse_version
+
 join = os.path.join
 abspath = os.path.abspath
 
@@ -268,7 +270,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
 def get_node_src_url(version, postfix=''):
     node_name = 'node-v%s%s' % (version, postfix)
     tar_name = '%s.tar.gz' % (node_name)
-    if version > "0.5.0":
+    if parse_version(version) > parse_version("0.5.0"):
         node_url = 'http://nodejs.org/dist/v%s/%s' % (version, tar_name)
     else:
         node_url = 'http://nodejs.org/dist/%s' % (tar_name)

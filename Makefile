@@ -16,6 +16,8 @@ clean:
 	@rm -rf nodeenv.egg-info/
 	@rm -rf dist/
 	@rm -rf build/
+	@rm -rf env/
+	@rm -rf nodeenv/
 
 test:
 	@rm -rf env                           && \
@@ -24,3 +26,10 @@ test:
 		python setup.py install           && \
 		rm -rf nodeenv                    && \
 		nodeenv -j 4 nodeenv
+
+test2:
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		nodeenv -j 4 -p

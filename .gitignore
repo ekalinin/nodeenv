@@ -2,6 +2,7 @@
 *.pyo
 *.swp
 env
+/nodeenv
 /TODO
 /build/
 /dist/

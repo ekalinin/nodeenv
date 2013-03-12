@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.6.0'
+nodeenv_version = '0.6.1'
 
 import sys
 import os
@@ -193,7 +193,9 @@ def writefile(dest, content, overwrite=True, append=False):
             if append:
                 logger.info(' * Appending nodeenv settings to %s', dest)
                 f = open(dest, 'a')
+                f.write(DISABLE_POMPT.encode('utf-8'))
                 f.write(content.encode('utf-8'))
+                f.write(ENABLE_PROMPT.encode('utf-8'))
                 f.close()
                 return
             logger.info(' * Overwriting %s with new content', dest)
@@ -499,6 +501,17 @@ def main():
 # ---------------------------------------------------------
 # Shell scripts content
 
+DISABLE_POMPT = """
+# disable nodeenv's prompt
+# (prompt already changed by original virtualenv's script)
+# https://github.com/ekalinin/nodeenv/issues/26
+NODE_VIRTUAL_ENV_DISABLE_PROMPT=1
+"""
+
+ENABLE_PROMPT = """
+unset NODE_VIRTUAL_ENV_DISABLE_PROMPT
+"""
+
 ACTIVATE_SH = """
 
 # This file must be used with "source bin/activate" *from bash*
@@ -583,7 +596,7 @@ export NODE_PATH
 if [ -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     _OLD_NODE_VIRTUAL_PS1="$PS1"
     if [ "x__NODE_VIRTUAL_PROMPT__" != x ] ; then
-    PS1="__NODE_VIRTUAL_PROMPT__$PS1"
+        PS1="__NODE_VIRTUAL_PROMPT__$PS1"
     else
     if [ "`basename \"$NODE_VIRTUAL_ENV\"`" = "__" ] ; then
         # special case for Aspen magic directories

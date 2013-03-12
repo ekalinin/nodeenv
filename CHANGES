@@ -1,13 +1,22 @@
 Nodeenv changelog
 =================
 
+Version 0.6.1
+-------------
+- Used pkg_resources.parse_version to compare versions. See `pull # 29`_
+- Fixed doubling prompt inside a virtualenv. See `issues # 26`_
+
+.. _pull # 29: https://github.com/ekalinin/nodeenv/pull/29
+.. _issues # 26: https://github.com/ekalinin/nodeenv/issues/26
+
+
 Version 0.6.0
 -------------
-- Fixed typo in deactive command. See `pull 20`_
-- Not used "--insecure" to download npm. See `pull 21`_
-- Removed "src" directory after installation. See `pull 22`_
+- Fixed typo in deactive command. See `pull # 20`_
+- Not used "--insecure" to download npm. See `pull # 21`_
+- Removed "src" directory after installation. See `pull # 22`_
 - Added option "--clean-src"
-- Added integration with python's virtualenv. See `pull 23`_
+- Added integration with python's virtualenv. See `pull # 23`_
 
 .. _pull # 20: https://github.com/ekalinin/nodeenv/pull/20
 .. _pull # 21: https://github.com/ekalinin/nodeenv/pull/21

@@ -92,8 +92,7 @@ def parse_args():
 
     parser.add_option('-r', '--requirement',
         dest='requirements', default='', metavar='FILENAME',
-        help='Install all the packages listed in the given requirements file. '
-             'Not compatible with --without-npm option.')
+        help='Install all the packages listed in the given requirements file.')
 
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
@@ -114,9 +113,10 @@ def parse_args():
         action='store_true', default=False,
         help='Enable profiling for node.js')
 
-    parser.add_option('--without-npm', dest='without_npm',
+    parser.add_option('--with-npm', dest='with_npm',
         action='store_true', default=False,
-        help='Build without installing npm into the new virtual environment (works for node.js < 0.6.3)')
+        help='Build without installing npm into the new virtual environment. '
+        'Required for node.js < 0.6.3. By default, the npm included with node.js is used.')
 
     parser.add_option('--npm', dest='npm',
         metavar='NPM_VER', default='latest',
@@ -149,15 +149,6 @@ def parse_args():
                 ' '.join(args)))
             parser.print_help()
             sys.exit(2)
-
-        if options.requirements and options.without_npm:
-            print('These options are not compatible: --requirements, --without-npm')
-            parser.print_help()
-            sys.exit(2)
-
-    if options.node < "0.6.3" and options.without_npm:
-        print("Option --without-npm works only for node.js < 0.6.3. See --help.")
-        sys.exit(2)
 
     return options, args
 
@@ -426,7 +417,7 @@ def create_environment(env_dir, opt):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, opt)
-    if opt.node < "0.6.3" or not opt.without_npm:
+    if opt.node < "0.6.3" or opt.with_npm:
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)

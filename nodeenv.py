@@ -363,7 +363,7 @@ def install_packages(env_dir, opt):
     """
     logger.info(' * Install node.js packages ... ',
         extra=dict(continued=True))
-    packages = [package.replace('\n', '') for package in
+    packages = [package.strip() for package in
                     open(opt.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = opt.npm if opt.npm.count(".") == 2 else opt.npm + ".0"

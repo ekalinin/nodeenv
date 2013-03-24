@@ -79,6 +79,9 @@ def parse_args():
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
+    parser.add_option('--load-average', dest='load_average',
+        help='Sets maximum load average for executing parallel commands at node.js compilation.')
+
     parser.add_option('-v', '--verbose',
         action='store_true', dest='verbose', default=False,
         help="Verbose mode")
@@ -311,7 +314,14 @@ def install_node(env_dir, src_dir, opt):
 
     logger.info('.', extra=dict(continued=True))
 
-    env = {'JOBS': str(opt.jobs)}
+    env = {}
+    make_param_names = ['load-average', 'jobs']
+    make_param_values = map(lambda x:getattr(opt,x.replace('-','_')), make_param_names)
+    make_opts = [ '--{0}={1}'.format(name, value)
+                  if len(value)>0 else '--{0}'.format(name)
+                  for name, value in zip(make_param_names, make_param_values)
+                  if value is not None ]
+
     conf_cmd = []
     conf_cmd.append('./configure')
     conf_cmd.append('--prefix=%s' % (env_dir))
@@ -324,7 +334,7 @@ def install_node(env_dir, src_dir, opt):
 
     callit(conf_cmd, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make'], opt.verbose, True, node_src_dir, env)
+    callit(['make']+make_opts, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
     callit(['make install'], opt.verbose, True, node_src_dir, env)
 

@@ -1,7 +1,7 @@
 .PHONY: deploy deploy-github deploy-pypi update-pypi clean test
 
 deploy-github:
-	git tag `grep "nodeenv_version =" nodeenv.py | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
+	git tag `grep "nodeenv_version =" nodeenv.py | sed 's/.*= *//;s/'\'//g`
 	git push --tags origin master
 
 deploy-pypi:

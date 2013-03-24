@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.6.1'
+nodeenv_version = '0.6.1.1'
 
 import sys
 import os
@@ -79,6 +79,9 @@ def parse_args():
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
+    parser.add_option('--load-average', dest='load_average',
+        help='Sets maximum load average for executing parallel commands at node.js compilation.')
+
     parser.add_option('-v', '--verbose',
         action='store_true', dest='verbose', default=False,
         help="Verbose mode")
@@ -87,10 +90,9 @@ def parse_args():
         action='store_true', dest='quiet', default=False,
         help="Quete mode")
 
-    parser.add_option('-r', '--requirement',
+    parser.add_option('-r', '--requirements',
         dest='requirements', default='', metavar='FILENAME',
-        help='Install all the packages listed in the given requirements file. '
-             'Not compatible with --without-npm option.')
+        help='Install all the packages listed in the given requirements file.')
 
     parser.add_option('--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
@@ -111,9 +113,10 @@ def parse_args():
         action='store_true', default=False,
         help='Enable profiling for node.js')
 
-    parser.add_option('--without-npm', dest='without_npm',
+    parser.add_option('--with-npm', dest='with_npm',
         action='store_true', default=False,
-        help='Build without installing npm into the new virtual environment (works for node.js < 0.6.3)')
+        help='Build without installing npm into the new virtual environment. '
+        'Required for node.js < 0.6.3. By default, the npm included with node.js is used.')
 
     parser.add_option('--npm', dest='npm',
         metavar='NPM_VER', default='latest',
@@ -123,7 +126,7 @@ def parse_args():
 
     parser.add_option('--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
-        help='Skip the npm 0.x cleanup. Do cleanup by default.')
+        help='Skip the npm 0.x cleanup.  Cleanup is enabled by default.')
 
     parser.add_option('--python-virtualenv', '-p', dest='python_virtualenv',
         action='store_true', default=False,
@@ -146,15 +149,6 @@ def parse_args():
                 ' '.join(args)))
             parser.print_help()
             sys.exit(2)
-
-        if options.requirements and options.without_npm:
-            print('These options are not compatible: --requirements, --without-npm')
-            parser.print_help()
-            sys.exit(2)
-
-    if options.node < "0.6.3" and options.without_npm:
-        print("Option --without-npm works only for node.js < 0.6.3. See --help.")
-        sys.exit(2)
 
     return options, args
 
@@ -320,7 +314,14 @@ def install_node(env_dir, src_dir, opt):
 
     logger.info('.', extra=dict(continued=True))
 
-    env = {'JOBS': str(opt.jobs)}
+    env = {}
+    make_param_names = ['load-average', 'jobs']
+    make_param_values = map(lambda x:getattr(opt,x.replace('-','_')), make_param_names)
+    make_opts = [ '--{0}={1}'.format(name, value)
+                  if len(value)>0 else '--{0}'.format(name)
+                  for name, value in zip(make_param_names, make_param_values)
+                  if value is not None ]
+
     conf_cmd = []
     conf_cmd.append('./configure')
     conf_cmd.append('--prefix=%s' % (env_dir))
@@ -333,7 +334,7 @@ def install_node(env_dir, src_dir, opt):
 
     callit(conf_cmd, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make'], opt.verbose, True, node_src_dir, env)
+    callit(['make']+make_opts, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
     callit(['make install'], opt.verbose, True, node_src_dir, env)
 
@@ -362,7 +363,7 @@ def install_packages(env_dir, opt):
     """
     logger.info(' * Install node.js packages ... ',
         extra=dict(continued=True))
-    packages = [package.replace('\n', '') for package in
+    packages = [package.strip() for package in
                     open(opt.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = opt.npm if opt.npm.count(".") == 2 else opt.npm + ".0"
@@ -416,7 +417,7 @@ def create_environment(env_dir, opt):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, opt)
-    if opt.node < "0.6.3" or not opt.without_npm:
+    if opt.node < "0.6.3" or opt.with_npm:
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)

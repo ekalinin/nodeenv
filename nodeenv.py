@@ -90,7 +90,7 @@ def parse_args():
         action='store_true', dest='quiet', default=False,
         help="Quete mode")
 
-    parser.add_option('-r', '--requirement',
+    parser.add_option('-r', '--requirements',
         dest='requirements', default='', metavar='FILENAME',
         help='Install all the packages listed in the given requirements file.')
 
@@ -126,7 +126,7 @@ def parse_args():
 
     parser.add_option('--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
-        help='Skip the npm 0.x cleanup. Do cleanup by default.')
+        help='Skip the npm 0.x cleanup.  Cleanup is enabled by default.')
 
     parser.add_option('--python-virtualenv', '-p', dest='python_virtualenv',
         action='store_true', default=False,

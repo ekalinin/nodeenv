@@ -417,7 +417,7 @@ def create_environment(env_dir, opt):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, opt)
-    if opt.node < "0.6.3" or opt.with_npm:
+    if parse_version(opt.node) < parse_version("0.6.3") or opt.with_npm:
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)

@@ -1,6 +1,15 @@
 Nodeenv changelog
 =================
 
+Version 0.6.2
+-------------
+- Skipped stand-alone npm installation by default. See `pull # 30`_
+- ``--without-npm`` has been changed to ``--with-npm``. See `pull # 30`_
+- Fixed options for running Make instances in parallel. See `pull # 30`_
+
+.. _pull # 30: https://github.com/ekalinin/nodeenv/pull/30
+
+
 Version 0.6.1
 -------------
 - Used pkg_resources.parse_version to compare versions. See `pull # 29`_

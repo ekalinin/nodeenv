@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.6.3
+-------------
+- Fixed ``nodeenv -p``. See `issue # 31`_
+.. _issue # 31: https://github.com/ekalinin/nodeenv/issues/31
+
+
 Version 0.6.2
 -------------
 - Skipped stand-alone npm installation by default. See `pull # 30`_

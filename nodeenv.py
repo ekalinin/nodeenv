@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.6.2'
+nodeenv_version = '0.6.3'
 
 import sys
 import os
@@ -75,7 +75,7 @@ def parse_args():
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version.')
 
-    parser.add_option('-j', '--jobs', dest='jobs', default=2,
+    parser.add_option('-j', '--jobs', dest='jobs', default='2',
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
@@ -316,9 +316,9 @@ def install_node(env_dir, src_dir, opt):
 
     env = {}
     make_param_names = ['load-average', 'jobs']
-    make_param_values = map(lambda x:getattr(opt,x.replace('-','_')), make_param_names)
+    make_param_values = map(lambda x: getattr(opt, x.replace('-','_')), make_param_names)
     make_opts = [ '--{0}={1}'.format(name, value)
-                  if len(value)>0 else '--{0}'.format(name)
+                  if len(value) > 0 else '--{0}'.format(name)
                   for name, value in zip(make_param_names, make_param_values)
                   if value is not None ]
 

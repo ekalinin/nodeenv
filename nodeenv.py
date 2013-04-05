@@ -19,7 +19,12 @@ import time
 import logging
 import optparse
 import subprocess
-import ConfigParser
+
+try:
+    import ConfigParser
+except ImportError:
+    # Python 3
+    from configparser import ConfigParser
 
 from pkg_resources import parse_version
 
@@ -493,7 +498,7 @@ def main():
         if opt.python_virtualenv:
             try:
                 env_dir = os.environ['VIRTUAL_ENV']
-            except KeyError, e:
+            except KeyError:
                 logger.error('No python virtualenv is available')
                 sys.exit(2)
         else:

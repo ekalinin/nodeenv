@@ -14,11 +14,17 @@ nodeenv_version = '0.6.3'
 
 import sys
 import os
+import stat
 import time
 import logging
 import optparse
 import subprocess
-import ConfigParser
+
+try:
+    import ConfigParser
+except ImportError:
+    # Python 3
+    from configparser import ConfigParser
 
 from pkg_resources import parse_version
 
@@ -390,7 +396,8 @@ def install_activate(env_dir, opt):
     bin_dir = join(env_dir, 'bin')
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
-
+    mode_0755 = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH
+    
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
@@ -398,7 +405,7 @@ def install_activate(env_dir, opt):
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content, append=opt.python_virtualenv)
-        os.chmod(file_path, 0755)
+        os.chmod(file_path, mode_0755)
 
 
 def create_environment(env_dir, opt):
@@ -491,7 +498,7 @@ def main():
         if opt.python_virtualenv:
             try:
                 env_dir = os.environ['VIRTUAL_ENV']
-            except KeyError, e:
+            except KeyError:
                 logger.error('No python virtualenv is available')
                 sys.exit(2)
         else:

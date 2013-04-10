@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.6.4'
+nodeenv_version = '0.6.5'
 
 import sys
 import os
@@ -278,25 +278,11 @@ def get_node_src_url(version, postfix=''):
         node_url = 'http://nodejs.org/dist/%s' % (tar_name)
     return node_url
 
-# ---------------------------------------------------------
-# Virtual environment functions
 
-def install_node(env_dir, src_dir, opt):
+def download_node(node_url, src_dir, env_dir, opt):
     """
-    Download source code for node.js, unpack it
-    and install it in virtual environment.
+    Download source code
     """
-    logger.info(' * Install node.js (%s' % opt.node,
-                         extra=dict(continued=True))
-
-    node_name = 'node-v%s' % (opt.node)
-    tar_name = '%s.tar.gz' % (node_name)
-    node_url = get_node_src_url(opt.node)
-    node_tar = join(src_dir, tar_name)
-    node_src_dir = join(src_dir, node_name)
-    env_dir = abspath(env_dir)
-    old_chdir = os.getcwd()
-
     cmd = []
     cmd.append('curl')
     cmd.append('--silent')
@@ -317,6 +303,29 @@ def install_node(env_dir, src_dir, opt):
         new_node_url = get_node_src_url(opt.node, postfix)
         cmd[cmd.index(node_url)] = new_node_url
         callit(cmd, opt.verbose, True, env_dir)
+
+# ---------------------------------------------------------
+# Virtual environment functions
+
+def install_node(env_dir, src_dir, opt):
+    """
+    Download source code for node.js, unpack it
+    and install it in virtual environment.
+    """
+    logger.info(' * Install node.js (%s' % opt.node,
+                         extra=dict(continued=True))
+
+    node_name = 'node-v%s' % (opt.node)
+    tar_name = '%s.tar.gz' % (node_name)
+    node_url = get_node_src_url(opt.node)
+    node_tar = join(src_dir, tar_name)
+    node_src_dir = join(src_dir, node_name)
+    env_dir = abspath(env_dir)
+    old_chdir = os.getcwd()
+
+    # get src if not downloaded yet
+    if not os.path.exists(node_src_dir):
+        download_node(node_url, src_dir, env_dir, opt)
 
     logger.info('.', extra=dict(continued=True))
 

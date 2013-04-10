@@ -1,6 +1,10 @@
 Nodeenv changelog
 =================
 
+Version 0.6.5
+-------------
+- Node's source not loaded if it already exists in FS.
+
 Version 0.6.4
 -------------
 - Added python3 compatibility. See `# 32`_

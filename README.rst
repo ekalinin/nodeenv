@@ -11,7 +11,10 @@ that doesn't share libraries with other node.js virtual environments.
 Install
 -------
 
-You can install nodeenv with `easy_install`_::
+Global installation
+^^^^^^^^^^^^^^^^^^^
+
+You can install nodeenv globally with `easy_install`_::
 
     $ sudo easy_install nodeenv
 
@@ -19,17 +22,23 @@ or `pip`_::
 
     $ sudo pip install nodeenv
 
+Local installation
+^^^^^^^^^^^^^^^^^^
+
+If you're using virtualenv_ then you can install nodeenv via
+pip/easy_install inside any virtual environment built with virtualenv:
+
+    $ virtualenv env
+    $ . env/bin/activate
+    (env) $ pip install nodeenv
+    (env) $ nodeenv --version
+    0.6.5
+
 If you want to work with the latest version of the nodeenv you can 
 install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nodeenv.py --help
-
-Or you can just download raw nodeenv.py and use it::
-
-    $ wget https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py
-    $ python nodeenv.py --version
-    0.4.0
 
 .. _repository: https://github.com/ekalinin/nodeenv
 .. _pip: http://pypi.python.org/pypi/pip
@@ -130,7 +139,11 @@ If you're already have python virtualenv tool, and want to use nodeenv and
 virtualenv in conjunction, then you should create (or activate) python virtual
 environment::
 
-    $ mkvirtualenv my_env # in case of using virtualenv_wrapper
+    # in case of using virtualenv_wrapper
+    $ mkvirtualenv my_env
+
+    # in cace of using virtualenv
+    $ . my_env/bin/activate
 
 and add node virtual environment to this existing new_venv::
 
@@ -160,6 +173,6 @@ There are several alternatives that create isolated environments:
   version.
   Can not pass additional arguments into configure (for example --without-ssl)
 
-* `virtualenv <https://github.com/pypa/virtualenv>`_ Virtual Python Environment
-  builder. For python only.
+* virtualenv_ — Virtual Python Environment builder. For python only.
 
+.. _`virtualenv`: https://github.com/pypa/virtualenv

@@ -26,7 +26,7 @@ Local installation
 ^^^^^^^^^^^^^^^^^^
 
 If you're using virtualenv_ then you can install nodeenv via
-pip/easy_install inside any virtual environment built with virtualenv:
+pip_/easy_install_ inside any virtual environment built with virtualenv::
 
     $ virtualenv env
     $ . env/bin/activate

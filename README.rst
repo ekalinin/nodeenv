@@ -7,6 +7,8 @@ isolated node.js environments.
 It creates an environment that has its own installation directories, 
 that doesn't share libraries with other node.js virtual environments.
 
+Also new environment can be integrated with environment which was built
+by virtualenv_ (python).
 
 Install
 -------
@@ -70,7 +72,7 @@ Usage
 Basic
 ^^^^^
 
-Install new environment::
+Create new environment::
 
     $ nodeenv env
 
@@ -115,8 +117,8 @@ for compilation and npm.js "0.3.17"::
 Saving into the file versions of all installed packages::
 
     $ . env-4.3/bin/activate
-    (env-4.3)$ npm install express
-    (env-4.3)$ npm install jade
+    (env-4.3)$ npm install -g express
+    (env-4.3)$ npm install -g jade
     (env-4.3)$ freeze ../prod-requirements.txt
 
 Create environment copy from requirement file::

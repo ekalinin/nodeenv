@@ -8,11 +8,17 @@
 отдельной директории, которое (окружение) никак не зависит от других
 установок node.js.
 
+Так же новое окружение может быть интегрировано в уже существующее окружение,
+созданное ранее с помощью virtualenv_ (python).
+
 
 Установка
 ---------
 
-Nodeenv установить с помощью `easy_install`_::
+Глобальная
+^^^^^^^^^^
+
+Nodeenv можно установить с помощью `easy_install`_::
 
     $ sudo easy_install nodeenv
 
@@ -20,18 +26,24 @@ Nodeenv установить с помощью `easy_install`_::
 
     $ sudo pip install nodeenv
 
+Локальная
+^^^^^^^^^
+
+Если же используется virtualenv_, то можно установить nodeenv
+внутри виртуального окружения с помощью pip_/easy_install_::
+
+    $ virtualenv env
+    $ . env/bin/activate
+    (env) $ pip install nodeenv
+    (env) $ nodeenv --version
+    0.6.5
+
 Если есть желание поработать с последней версией nodeenv, то
 установить его можно напрямую из репозитория::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nodeenv.py --help
 
-Или же можно просто скачать исходный файл nodeenv.py и
-использовать его::
-
-    $ wget https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py
-    $ python nodeenv.py --version
-    0.4.0
 
 .. _pip: http://pypi.python.org/pypi/pip
 .. _easy_install: http://pypi.python.org/pypi/setuptools
@@ -107,8 +119,8 @@ Nodeenv установить с помощью `easy_install`_::
 Сохранение в файл «зависимостей» версий всех установленных пакетов::
 
     $ . env-4.3/bin/activate
-    (env-4.3)$ npm install express
-    (env-4.3)$ npm install jade
+    (env-4.3)$ npm install -g express
+    (env-4.3)$ npm install -g jade
     (env-4.3)$ freeze ../prod-requirements.txt
 
 Создание точной копии окружения из файла «зависимостей»::
@@ -132,7 +144,8 @@ Nodeenv установить с помощью `easy_install`_::
 сперва вы должны создать (или активировать) виртуальное окружение для
 python'а::
 
-    $ mkvirtualenv my_env # если вы используете утилиту virtualenv_wrapper
+    # если вы используете утилиту virtualenv_wrapper
+    $ mkvirtualenv my_env
 
 и затем добавить node.js в это окружение::
 
@@ -161,6 +174,6 @@ python'а::
   Manager. Требует регулярно выполнять ``nvm sync`` для кэширования доступных
   версий node.js
   Не позволяет передавать аргументы в конфигурацию (например, --without-ssl)
-* `virtualenv <https://github.com/pypa/virtualenv>`_ Virtual Python Environment
-  builder. Только для python.
+* `virtualenv`_ Virtual Python Environment builder. Только для python.
 
+.. _`virtualenv`: https://github.com/pypa/virtualenv

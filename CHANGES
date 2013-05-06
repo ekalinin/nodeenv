@@ -1,15 +1,26 @@
 Nodeenv changelog
 =================
 
+Version 0.6.6
+-------------
+- Fixed incomplete package names using freeze. See `# 35`_
+- Fixed packages installation type in README. See `# 33`_
+
+.. _# 33: https://github.com/ekalinin/nodeenv/issues/33
+.. _# 35: https://github.com/ekalinin/nodeenv/pull/35
+
+
 Version 0.6.5
 -------------
 - Node's source not loaded if it already exists in FS.
+
 
 Version 0.6.4
 -------------
 - Added python3 compatibility. See `# 32`_
 
 .. _# 32: https://github.com/ekalinin/nodeenv/pull/32
+
 
 Version 0.6.3
 -------------

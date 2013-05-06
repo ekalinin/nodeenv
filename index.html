@@ -1,30 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Nodeenv by ekalinin</title>
-    
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Nodeenv : Node.js virtual environment (sandbox) builder" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Nodeenv</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Nodeenv</h1>
-        <p>Node.js virtual environment builder</p>
-        <p class="view"><a href="https://github.com/ekalinin/nodeenv">View the Project on GitHub <small>ekalinin/nodeenv</small></a></p>
-        <ul>
-          <li><a href="https://github.com/ekalinin/nodeenv/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/ekalinin/nodeenv/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/ekalinin/nodeenv">Fork On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ekalinin/nodeenv">View on GitHub</a>
+
+          <h1 id="project_title">Nodeenv</h1>
+          <h2 id="project_tagline">Node.js virtual environment (sandbox) builder</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ekalinin/nodeenv/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ekalinin/nodeenv/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h3>nodeenv</h3>
 
 <p><code>nodeenv</code> (node.js virtual environment) is a tool to create 
@@ -33,7 +39,12 @@ isolated node.js environments.</p>
 <p>It creates an environment that has its own installation directories, 
 that doesn't share libraries with other node.js virtual environments.</p>
 
+<p>Also new environment can be integrated with environment which was built
+by <a href="https://github.com/pypa/virtualenv">virtualenv</a> (python).</p>
+
 <h3>Install</h3>
+
+<h4>Global installation</h4>
 
 <p>You can install nodeenv with <a href="http://pypi.python.org/pypi/setuptools">easy_install</a>:</p>
 
@@ -45,18 +56,30 @@ that doesn't share libraries with other node.js virtual environments.</p>
 <pre><code>$ sudo pip install nodeenv
 </code></pre>
 
+<h4>Local installation</h4>
+
+<p>If you're using <a href="https://github.com/pypa/virtualenv">virtualenv</a> then you can install nodeenv via
+<code>pip</code>/<code>easy_install</code> inside any virtual environment built with virtualenv::</p>
+
+<pre><code>$ virtualenv env
+$ . env/bin/activate
+(env) $ pip install nodeenv
+(env) $ nodeenv --version
+0.6.5
+</code></pre>
+
 <p>If you want to work with the latest version of the nodeenv you can 
 install it from the github <a href="https://github.com/ekalinin/nodeenv">repository</a>:</p>
 
-<pre><code>$ git clone <a href="https://github.com/ekalinin/nodeenv.git">https://github.com/ekalinin/nodeenv.git</a>
+<pre><code>$ git clone https://github.com/ekalinin/nodeenv.git
 $ ./nodeenv/nodeenv.py --help
 </code></pre>
 
 <p>Or you can just download raw nodeenv.py and use it::</p>
 
-<pre><code>$ wget <a href="https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py">https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py</a>
+<pre><code>$ wget https://raw.github.com/ekalinin/nodeenv/master/nodeenv.py
 $ python nodeenv.py --version
-0.4.0
+0.6.5
 </code></pre>
 
 <h3>Usage</h3>
@@ -88,8 +111,8 @@ v0.4.6
 <p>Saving into the file versions of all installed packages:</p>
 
 <pre><code>$ . env/bin/activate
-(env) $ npm install express
-(env) $ npm install jade
+(env) $ npm install -g express
+(env) $ npm install -g jade
 (env) $ freeze ../prod-requirements.txt
 </code></pre>
 
@@ -110,23 +133,53 @@ mime@1.2.1
 npm@0.3.17
 qs@0.0.7
 </code></pre>
+
+<p>If you're already have python virtualenv tool, and want to use nodeenv and
+virtualenv in conjunction, then you should create (or activate) python virtual
+environment:</p>
+
+<pre><code># in case of using virtualenv_wrapper
+$ mkvirtualenv my_env
+
+# in cace of using virtualenv
+$ . my_env/bin/activate
+</code></pre>
+
+<p>and add node virtual environment to this existing new_venv:</p>
+
+<pre><code>(my_env) $ nodeenv -p
+</code></pre>
+
+<p>That's all. Now, all your node.js modules will be installed into your virtual
+environment:</p>
+
+<pre><code>$ workon my_env
+(my_env) $ npm install -g coffee-script
+(my_env) $ which coffee
+/home/User/virtualenvs/my_env/bin/coffee
+</code></pre>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/ekalinin">ekalinin</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Nodeenv maintained by <a href="https://github.com/ekalinin">ekalinin</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-9001714-5']);
-      _gaq.push(['_trackPageview']);
 
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-9001714-5");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
   </body>
 </html>

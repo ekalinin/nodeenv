@@ -144,7 +144,7 @@ environment::
     # in case of using virtualenv_wrapper
     $ mkvirtualenv my_env
 
-    # in cace of using virtualenv
+    # in case of using virtualenv
     $ . my_env/bin/activate
 
 and add node virtual environment to this existing new_venv::

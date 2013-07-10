@@ -142,6 +142,10 @@ def parse_args():
         action='store_true', default=False,
         help='Remove "src" directory after installation')
 
+    parser.add_option('--force', dest='force',
+        action='store_true', default=False,
+        help='Force installation in a pre-existing directory')
+
     options, args = parser.parse_args()
 
     if not options.list and not options.python_virtualenv:
@@ -423,7 +427,8 @@ def create_environment(env_dir, opt):
     """
     if os.path.exists(env_dir) and not opt.python_virtualenv:
         logger.info(' * Environment already exists: %s', env_dir)
-        sys.exit(2)
+        if not opt.force:
+            sys.exit(2)
     src_dir = abspath(join(env_dir, 'src'))
     mkdir(src_dir)
     save_env_options(env_dir, opt)

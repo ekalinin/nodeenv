@@ -410,7 +410,7 @@ def install_activate(env_dir, opt):
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
     mode_0755 = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH
-    
+
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
@@ -482,7 +482,7 @@ def get_last_stable_node_version():
         "sort -u -k 1,1n -k 2,2n -k 3,3n -t . | "
         "tail -n1",
         shell=True, stdout=subprocess.PIPE)
-    return p.stdout.readline().replace("\n", "")
+    return p.stdout.read().decode("utf-8").replace("\n", "")
 
 
 def save_env_options(env_dir, opt, file_path='install.cfg'):

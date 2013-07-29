@@ -44,4 +44,12 @@ test3:
 		python setup.py install           && \
 		nodeenv -p
 
+test4:
+	@echo " * test4: separate nodejs's env for python3.2"
+	@rm -rf env                                                  && \
+		virtualenv --no-site-packages --python=python3.2 env     && \
+		. env/bin/activate                                       && \
+		python3.2 setup.py install                               && \
+		nodeenv -j 4 -p
+
 tests: clean test1 clean test2 clean test3 clean

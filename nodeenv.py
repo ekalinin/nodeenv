@@ -15,7 +15,6 @@ nodeenv_version = '0.6.6'
 import sys
 import os
 import stat
-import time
 import logging
 import optparse
 import subprocess

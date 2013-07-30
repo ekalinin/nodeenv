@@ -430,7 +430,6 @@ def create_environment(env_dir, opt):
             sys.exit(2)
     src_dir = abspath(join(env_dir, 'src'))
     mkdir(src_dir)
-    save_env_options(env_dir, opt)
 
     install_node(env_dir, src_dir, opt)
     # activate script install must be
@@ -483,19 +482,6 @@ def get_last_stable_node_version():
         shell=True, stdout=subprocess.PIPE)
     return p.stdout.read().decode("utf-8").replace("\n", "")
 
-
-def save_env_options(env_dir, opt, file_path='install.cfg'):
-    """
-    Save command line options into config file
-    """
-    section_name = 'options'
-    config = ConfigParser.RawConfigParser()
-    config.add_section(section_name)
-    for o, v in opt.__dict__.items():
-        config.set(section_name, o, v)
-
-    with open(join(env_dir, file_path), 'wb') as configfile:
-        config.write(configfile)
 
 
 def main():

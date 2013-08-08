@@ -18,6 +18,7 @@ import stat
 import logging
 import optparse
 import subprocess
+import pipes
 
 try:
     import ConfigParser
@@ -296,7 +297,7 @@ def download_node(node_url, src_dir, env_dir, opt):
     cmd.append('xzf')
     cmd.append('-')
     cmd.append('-C')
-    cmd.append(src_dir)
+    cmd.append(pipes.quote(src_dir))
     try:
         callit(cmd, opt.verbose, True, env_dir)
         logger.info(') ', extra=dict(continued=True))
@@ -342,7 +343,7 @@ def install_node(env_dir, src_dir, opt):
 
     conf_cmd = []
     conf_cmd.append('./configure')
-    conf_cmd.append('--prefix=%s' % (env_dir))
+    conf_cmd.append('--prefix=%s' % pipes.quote(env_dir))
     if opt.without_ssl:
         conf_cmd.append('--without-ssl')
     if opt.debug:
@@ -367,7 +368,7 @@ def install_npm(env_dir, src_dir, opt):
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                     extra=dict(continued=True))
     cmd = ['. %s && curl --silent %s | clean=%s npm_install=%s bash && deactivate_node' % (
-            join(env_dir, 'bin', 'activate'),
+            pipes.quote(join(env_dir, 'bin', 'activate')),
             'https://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
             opt.npm)]
@@ -386,10 +387,10 @@ def install_packages(env_dir, opt):
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = opt.npm if opt.npm.count(".") == 2 else opt.npm + ".0"
     if opt.npm == "latest" or real_npm_ver >= "1.0.0":
-        cmd = '. ' + activate_path + \
+        cmd = '. ' + pipes.quote(activate_path) + \
                 ' && npm install -g %(pack)s'
     else:
-        cmd = '. ' + activate_path + \
+        cmd = '. ' + pipes.quote(activate_path) + \
                 ' && npm install %(pack)s' + \
                 ' && npm activate %(pack)s'
 
@@ -443,7 +444,7 @@ def create_environment(env_dir, opt):
         install_packages(env_dir, opt)
     # Cleanup
     if opt.clean_src:
-        callit(['rm -rf', src_dir], opt.verbose, True, env_dir)
+        callit(['rm -rf', pipes.quote(src_dir)], opt.verbose, True, env_dir)
 
 
 def print_node_versions():

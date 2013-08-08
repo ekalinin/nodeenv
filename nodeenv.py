@@ -292,8 +292,9 @@ def download_node(node_url, src_dir, env_dir, opt):
     cmd.append('tar')
     cmd.append('xzf')
     cmd.append('-')
-    cmd.append('-C')
+    cmd.append("-C '")
     cmd.append(src_dir)
+    cmd.append("'")
     try:
         callit(cmd, opt.verbose, True, env_dir)
         logger.info(') ', extra=dict(continued=True))

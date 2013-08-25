@@ -114,6 +114,10 @@ for compilation and npm.js "0.3.17"::
 
     $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --jobs=4 env-4.3
 
+Create a new environment with the system-wide node.js::
+
+    $ nodeenv --node=system
+
 Saving into the file versions of all installed packages::
 
     $ . env-4.3/bin/activate

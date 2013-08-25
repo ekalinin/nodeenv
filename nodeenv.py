@@ -79,7 +79,8 @@ def parse_args():
         metavar='NODE_VER', default=get_last_stable_node_version(),
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
-        'to create the new environment. The default is last stable version.')
+        'to create the new environment. The default is last stable version. '
+        'Use `system` to use system-wide node.')
 
     parser.add_option('-j', '--jobs', dest='jobs', default='2',
         help='Sets number of parallel commands at node.js compilation. '
@@ -432,7 +433,12 @@ def create_environment(env_dir, opt):
     src_dir = abspath(join(env_dir, 'src'))
     mkdir(src_dir)
 
-    install_node(env_dir, src_dir, opt)
+    if opt.node != "system":
+        install_node(env_dir, src_dir, opt)
+    else:
+        mkdir(join(env_dir, 'bin'))
+        mkdir(join(env_dir, 'lib'))
+        mkdir(join(env_dir, 'lib', 'node_modules'))
     # activate script install must be
     # before npm install, npm use activate
     # for install
@@ -535,6 +541,10 @@ deactivate_node () {
         NODE_PATH="$_OLD_NODE_PATH"
         export NODE_PATH
         unset _OLD_NODE_PATH
+
+        NPM_CONFIG_PREFIX="$_OLD_NPM_CONFIG_PREFIX"
+        export NPM_CONFIG_PREFIX
+        unset _OLD_NPM_CONFIG_PREFIX
     fi
 
     # This should detect bash and zsh, which have a hash command that must
@@ -600,6 +610,10 @@ export PATH
 _OLD_NODE_PATH="$NODE_PATH"
 NODE_PATH="$NODE_VIRTUAL_ENV/__MOD_NAME__"
 export NODE_PATH
+
+_OLD_NPM_CONFIG_PREFIX="$NPM_CONFIG_PREFIX"
+NPM_CONFIG_PREFIX="$NODE_VIRTUAL_ENV"
+export NPM_CONFIG_PREFIX
 
 if [ -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     _OLD_NODE_VIRTUAL_PS1="$PS1"

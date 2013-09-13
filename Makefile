@@ -45,11 +45,11 @@ test3:
 		nodeenv -p
 
 test4:
-	@echo " * test4: separate nodejs's env for python3.2"
+	@echo " * test4: separate nodejs's env for python3.3"
 	@rm -rf env                                                  && \
-		virtualenv --no-site-packages --python=python3.2 env     && \
+		virtualenv --no-site-packages --python=python3.3 env     && \
 		. env/bin/activate                                       && \
-		python3.2 setup.py install                               && \
-		nodeenv -j 4 -p
+		python3.3 setup.py install                               && \
+		python3.3 nodeenv -j 4 -p
 
 tests: clean test1 clean test2 clean test3 clean

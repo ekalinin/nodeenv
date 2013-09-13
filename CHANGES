@@ -1,6 +1,20 @@
 Nodeenv changelog
 =================
 
+Version 0.7.0
+-------------
+- added ``--force``. See `# 37`_
+- python3 support (first steps). See `# 38`_, `# 39`_
+- escaping all directories used by subprocesses. See `# 40`_
+- added an option to use system-wide node. See `# 41`_
+
+.. _# 37: https://github.com/ekalinin/nodeenv/pull/37
+.. _# 38: https://github.com/ekalinin/nodeenv/issues/38
+.. _# 39: https://github.com/ekalinin/nodeenv/issues/39
+.. _# 40: https://github.com/ekalinin/nodeenv/pull/40
+.. _# 41: https://github.com/ekalinin/nodeenv/pull/41
+
+
 Version 0.6.6
 -------------
 - Fixed incomplete package names using freeze. See `# 35`_

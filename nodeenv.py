@@ -75,75 +75,94 @@ def parse_args():
         version=nodeenv_version,
         usage="%prog [OPTIONS] ENV_DIR")
 
-    parser.add_option('-n', '--node', dest='node',
+    parser.add_option(
+        '-n', '--node', dest='node',
         metavar='NODE_VER', default=get_last_stable_node_version(),
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version. '
         'Use `system` to use system-wide node.')
 
-    parser.add_option('-j', '--jobs', dest='jobs', default='2',
+    parser.add_option(
+        '-j', '--jobs', dest='jobs', default='2',
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
-    parser.add_option('--load-average', dest='load_average',
-        help='Sets maximum load average for executing parallel commands at node.js compilation.')
+    parser.add_option(
+        '--load-average', dest='load_average',
+        help='Sets maximum load average for executing parallel commands '
+             'at node.js compilation.')
 
-    parser.add_option('-v', '--verbose',
+    parser.add_option(
+        '-v', '--verbose',
         action='store_true', dest='verbose', default=False,
         help="Verbose mode")
 
-    parser.add_option('-q', '--quiet',
+    parser.add_option(
+        '-q', '--quiet',
         action='store_true', dest='quiet', default=False,
         help="Quete mode")
 
-    parser.add_option('-r', '--requirements',
+    parser.add_option(
+        '-r', '--requirements',
         dest='requirements', default='', metavar='FILENAME',
         help='Install all the packages listed in the given requirements file.')
 
-    parser.add_option('--prompt', dest='prompt',
+    parser.add_option(
+        '--prompt', dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
-    parser.add_option('-l', '--list', dest='list',
+    parser.add_option(
+        '-l', '--list', dest='list',
         action='store_true', default=False,
         help='Lists available node.js versions')
 
-    parser.add_option('--without-ssl', dest='without_ssl',
+    parser.add_option(
+        '--without-ssl', dest='without_ssl',
         action='store_true', default=False,
         help='Build node.js without SSL support')
 
-    parser.add_option('--debug', dest='debug',
+    parser.add_option(
+        '--debug', dest='debug',
         action='store_true', default=False,
         help='Build debug variant of the node.js')
 
-    parser.add_option('--profile', dest='profile',
+    parser.add_option(
+        '--profile', dest='profile',
         action='store_true', default=False,
         help='Enable profiling for node.js')
 
-    parser.add_option('--with-npm', dest='with_npm',
+    parser.add_option(
+        '--with-npm', dest='with_npm',
         action='store_true', default=False,
         help='Build without installing npm into the new virtual environment. '
-        'Required for node.js < 0.6.3. By default, the npm included with node.js is used.')
+        'Required for node.js < 0.6.3. By default, the npm included with '
+        'node.js is used.')
 
-    parser.add_option('--npm', dest='npm',
+    parser.add_option(
+        '--npm', dest='npm',
         metavar='NPM_VER', default='latest',
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
         'tarball to install. The default is last available version.')
 
-    parser.add_option('--no-npm-clean', dest='no_npm_clean',
+    parser.add_option(
+        '--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
         help='Skip the npm 0.x cleanup.  Cleanup is enabled by default.')
 
-    parser.add_option('--python-virtualenv', '-p', dest='python_virtualenv',
+    parser.add_option(
+        '--python-virtualenv', '-p', dest='python_virtualenv',
         action='store_true', default=False,
         help='Use current python virtualenv')
 
-    parser.add_option('--clean-src', '-c', dest='clean_src',
+    parser.add_option(
+        '--clean-src', '-c', dest='clean_src',
         action='store_true', default=False,
         help='Remove "src" directory after installation')
 
-    parser.add_option('--force', dest='force',
+    parser.add_option(
+        '--force', dest='force',
         action='store_true', default=False,
         help='Force installation in a pre-existing directory')
 
@@ -151,7 +170,8 @@ def parse_args():
 
     if not options.list and not options.python_virtualenv:
         if not args:
-            print('You must provide a DEST_DIR or use current python virtualenv')
+            print('You must provide a DEST_DIR or '
+                  'use current python virtualenv')
             parser.print_help()
             sys.exit(2)
 
@@ -193,7 +213,8 @@ def writefile(dest, content, overwrite=True, append=False):
         f.close()
         if c != content:
             if not overwrite:
-                logger.info(' * File %s exists with different content; not overwriting', dest)
+                logger.info(' * File %s exists with different content; '
+                            ' not overwriting', dest)
                 return
             if append:
                 logger.info(' * Appending nodeenv settings to %s', dest)
@@ -212,7 +233,7 @@ def writefile(dest, content, overwrite=True, append=False):
 
 
 def callit(cmd, show_stdout=True, in_shell=False,
-        cwd=None, extra_env=None):
+           cwd=None, extra_env=None):
     """
     Execute cmd line in sub-shell
     """
@@ -269,7 +290,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
             for s in all_output:
                 logger.critical(s)
         raise OSError("Command %s failed with error code %s"
-            % (cmd_desc, proc.returncode))
+                      % (cmd_desc, proc.returncode))
 
     return proc.returncode, all_output
 
@@ -312,21 +333,19 @@ def download_node(node_url, src_dir, env_dir, opt):
 # ---------------------------------------------------------
 # Virtual environment functions
 
+
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
     logger.info(' * Install node.js (%s' % opt.node,
-                         extra=dict(continued=True))
+                extra=dict(continued=True))
 
     node_name = 'node-v%s' % (opt.node)
-    tar_name = '%s.tar.gz' % (node_name)
     node_url = get_node_src_url(opt.node)
-    node_tar = join(src_dir, tar_name)
     node_src_dir = join(src_dir, node_name)
     env_dir = abspath(env_dir)
-    old_chdir = os.getcwd()
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
@@ -336,11 +355,13 @@ def install_node(env_dir, src_dir, opt):
 
     env = {}
     make_param_names = ['load-average', 'jobs']
-    make_param_values = map(lambda x: getattr(opt, x.replace('-','_')), make_param_names)
-    make_opts = [ '--{0}={1}'.format(name, value)
-                  if len(value) > 0 else '--{0}'.format(name)
-                  for name, value in zip(make_param_names, make_param_values)
-                  if value is not None ]
+    make_param_values = map(
+        lambda x: getattr(opt, x.replace('-', '_')),
+        make_param_names)
+    make_opts = ['--{0}={1}'.format(name, value)
+                 if len(value) > 0 else '--{0}'.format(name)
+                 for name, value in zip(make_param_names, make_param_values)
+                 if value is not None]
 
     conf_cmd = []
     conf_cmd.append('./configure')
@@ -354,7 +375,7 @@ def install_node(env_dir, src_dir, opt):
 
     callit(conf_cmd, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make']+make_opts, opt.verbose, True, node_src_dir, env)
+    callit(['make'] + make_opts, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
     callit(['make install'], opt.verbose, True, node_src_dir, env)
 
@@ -367,12 +388,16 @@ def install_npm(env_dir, src_dir, opt):
     and install it in virtual environment.
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
-                    extra=dict(continued=True))
-    cmd = ['. %s && curl --silent %s | clean=%s npm_install=%s bash && deactivate_node' % (
+                extra=dict(continued=True))
+    cmd = [
+        '. %s && curl --silent %s | '
+        'clean=%s npm_install=%s bash && deactivate_node' % (
             pipes.quote(join(env_dir, 'bin', 'activate')),
             'https://npmjs.org/install.sh',
             'no' if opt.no_npm_clean else 'yes',
-            opt.npm)]
+            opt.npm
+        )
+    ]
     callit(cmd, opt.verbose, True)
     logger.info('done.')
 
@@ -382,22 +407,22 @@ def install_packages(env_dir, opt):
     Install node.js packages via npm
     """
     logger.info(' * Install node.js packages ... ',
-        extra=dict(continued=True))
+                extra=dict(continued=True))
     packages = [package.strip() for package in
-                    open(opt.requirements).readlines()]
+                open(opt.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = opt.npm if opt.npm.count(".") == 2 else opt.npm + ".0"
     if opt.npm == "latest" or real_npm_ver >= "1.0.0":
         cmd = '. ' + pipes.quote(activate_path) + \
-                ' && npm install -g %(pack)s'
+              ' && npm install -g %(pack)s'
     else:
         cmd = '. ' + pipes.quote(activate_path) + \
-                ' && npm install %(pack)s' + \
-                ' && npm activate %(pack)s'
+              ' && npm install %(pack)s' + \
+              ' && npm activate %(pack)s'
 
     for package in packages:
-        callit(cmd=[cmd % {"pack": package}],
-                show_stdout=opt.verbose, in_shell=True)
+        callit(cmd=[
+            cmd % {"pack": package}], show_stdout=opt.verbose, in_shell=True)
 
     logger.info('done.')
 
@@ -410,12 +435,14 @@ def install_activate(env_dir, opt):
     bin_dir = join(env_dir, 'bin')
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
-    mode_0755 = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH
+    mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
+                 stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
-        content = content.replace('__NODE_VIRTUAL_ENV__', os.path.abspath(env_dir))
+        content = content.replace('__NODE_VIRTUAL_ENV__',
+                                  os.path.abspath(env_dir))
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content, append=opt.python_virtualenv)
@@ -488,7 +515,6 @@ def get_last_stable_node_version():
         "tail -n1",
         shell=True, stdout=subprocess.PIPE)
     return p.stdout.read().decode("utf-8").replace("\n", "")
-
 
 
 def main():
@@ -570,9 +596,12 @@ deactivate_node () {
 freeze () {
     NPM_VER=`npm -v | cut -d '.' -f 1`
     if [ "$NPM_VER" != '1' ]; then
-        NPM_LIST=`npm list installed active 2>/dev/null | cut -d ' ' -f 1 | grep -v npm`
+        NPM_LIST=`npm list installed active 2>/dev/null | \
+                  cut -d ' ' -f 1 | grep -v npm`
     else
-        NPM_LIST=`npm ls -g | grep -E '^.{4}\w{1}' | grep -o -E '[a-zA-Z0-9\-]+@[0-9]+\.[0-9]+\.[0-9]+' | grep -v npm`
+        NPM_LIST=`npm ls -g | grep -E '^.{4}\w{1}' | \
+                 grep -o -E '[a-zA-Z0-9\-]+@[0-9]+\.[0-9]+\.[0-9]+' | \
+                 grep -v npm`
     fi
 
     if [ -z "$@" ]; then

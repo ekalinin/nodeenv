@@ -154,6 +154,10 @@ environment::
 and add node virtual environment to this existing new_venv::
 
     $ nodeenv -p
+    
+If you need to set the path to make used  to build node::
+
+	$ nodeenv -m /usr/local/bin/gmake ENV
 
 That's all. Now, all your node.js modules will be installed into your virtual
 environment::

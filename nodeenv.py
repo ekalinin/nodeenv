@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.7.0'
+nodeenv_version = '0.7.1'
 
 import sys
 import os
@@ -165,6 +165,12 @@ def parse_args():
         '--force', dest='force',
         action='store_true', default=False,
         help='Force installation in a pre-existing directory')
+
+    parser.add_option(
+        '--make','-m',dest='make_path',
+        metavar='MAKE_PATH',
+        help='Path to make command',
+        default='make')
 
     options, args = parser.parse_args()
 
@@ -373,11 +379,13 @@ def install_node(env_dir, src_dir, opt):
     if opt.profile:
         conf_cmd.append('--profile')
 
+    make_cmd = opt.make_path
+
     callit(conf_cmd, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make'] + make_opts, opt.verbose, True, node_src_dir, env)
+    callit([make_cmd] + make_opts, opt.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit(['make install'], opt.verbose, True, node_src_dir, env)
+    callit([make_cmd + ' install'], opt.verbose, True, node_src_dir, env)
 
     logger.info(' done.')
 

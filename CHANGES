@@ -1,6 +1,10 @@
 Nodeenv changelog
 =================
 
+Version 0.7.1
+-------------
+- Added ``--make`` option
+
 Version 0.7.0
 -------------
 - added ``--force``. See `# 37`_

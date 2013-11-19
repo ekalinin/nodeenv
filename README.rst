@@ -174,9 +174,10 @@ Alternatives
 There are several alternatives that create isolated environments:
 
 * `nave <https://github.com/isaacs/nave>`_ - Virtual Environments for Node.
-  Nave stores all environments in one directory ``~/.nave``. Thus it is not 
-  possible to create different environments for one version of node.js.
+  Nave stores all environments in one directory ``~/.nave``. Can create
+  per node version environments using `nave use envname versionname`.
   Can not pass additional arguments into configure (for example --without-ssl)
+  Can't run on windows because it relies on bash.
 
 * `nvm <https://github.com/creationix/nvm/blob/master/nvm.sh>`_ - Node Version
   Manager. It is necessarily to do `nvm sync` for caching available node.js

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.7.1'
+nodeenv_version = '0.7.2'
 
 import sys
 import os
@@ -608,7 +608,7 @@ freeze () {
                   cut -d ' ' -f 1 | grep -v npm`
     else
         NPM_LIST=`npm ls -g | grep -E '^.{4}\w{1}' | \
-                 grep -o -E '[a-zA-Z0-9\-]+@[0-9]+\.[0-9]+\.[0-9]+' | \
+                 grep -o -E '[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*' | \
                  grep -v npm`
     fi
 

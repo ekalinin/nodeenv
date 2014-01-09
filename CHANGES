@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.7.2
+-------------
+- Bug fixing in ``freeze``. See `# 47`_
+
+.. _# 47: https://github.com/ekalinin/nodeenv/issues/47
+
 Version 0.7.1
 -------------
 - Added ``--make`` option

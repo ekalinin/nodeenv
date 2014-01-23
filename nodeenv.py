@@ -118,6 +118,11 @@ def parse_args():
         help='Lists available node.js versions')
 
     parser.add_option(
+        '-p', '--packages', dest='packages',
+        action='store_true', default=False,
+        help='Install curent packages form file')
+
+    parser.add_option(
         '--without-ssl', dest='without_ssl',
         action='store_true', default=False,
         help='Build node.js without SSL support')
@@ -532,6 +537,17 @@ def main():
     opt, args = parse_args()
     if opt.list:
         print_node_versions()
+    elif opt.packages:
+        if opt.python_virtualenv:
+            try:
+                env_dir = os.environ['VIRTUAL_ENV']
+            except KeyError:
+                logger.error('No python virtualenv is available')
+                sys.exit(2)
+        else:
+            env_dir = args[0]
+
+        install_packages(env_dir, opt)
     else:
         if opt.quiet:
             logger.setLevel(logging.CRITICAL)

@@ -530,35 +530,30 @@ def get_last_stable_node_version():
     return p.stdout.read().decode("utf-8").replace("\n", "")
 
 
+def get_env_dir(opt):
+    if opt.python_virtualenv:
+        try:
+            return env_dir = os.environ['VIRTUAL_ENV']
+        except KeyError:
+            logger.error('No python virtualenv is available')
+            sys.exit(2)
+    else:
+        return env_dir = args[0]
+
+
 def main():
     """
     Entry point
     """
     opt, args = parse_args()
+
     if opt.list:
         print_node_versions()
     elif opt.packages:
-        if opt.python_virtualenv:
-            try:
-                env_dir = os.environ['VIRTUAL_ENV']
-            except KeyError:
-                logger.error('No python virtualenv is available')
-                sys.exit(2)
-        else:
-            env_dir = args[0]
-
+        env_dir = get_env_dir(opt)
         install_packages(env_dir, opt)
     else:
-        if opt.quiet:
-            logger.setLevel(logging.CRITICAL)
-        if opt.python_virtualenv:
-            try:
-                env_dir = os.environ['VIRTUAL_ENV']
-            except KeyError:
-                logger.error('No python virtualenv is available')
-                sys.exit(2)
-        else:
-            env_dir = args[0]
+        env_dir = get_env_dir(opt)
         create_environment(env_dir, opt)
 
 

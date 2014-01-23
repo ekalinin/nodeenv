@@ -118,7 +118,7 @@ def parse_args():
         help='Lists available node.js versions')
 
     parser.add_option(
-        '-pac', '--packages', dest='packages',
+        '--packages', dest='packages',
         action='store_true', default=False,
         help='Install curent packages form file')
 

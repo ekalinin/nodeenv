@@ -533,12 +533,12 @@ def get_last_stable_node_version():
 def get_env_dir(opt):
     if opt.python_virtualenv:
         try:
-            return env_dir = os.environ['VIRTUAL_ENV']
+            return os.environ['VIRTUAL_ENV']
         except KeyError:
             logger.error('No python virtualenv is available')
             sys.exit(2)
     else:
-        return env_dir = args[0]
+        return args[0]
 
 
 def main():

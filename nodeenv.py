@@ -530,7 +530,7 @@ def get_last_stable_node_version():
     return p.stdout.read().decode("utf-8").replace("\n", "")
 
 
-def get_env_dir(opt):
+def get_env_dir(opt, args):
     if opt.python_virtualenv:
         try:
             return os.environ['VIRTUAL_ENV']
@@ -550,10 +550,10 @@ def main():
     if opt.list:
         print_node_versions()
     elif opt.packages:
-        env_dir = get_env_dir(opt)
+        env_dir = get_env_dir(opt, args)
         install_packages(env_dir, opt)
     else:
-        env_dir = get_env_dir(opt)
+        env_dir = get_env_dir(opt, args)
         create_environment(env_dir, opt)
 
 

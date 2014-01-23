@@ -118,9 +118,9 @@ def parse_args():
         help='Lists available node.js versions')
 
     parser.add_option(
-        '--packages', dest='packages',
+        '--update', dest='update',
         action='store_true', default=False,
-        help='Install curent packages form file')
+        help='Install npm packages form file without node')
 
     parser.add_option(
         '--without-ssl', dest='without_ssl',
@@ -549,7 +549,7 @@ def main():
 
     if opt.list:
         print_node_versions()
-    elif opt.packages:
+    elif opt.update:
         env_dir = get_env_dir(opt, args)
         install_packages(env_dir, opt)
     else:

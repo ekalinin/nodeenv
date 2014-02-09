@@ -118,6 +118,11 @@ def parse_args():
         help='Lists available node.js versions')
 
     parser.add_option(
+        '--update', dest='update',
+        action='store_true', default=False,
+        help='Install npm packages form file without node')
+
+    parser.add_option(
         '--without-ssl', dest='without_ssl',
         action='store_true', default=False,
         help='Build node.js without SSL support')
@@ -525,24 +530,30 @@ def get_last_stable_node_version():
     return p.stdout.read().decode("utf-8").replace("\n", "")
 
 
+def get_env_dir(opt, args):
+    if opt.python_virtualenv:
+        try:
+            return os.environ['VIRTUAL_ENV']
+        except KeyError:
+            logger.error('No python virtualenv is available')
+            sys.exit(2)
+    else:
+        return args[0]
+
+
 def main():
     """
     Entry point
     """
     opt, args = parse_args()
+
     if opt.list:
         print_node_versions()
+    elif opt.update:
+        env_dir = get_env_dir(opt, args)
+        install_packages(env_dir, opt)
     else:
-        if opt.quiet:
-            logger.setLevel(logging.CRITICAL)
-        if opt.python_virtualenv:
-            try:
-                env_dir = os.environ['VIRTUAL_ENV']
-            except KeyError:
-                logger.error('No python virtualenv is available')
-                sys.exit(2)
-        else:
-            env_dir = args[0]
+        env_dir = get_env_dir(opt, args)
         create_environment(env_dir, opt)
 
 

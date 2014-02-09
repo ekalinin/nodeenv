@@ -167,6 +167,15 @@ environment::
     $ which coffee
     /home/monty/virtualenvs/my_env/bin/coffee
 
+If environment's directory already exists then you can use ``--force`` option::
+
+    $ nodeenv --requirement=./requirements.txt --jobs=4 --force env
+
+If you alredy have an environment and want to update packages from requirements
+file you can use ``--update`` option::
+
+    $ . env-4.3/bin/activate
+    (env-4.3)$ nodeenv --update=./requirements.txt
 
 Alternatives
 ------------

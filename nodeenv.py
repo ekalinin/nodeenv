@@ -403,7 +403,7 @@ def install_npm(env_dir, src_dir, opt):
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
     cmd = [
-        '. %s && curl --silent %s | '
+        '. %s && curl --location --silent %s | '
         'clean=%s npm_install=%s bash && deactivate_node' % (
             pipes.quote(join(env_dir, 'bin', 'activate')),
             'https://www.npmjs.org/install.sh',

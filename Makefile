@@ -53,3 +53,14 @@ test4:
 		python3.3 nodeenv -j 4 -p
 
 tests: clean test1 clean test2 clean test3 clean
+
+contributors:
+	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS
+	@echo "" >> AUTHORS
+	@echo "Patches and Suggestions" >> AUTHORS
+	@echo '```````````````````````' >> AUTHORS
+	@echo "" >> AUTHORS
+	@git log --raw | grep "^Author: " | \
+		sort | uniq -c | sort -n -r | \
+		cut -d ':' -f 2 | sed 's/^/- /' | \
+		cut -d '<' -f1 | uniq | tail -n +3 >> AUTHORS

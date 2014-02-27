@@ -1,28 +1,27 @@
 Nodeenv is written and maintained by Eugene Kalinin.
 
-Development Lead
-````````````````
-
-- Eugene Kalinin <e.v.kalinin@gmail.com>
-
-
 Patches and Suggestions
 ```````````````````````
 
-- Alexandr / @Lispython
-- Dan North / @tastapod
-- Jeremy Banks / @jeremybanks
-- Stan Seibert / @seibert
-- Yi-Feng Tzeng (ant) / @yftzeng
-- Mrinal Wadhwa / @mrinalwadhwa
-- Xiaonuo Gantan / @XiaonuoGantan
-- Geoffrey Huntley / @ghuntley
-- Travis Miller / @puckbag
-- Vincent Bernat / @vincentbernat
-- Anton Parkhomenko / @chuwy
-- Shubhang Mani / @bhang
-- Elias Kunnas / @eliask
-- Alex Couper / @alexcouper
-- Vladimír Gorej / @char0n
-- Doug Turnbull / @softwaredoug
-- Kyle P Davis / @KylePDavis
+-  ivan hilkov 
+-  Vincent Bernat 
+-  Elias Kunnas 
+-  Doug Turnbull 
+-  Anton Parkhomenko 
+-  Travis Miller 
+-  Spencer Rathbun 
+-  Lispython 
+-  Dennis Flanigan 
+-  Alex Couper 
+-  Zenobius Jiricek 
+-  Yi-Feng Tzeng 
+-  Vladimír Gorej 
+-  Stan Seibert 
+-  Shubhang Mani 
+-  Mrinal Wadhwa 
+-  Kyle P Davis 
+-  Jeremy Banks 
+-  Geoffrey Huntley 
+-  dhilipsiva 
+-  Dennis Flanigan 
+-  Dan North 

@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.7.3
+-------------
+- Fixed npm.js redirect. See `# 52`_
+- Added ``--update`` option. See `# 25`_
+
+.. _# 52: https://github.com/ekalinin/nodeenv/pull/52
+.. _# 25: https://github.com/ekalinin/nodeenv/issues/25
+
 Version 0.7.2
 -------------
 - Bug fixing in ``freeze``. See `# 47`_

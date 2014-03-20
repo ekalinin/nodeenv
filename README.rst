@@ -53,6 +53,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
+* python 2.6 / 2.7
 * make
 * curl
 * egrep
@@ -63,7 +64,7 @@ For nodeenv
 For node.js
 ^^^^^^^^^^^
 
-* python
+* python 2.6 / 2.7
 * libssl-dev
 
 Usage

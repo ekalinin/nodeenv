@@ -374,6 +374,25 @@ def install_node(env_dir, src_dir, opt):
                  for name, value in zip(make_param_names, make_param_values)
                  if value is not None]
 
+    if sys.version_info.major > 2:
+        # Currently, the node.js build scripts are using python2.*, therefore
+        # we need to temporarily point python exec to the python 2.* version
+        # in this case.
+        try:
+            _, which_python2_output = callit(['which', 'python2'])
+            python2_path = which_python2_output[0].decode('utf-8')
+        except (OSError, IndexError):
+            raise OSError('Python >=3.0 virtualenv detected, but no python2'
+                          ' command (required for building node.js) was found')
+        logger.debug(' * Temporarily pointing python to %s', python2_path)
+        node_tmpbin_dir = join(src_dir, 'tmpbin')
+        node_tmpbin_link = join(node_tmpbin_dir, 'python')
+        mkdir(node_tmpbin_dir)
+        if not os.path.exists(node_tmpbin_link):
+            callit(['ln', '-s', python2_path, node_tmpbin_link])
+        env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
+                                     os.environ.get('PATH', ''))
+
     conf_cmd = []
     conf_cmd.append('./configure')
     conf_cmd.append('--prefix=%s' % pipes.quote(env_dir))

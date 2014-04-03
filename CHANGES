@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.8.0
+-------------
+- Added support for prebuilt packages. See `# 56`_
+- Added support for python3. See `# 42`_
+
+.. _# 56: https://github.com/ekalinin/nodeenv/issues/56
+.. _# 42: https://github.com/ekalinin/nodeenv/issues/42
+
 Version 0.7.3
 -------------
 - Fixed npm.js redirect. See `# 52`_

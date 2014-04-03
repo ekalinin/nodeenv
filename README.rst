@@ -53,7 +53,6 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* python 2.6 / 2.7
 * make
 * curl
 * egrep
@@ -64,7 +63,6 @@ For nodeenv
 For node.js
 ^^^^^^^^^^^
 
-* python 2.6 / 2.7
 * libssl-dev
 
 Usage
@@ -84,10 +82,10 @@ Activate new environment::
 Chek versions of main packages::
 
     (env) $ node -v
-    v0.4.6
+    v0.10.26
 
     (env) $ npm -v
-    0.3.18
+    1.4.3
 
 Deactivate environment::
 
@@ -114,6 +112,26 @@ Install node.js "0.4.3" without ssl support with 4 parallel commands
 for compilation and npm.js "0.3.17"::
 
     $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --jobs=4 env-4.3
+
+Install node.js from prebuilt package::
+
+    $ nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
+
+It mach faster then install & compile node.js from source::
+
+    $ time nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
+     + Install node.js (0.10.25) ... done.
+
+    real    0m6.928s
+    user    0m0.408s
+    sys     0m1.144s
+
+    $ time nodeenv --node=0.10.25 env-0.10.25-src
+     + Install node.js (0.10.25) ... done.
+
+    real    4m12.602s
+    user    6m34.112s
+    sys     0m30.524s
 
 Create a new environment with the system-wide node.js::
 

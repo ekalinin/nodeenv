@@ -10,7 +10,7 @@ deploy-pypi:
 update-pypi:
 	python setup.py register
 
-deploy: deploy-github deploy-pypi
+deploy: contributors deploy-github deploy-pypi
 
 clean:
 	@rm -rf nodeenv.egg-info/

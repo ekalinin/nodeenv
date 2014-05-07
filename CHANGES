@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.8.1
+-------------
+- Fixed system's node usage. See `# 62`_
+
+.. _# 62: https://github.com/ekalinin/nodeenv/pull/62
+
 Version 0.8.0
 -------------
 - Added support for prebuilt packages. See `# 56`_

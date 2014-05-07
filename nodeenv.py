@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.8.0'
+nodeenv_version = '0.8.1'
 
 import sys
 import os
@@ -34,6 +34,16 @@ abspath = os.path.abspath
 # ---------------------------------------------------------
 # Utils
 
+def node_version_from_opt(opt):
+    """
+    Parse the node version from the optparse options
+    """
+    if opt.node == 'system':
+        out, err = subprocess.Popen(
+            ["node", "--version"], stdout=subprocess.PIPE).communicate()
+        return parse_version(out.replace('\n','').replace('v', ''))
+
+    return parse_version(opt.node)
 
 def create_logger():
     """
@@ -522,7 +532,7 @@ def create_environment(env_dir, opt):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, opt)
-    if parse_version(opt.node) < parse_version("0.6.3") or opt.with_npm:
+    if node_version_from_opt(opt) < parse_version("0.6.3") or opt.with_npm:
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)

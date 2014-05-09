@@ -391,7 +391,7 @@ def install_node(env_dir, src_dir, opt):
 
     if opt.prebuilt:
         logger.info('.', extra=dict(continued=True))
-        callit(['cp', '-r', src_dir + '/*/*', env_dir], True, env_dir)
+        callit(['cp', '-r', src_dir + '/node-v*/*', env_dir], True, env_dir)
         logger.info('.', extra=dict(continued=True))
     else:
         env = {}

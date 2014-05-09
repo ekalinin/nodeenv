@@ -346,6 +346,9 @@ def download_node(node_url, src_dir, env_dir, opt):
     cmd.append('-')
     cmd.append('-C')
     cmd.append(pipes.quote(src_dir))
+    cmd.append('--exclude').append('ChangeLog')
+    cmd.append('--exclude').append('LICENSE')
+    cmd.append('--exclude').append('README')
     try:
         callit(cmd, opt.verbose, True, env_dir)
         logger.info(') ', extra=dict(continued=True))

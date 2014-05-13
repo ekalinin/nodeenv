@@ -4,6 +4,8 @@ Nodeenv changelog
 Version 0.9.1
 -------------
 - Fixed 'shim' script if used system-wide node
+- Fixed shebang in the 'shim'
+- Added shim with name 'node' in case of using system-wide node
 
 Version 0.9.0
 -------------

@@ -514,6 +514,8 @@ def install_activate(env_dir, opt):
     Install virtual environment activation script
     """
     files = {'activate': ACTIVATE_SH, 'shim': SHIM}
+    if opt.node == "system":
+        files["node"] = SHIM
     bin_dir = join(env_dir, 'bin')
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))

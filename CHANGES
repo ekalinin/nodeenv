@@ -1,6 +1,15 @@
 Nodeenv changelog
 =================
 
+Version 0.8.2
+-------------
+- Fixed prebuilt installation:
+    - cp more choosy. See `# 64`_
+    - exclude top-level files in prebuilt tar. See `# 63`_
+
+.. _#63: https://github.com/ekalinin/nodeenv/issues/63
+.. _#64: https://github.com/ekalinin/nodeenv/issues/64
+
 Version 0.8.1
 -------------
 - Fixed system's node usage. See `# 62`_

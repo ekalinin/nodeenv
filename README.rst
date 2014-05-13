@@ -197,7 +197,7 @@ file you can use ``--update`` option::
     (env-4.3)$ nodeenv --update=./requirements.txt
 
 If you whant to call node from environment without activation then you shoould
-use `shim` script:
+use `shim` script::
 
     $ ./env-4.3/bin/shim --version
     v0.4.3

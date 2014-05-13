@@ -376,6 +376,68 @@ def get_node_src_url_postfix(opt):
 # Virtual environment functions
 
 
+def copy_node_from_prebuilt(env_dir, src_dir):
+    """
+    Copy prebuilt binaries into environment
+    """
+    logger.info('.', extra=dict(continued=True))
+    callit(['cp', '-r', src_dir + '/node-v*/*', env_dir], True, env_dir)
+    logger.info('.', extra=dict(continued=True))
+
+
+def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
+    env = {}
+    make_param_names = ['load-average', 'jobs']
+    make_param_values = map(
+        lambda x: getattr(opt, x.replace('-', '_')),
+        make_param_names)
+    make_opts = [
+        '--{0}={1}'.format(name, value)
+        if len(value) > 0 else '--{0}'.format(name)
+        for name, value in zip(make_param_names, make_param_values)
+        if value is not None
+    ]
+
+    if sys.version_info.major > 2:
+        # Currently, the node.js build scripts are using python2.*,
+        # therefore we need to temporarily point python exec to the
+        # python 2.* version in this case.
+        try:
+            _, which_python2_output = callit(['which', 'python2'])
+            python2_path = which_python2_output[0].decode('utf-8')
+        except (OSError, IndexError):
+            raise OSError(
+                'Python >=3.0 virtualenv detected, but no python2 '
+                'command (required for building node.js) was found'
+            )
+        logger.debug(' * Temporarily pointing python to %s', python2_path)
+        node_tmpbin_dir = join(src_dir, 'tmpbin')
+        node_tmpbin_link = join(node_tmpbin_dir, 'python')
+        mkdir(node_tmpbin_dir)
+        if not os.path.exists(node_tmpbin_link):
+            callit(['ln', '-s', python2_path, node_tmpbin_link])
+        env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
+                                     os.environ.get('PATH', ''))
+
+    conf_cmd = []
+    conf_cmd.append('./configure')
+    conf_cmd.append('--prefix=%s' % pipes.quote(env_dir))
+    if opt.without_ssl:
+        conf_cmd.append('--without-ssl')
+    if opt.debug:
+        conf_cmd.append('--debug')
+    if opt.profile:
+        conf_cmd.append('--profile')
+
+    make_cmd = opt.make_path
+
+    callit(conf_cmd, opt.verbose, True, node_src_dir, env)
+    logger.info('.', extra=dict(continued=True))
+    callit([make_cmd] + make_opts, opt.verbose, True, node_src_dir, env)
+    logger.info('.', extra=dict(continued=True))
+    callit([make_cmd + ' install'], opt.verbose, True, node_src_dir, env)
+
+
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
@@ -395,60 +457,9 @@ def install_node(env_dir, src_dir, opt):
     logger.info('.', extra=dict(continued=True))
 
     if opt.prebuilt:
-        logger.info('.', extra=dict(continued=True))
-        callit(['cp', '-r', src_dir + '/node-v*/*', env_dir], True, env_dir)
-        logger.info('.', extra=dict(continued=True))
+        copy_node_from_prebuilt(env_dir, src_dir)
     else:
-        env = {}
-        make_param_names = ['load-average', 'jobs']
-        make_param_values = map(
-            lambda x: getattr(opt, x.replace('-', '_')),
-            make_param_names)
-        make_opts = [
-            '--{0}={1}'.format(name, value)
-            if len(value) > 0 else '--{0}'.format(name)
-            for name, value in zip(make_param_names, make_param_values)
-            if value is not None
-        ]
-
-        if sys.version_info.major > 2:
-            # Currently, the node.js build scripts are using python2.*,
-            # therefore we need to temporarily point python exec to the
-            # python 2.* version in this case.
-            try:
-                _, which_python2_output = callit(['which', 'python2'])
-                python2_path = which_python2_output[0].decode('utf-8')
-            except (OSError, IndexError):
-                raise OSError(
-                    'Python >=3.0 virtualenv detected, but no python2 '
-                    'command (required for building node.js) was found'
-                )
-            logger.debug(' * Temporarily pointing python to %s', python2_path)
-            node_tmpbin_dir = join(src_dir, 'tmpbin')
-            node_tmpbin_link = join(node_tmpbin_dir, 'python')
-            mkdir(node_tmpbin_dir)
-            if not os.path.exists(node_tmpbin_link):
-                callit(['ln', '-s', python2_path, node_tmpbin_link])
-            env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
-                                         os.environ.get('PATH', ''))
-
-        conf_cmd = []
-        conf_cmd.append('./configure')
-        conf_cmd.append('--prefix=%s' % pipes.quote(env_dir))
-        if opt.without_ssl:
-            conf_cmd.append('--without-ssl')
-        if opt.debug:
-            conf_cmd.append('--debug')
-        if opt.profile:
-            conf_cmd.append('--profile')
-
-        make_cmd = opt.make_path
-
-        callit(conf_cmd, opt.verbose, True, node_src_dir, env)
-        logger.info('.', extra=dict(continued=True))
-        callit([make_cmd] + make_opts, opt.verbose, True, node_src_dir, env)
-        logger.info('.', extra=dict(continued=True))
-        callit([make_cmd + ' install'], opt.verbose, True, node_src_dir, env)
+        build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 
     logger.info(' done.')
 

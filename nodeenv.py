@@ -34,6 +34,7 @@ abspath = os.path.abspath
 # ---------------------------------------------------------
 # Utils
 
+
 def node_version_from_opt(opt):
     """
     Parse the node version from the optparse options
@@ -41,9 +42,10 @@ def node_version_from_opt(opt):
     if opt.node == 'system':
         out, err = subprocess.Popen(
             ["node", "--version"], stdout=subprocess.PIPE).communicate()
-        return parse_version(out.replace('\n','').replace('v', ''))
+        return parse_version(out.replace('\n', '').replace('v',  ''))
 
     return parse_version(opt.node)
+
 
 def create_logger():
     """
@@ -182,7 +184,7 @@ def parse_args():
         help='Force installation in a pre-existing directory')
 
     parser.add_option(
-        '--make','-m',dest='make_path',
+        '--make', '-m', dest='make_path',
         metavar='MAKE_PATH',
         help='Path to make command',
         default='make')
@@ -402,21 +404,25 @@ def install_node(env_dir, src_dir, opt):
         make_param_values = map(
             lambda x: getattr(opt, x.replace('-', '_')),
             make_param_names)
-        make_opts = ['--{0}={1}'.format(name, value)
-                    if len(value) > 0 else '--{0}'.format(name)
-                    for name, value in zip(make_param_names, make_param_values)
-                    if value is not None]
+        make_opts = [
+            '--{0}={1}'.format(name, value)
+            if len(value) > 0 else '--{0}'.format(name)
+            for name, value in zip(make_param_names, make_param_values)
+            if value is not None
+        ]
 
         if sys.version_info.major > 2:
-            # Currently, the node.js build scripts are using python2.*, therefore
-            # we need to temporarily point python exec to the python 2.* version
-            # in this case.
+            # Currently, the node.js build scripts are using python2.*,
+            # therefore we need to temporarily point python exec to the
+            # python 2.* version in this case.
             try:
                 _, which_python2_output = callit(['which', 'python2'])
                 python2_path = which_python2_output[0].decode('utf-8')
             except (OSError, IndexError):
-                raise OSError('Python >=3.0 virtualenv detected, but no python2'
-                            ' command (required for building node.js) was found')
+                raise OSError(
+                    'Python >=3.0 virtualenv detected, but no python2 '
+                    'command (required for building node.js) was found'
+                )
             logger.debug(' * Temporarily pointing python to %s', python2_path)
             node_tmpbin_dir = join(src_dir, 'tmpbin')
             node_tmpbin_link = join(node_tmpbin_dir, 'python')
@@ -424,7 +430,7 @@ def install_node(env_dir, src_dir, opt):
             if not os.path.exists(node_tmpbin_link):
                 callit(['ln', '-s', python2_path, node_tmpbin_link])
             env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
-                                        os.environ.get('PATH', ''))
+                                         os.environ.get('PATH', ''))
 
         conf_cmd = []
         conf_cmd.append('./configure')

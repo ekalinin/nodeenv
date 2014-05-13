@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.9.0'
+nodeenv_version = '0.9.1'
 
 import sys
 import os
@@ -519,7 +519,7 @@ def install_activate(env_dir, opt):
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
     mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
                  stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
-    shim_node = "`which node`" if opt.node == "system" else bin_dir
+    shim_node = "`which node`" if opt.node == "system" else join(bin_dir, "node")
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
@@ -646,7 +646,7 @@ SHIM = """
 #!/bin/sh
 export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
-exec __SHIM_NODE__/node $*
+exec __SHIM_NODE__ $*
 """
 
 ACTIVATE_SH = """

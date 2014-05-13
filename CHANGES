@@ -1,6 +1,10 @@
 Nodeenv changelog
 =================
 
+Version 0.9.1
+-------------
+- Fixed 'shim' script if used system-wide node
+
 Version 0.9.0
 -------------
 - Added `shim` script. See `# 59`_

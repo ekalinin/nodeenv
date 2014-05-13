@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.8.2'
+nodeenv_version = '0.9.0'
 
 import sys
 import os
@@ -502,18 +502,20 @@ def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
     """
-    files = {'activate': ACTIVATE_SH}
+    files = {'activate': ACTIVATE_SH, 'shim': SHIM}
     bin_dir = join(env_dir, 'bin')
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
     mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
                  stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
+    shim_node = "`which node`" if opt.node == "system" else bin_dir
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
         content = content.replace('__NODE_VIRTUAL_ENV__',
                                   os.path.abspath(env_dir))
+        content = content.replace('__SHIM_NODE__', shim_node)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         writefile(file_path, content, append=opt.python_virtualenv)
@@ -627,6 +629,13 @@ NODE_VIRTUAL_ENV_DISABLE_PROMPT=1
 
 ENABLE_PROMPT = """
 unset NODE_VIRTUAL_ENV_DISABLE_PROMPT
+"""
+
+SHIM = """
+#!/bin/sh
+export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
+export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
+exec __SHIM_NODE__/node $*
 """
 
 ACTIVATE_SH = """

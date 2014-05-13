@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.9.0
+-------------
+- Added `shim` script. See `# 59`_
+
+.. _# 59: https://github.com/ekalinin/nodeenv/issues/59
+
 Version 0.8.2
 -------------
 - Fixed prebuilt installation:

@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.9.2
+-------------
+- Fixed infinite loop when system-wide node used. See `# 67`_
+
+.. _# 67: https://github.com/ekalinin/nodeenv/issues/67
+
 Version 0.9.1
 -------------
 - Fixed 'shim' script if used system-wide node

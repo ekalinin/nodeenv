@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.9.1'
+nodeenv_version = '0.9.2'
 
 import sys
 import os
@@ -521,7 +521,11 @@ def install_activate(env_dir, opt):
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
     mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
                  stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
-    shim_node = "`which node`" if opt.node == "system" else join(bin_dir, "node")
+
+    shim_node = join(bin_dir, "node")
+    if opt.node == "system":
+        _, which_node_output = callit(['which', 'node'])
+        shim_node = which_node_output[0]
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
@@ -574,7 +578,7 @@ def print_node_versions():
         "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
         "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ",
         shell=True, stdout=subprocess.PIPE)
-    #out, err = p.communicate()
+    # out, err = p.communicate()
     pos = 0
     rowx = []
     while 1:

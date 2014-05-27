@@ -381,7 +381,7 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     Copy prebuilt binaries into environment
     """
     logger.info('.', extra=dict(continued=True))
-    callit(['cp', '-r', src_dir + '/node-v*/*', env_dir], True, env_dir)
+    callit(['cp', '-a', src_dir + '/node-v*/*', env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 

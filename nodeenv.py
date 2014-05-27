@@ -42,7 +42,8 @@ def node_version_from_opt(opt):
     if opt.node == 'system':
         out, err = subprocess.Popen(
             ["node", "--version"], stdout=subprocess.PIPE).communicate()
-        return parse_version(out.replace('\n', '').replace('v',  ''))
+        return parse_version(
+            out.decode('utf-8').replace('\n', '').replace('v', ''))
 
     return parse_version(opt.node)
 
@@ -525,7 +526,7 @@ def install_activate(env_dir, opt):
     shim_node = join(bin_dir, "node")
     if opt.node == "system":
         _, which_node_output = callit(['which', 'node'])
-        shim_node = which_node_output[0]
+        shim_node = which_node_output[0].decode('utf-8')
 
     for name, content in files.items():
         file_path = join(bin_dir, name)

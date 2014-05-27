@@ -44,15 +44,26 @@ test3:
 		python setup.py install           && \
 		nodeenv -p
 
+# https://github.com/ekalinin/nodeenv/issues/43
 test4:
-	@echo " * test4: separate nodejs's env for python3.3"
-	@rm -rf env                                                  && \
-		virtualenv --no-site-packages --python=python3.3 env     && \
-		. env/bin/activate                                       && \
-		python3.3 setup.py install                               && \
-		python3.3 nodeenv -j 4 -p
+	@echo " * test4: separate nodejs's env for python3.4"
+	@rm -rf env                                                 && \
+		virtualenv --no-site-packages --python=python3.4 env    && \
+		. env/bin/activate                                      && \
+		python setup.py install                                 && \
+		nodeenv 4 -p --prebuilt                                 && \
+		nodeenv -p --node=system
 
-tests: clean test1 clean test2 clean test3 clean
+test5:
+	@echo " * test5: prebuilt nodejs's env for python2"
+	@rm -rf env                                 && \
+		virtualenv --no-site-packages env       && \
+		. env/bin/activate                      && \
+		python setup.py install                 && \
+		nodeenv 4 -p --prebuilt                 && \
+		nodeenv -p --node=system
+
+tests: clean test1 clean test2 clean test3 clean test4 clean test5 clean
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

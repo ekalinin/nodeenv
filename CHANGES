@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.9.3
+-------------
+- Fixed npm when using prebuilt binaries on Mac OS X. See `# 68`_
+- Fixed using ``system`` node under python3.4. See `# 43`_
+
+.. _# 68: https://github.com/ekalinin/nodeenv/issues/68
+.. _# 43: https://github.com/ekalinin/nodeenv/issues/43
+
 Version 0.9.2
 -------------
 - Fixed infinite loop when system-wide node used. See `# 67`_

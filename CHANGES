@@ -5,6 +5,7 @@ Version 0.9.3
 -------------
 - Fixed npm when using prebuilt binaries on Mac OS X. See `# 68`_
 - Fixed using ``system`` node under python3.4. See `# 43`_
+- If used ``system`` node script ``bin/node`` always overwritten
 
 .. _# 68: https://github.com/ekalinin/nodeenv/issues/68
 .. _# 43: https://github.com/ekalinin/nodeenv/issues/43

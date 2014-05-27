@@ -34,6 +34,19 @@ abspath = os.path.abspath
 # ---------------------------------------------------------
 # Utils
 
+def clear_output(out):
+    """
+    Remove new-lines and
+    """
+    return out.decode('utf-8').replace('\n', '')
+
+
+def remove_env_bin_from_path(env, env_bin_dir):
+    """
+    Remove bin directory of the current environment from PATH
+    """
+    return env.replace(env_bin_dir + ':', '')
+
 
 def node_version_from_opt(opt):
     """
@@ -42,8 +55,7 @@ def node_version_from_opt(opt):
     if opt.node == 'system':
         out, err = subprocess.Popen(
             ["node", "--version"], stdout=subprocess.PIPE).communicate()
-        return parse_version(
-            out.decode('utf-8').replace('\n', '').replace('v', ''))
+        return parse_version(clear_output(out).replace('v', ''))
 
     return parse_version(opt.node)
 
@@ -525,8 +537,11 @@ def install_activate(env_dir, opt):
 
     shim_node = join(bin_dir, "node")
     if opt.node == "system":
-        _, which_node_output = callit(['which', 'node'])
-        shim_node = which_node_output[0].decode('utf-8')
+        env = os.environ.copy()
+        env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
+        which_node_output, _ = subprocess.Popen(
+            ["which", "node"], stdout=subprocess.PIPE, env=env).communicate()
+        shim_node = clear_output(which_node_output)
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
@@ -536,7 +551,14 @@ def install_activate(env_dir, opt):
         content = content.replace('__SHIM_NODE__', shim_node)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
-        writefile(file_path, content, append=opt.python_virtualenv)
+        # if we call in the same environment:
+        #   $ nodeenv -p --prebuilt
+        #   $ nodeenv -p --node=system
+        # we should get `bin/node` not as binary+string.
+        # `bin/activate` should be appended if we inside
+        # existing python's virtual environment
+        need_append = False if name in ('node', 'shim') else opt.python_virtualenv
+        writefile(file_path, content, append=need_append)
         os.chmod(file_path, mode_0755)
 
 

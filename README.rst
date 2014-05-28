@@ -53,6 +53,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
+* python (>= 2.6)
 * make
 * curl
 * egrep
@@ -117,7 +118,7 @@ Install node.js from prebuilt package::
 
     $ nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
 
-It mach faster then install & compile node.js from source::
+It much faster then install & compile node.js from source::
 
     $ time nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
      + Install node.js (0.10.25) ... done.

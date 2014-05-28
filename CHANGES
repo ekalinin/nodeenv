@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.9.4
+-------------
+- Fixed support for python2.6. See `# 70`_
+
+.. _# 70: https://github.com/ekalinin/nodeenv/issues/70
+
 Version 0.9.3
 -------------
 - Fixed npm when using prebuilt binaries on Mac OS X. See `# 68`_

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.9.3'
+nodeenv_version = '0.9.4'
 
 import sys
 import os
@@ -33,6 +33,7 @@ abspath = os.path.abspath
 
 # ---------------------------------------------------------
 # Utils
+
 
 def clear_output(out):
     """
@@ -557,7 +558,7 @@ def install_activate(env_dir, opt):
         # we should get `bin/node` not as binary+string.
         # `bin/activate` should be appended if we inside
         # existing python's virtual environment
-        need_append = False if name in ('node', 'shim') else opt.python_virtualenv
+        need_append = 0 if name in ('node', 'shim') else opt.python_virtualenv
         writefile(file_path, content, append=need_append)
         os.chmod(file_path, mode_0755)
 

@@ -383,7 +383,7 @@ def get_node_src_url_postfix(opt):
     postfix_system = platform.system().lower()
     arches = {'x86_64': 'x64', 'i686': 'x86'}
     postfix_arch = arches[platform.machine()]
-    return '-{}-{}'.format(postfix_system, postfix_arch)
+    return '-{0}-{1}'.format(postfix_system, postfix_arch)
 
 # ---------------------------------------------------------
 # Virtual environment functions
@@ -411,7 +411,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
         if value is not None
     ]
 
-    if sys.version_info.major > 2:
+    if getattr(sys.version_info, 'major', sys.version_info[0]) > 2:
         # Currently, the node.js build scripts are using python2.*,
         # therefore we need to temporarily point python exec to the
         # python 2.* version in this case.

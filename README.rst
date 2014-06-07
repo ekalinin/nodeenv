@@ -80,7 +80,7 @@ Activate new environment::
 
     $ . env/bin/activate
 
-Chek versions of main packages::
+Check versions of main packages::
 
     (env) $ node -v
     v0.10.26
@@ -191,13 +191,13 @@ If environment's directory already exists then you can use ``--force`` option::
 
     $ nodeenv --requirements=requirements.txt --jobs=4 --force env
 
-If you alredy have an environment and want to update packages from requirements
+If you already have an environment and want to update packages from requirements
 file you can use ``--update`` option::
 
     $ . env-4.3/bin/activate
     (env-4.3)$ nodeenv --requirements=requirements.txt --update env-4.3
 
-If you whant to call node from environment without activation then you shoould
+If you want to call node from environment without activation then you should
 use `shim` script::
 
     $ ./env-4.3/bin/shim --version

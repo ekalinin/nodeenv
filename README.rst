@@ -147,7 +147,7 @@ Saving into the file versions of all installed packages::
 
 Create environment copy from requirement file::
 
-    $ nodeenv --requirement=../prod-requirements.txt --jobs=4 env-copy
+    $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
 
 Requirements files are plain text files that contain a list of packages 
 to be installed. These text files allow you to create repeatable installations.
@@ -189,13 +189,13 @@ environment::
 
 If environment's directory already exists then you can use ``--force`` option::
 
-    $ nodeenv --requirement=./requirements.txt --jobs=4 --force env
+    $ nodeenv --requirements=requirements.txt --jobs=4 --force env
 
 If you alredy have an environment and want to update packages from requirements
 file you can use ``--update`` option::
 
     $ . env-4.3/bin/activate
-    (env-4.3)$ nodeenv --update=./requirements.txt
+    (env-4.3)$ nodeenv --requirements=requirements.txt --update env-4.3
 
 If you whant to call node from environment without activation then you shoould
 use `shim` script::

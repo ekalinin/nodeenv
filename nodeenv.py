@@ -543,6 +543,7 @@ def install_activate(env_dir, opt):
         which_node_output, _ = subprocess.Popen(
             ["which", "node"], stdout=subprocess.PIPE, env=env).communicate()
         shim_node = clear_output(which_node_output)
+        assert shim_node, "Did not find nodejs or node system executable"
 
     for name, content in files.items():
         file_path = join(bin_dir, name)

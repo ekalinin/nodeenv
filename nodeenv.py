@@ -675,7 +675,7 @@ unset NODE_VIRTUAL_ENV_DISABLE_PROMPT
 SHIM = """#!/usr/bin/env bash
 export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
-exec __SHIM_NODE__ $*
+exec __SHIM_NODE__ "$@"
 """
 
 ACTIVATE_SH = """

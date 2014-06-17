@@ -1,2 +1,3 @@
 include *.py README README.rst LICENSE CHANGES
 exclude *.pyc *.swp
+recursive-include debian changelog compat control copyright rules nodeenv.links

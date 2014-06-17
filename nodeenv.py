@@ -542,7 +542,8 @@ def install_activate(env_dir, opt):
         env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
         for candidate in ("nodejs", "node"):
             which_node_output, _ = subprocess.Popen(
-                ["which", candidate], stdout=subprocess.PIPE, env=env).communicate()
+                ["which", candidate],
+                stdout=subprocess.PIPE, env=env).communicate()
             shim_node = clear_output(which_node_output)
             if shim_node:
                 break

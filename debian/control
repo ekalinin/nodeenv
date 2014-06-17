@@ -8,7 +8,7 @@ Homepage: https://github.com/ekalinin/nodeenv
 
 Package: nodeenv
 Architecture: any
-Depends: ${python:Depends}, ${misc:Depends}
+Depends: ${python:Depends}, ${misc:Depends}, nodejs
 Description: Node.js virtual environment builder
     .
     Tool to create isolated node.js environments, with its own 

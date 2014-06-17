@@ -726,14 +726,18 @@ deactivate_node () {
 }
 
 freeze () {
-    NPM_VER=`npm -v | cut -d '.' -f 1`
+    local NPM_VER=`npm -v | cut -d '.' -f 1`
+    local re="[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*"
     if [ "$NPM_VER" != '1' ]; then
         NPM_LIST=`npm list installed active 2>/dev/null | \
                   cut -d ' ' -f 1 | grep -v npm`
     else
-        NPM_LIST=`npm ls -g | grep -E '^.{4}\w{1}' | \
-                 grep -o -E '[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*' | \
-                 grep -v npm`
+        local npmls="npm ls -g"
+        if [ "$1" = "-l" ]; then
+            npmls="npm ls"
+            shift
+        fi
+        NPM_LIST=$($npmls| grep -E '^.{4}\w{1}'| grep -o -E "$re"| grep -v npm)
     fi
 
     if [ -z "$@" ]; then

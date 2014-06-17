@@ -1,6 +1,18 @@
 Nodeenv changelog
 =================
 
+Version 0.9.5
+-------------
+- Fixed a few spelling typos in README. See `# 74`_
+- Fixed example of using --update option in README. See `# 74`_
+- Improved args passing into shim script. See `# 75`_
+- Try to find ``nodejs`` if used system-wide node as well. See `# 76`_
+- Added ``assert`` if used system-wide node and it wasnt found. See `# 76`_
+
+.. _# 74: https://github.com/ekalinin/nodeenv/issues/74
+.. _# 75: https://github.com/ekalinin/nodeenv/pull/75
+.. _# 75: https://github.com/ekalinin/nodeenv/pull/76
+
 Version 0.9.4
 -------------
 - Fixed support for python2.6. See `# 70`_

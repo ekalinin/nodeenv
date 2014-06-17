@@ -145,6 +145,10 @@ Saving into the file versions of all installed packages::
     (env-4.3)$ npm install -g jade
     (env-4.3)$ freeze ../prod-requirements.txt
 
+If you want to list locally installed packages use ``-l`` option::
+
+    (env-4.3)$ freeze -l ../prod-requirements.txt
+
 Create environment copy from requirement file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy

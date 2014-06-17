@@ -1,0 +1,19 @@
+Source: nodeenv
+Section: contrib/python
+Priority: extra
+Maintainer: Eugene Kalinin <e.v.kalinin@gmail.com>
+Build-Depends: debhelper (>= 9), python, dh-virtualenv, unzip
+Standards-Version: 3.9.5
+Homepage: https://github.com/ekalinin/nodeenv
+
+Package: nodeenv
+Architecture: any
+Depends: ${python:Depends}, ${misc:Depends}
+Description: Node.js virtual environment builder
+    .
+    Tool to create isolated node.js environments, with its own 
+    installation directories, that doesn't share libraries with
+    other node.js virtual environments.
+    .
+    These environments can be integrated with ones created by
+    Python's virtualenv.

@@ -540,9 +540,13 @@ def install_activate(env_dir, opt):
     if opt.node == "system":
         env = os.environ.copy()
         env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
-        which_node_output, _ = subprocess.Popen(
-            ["which", "node"], stdout=subprocess.PIPE, env=env).communicate()
-        shim_node = clear_output(which_node_output)
+        for candidate in ("nodejs", "node"):
+            which_node_output, _ = subprocess.Popen(
+                ["which", candidate], stdout=subprocess.PIPE, env=env).communicate()
+            shim_node = clear_output(which_node_output)
+            if shim_node:
+                break
+        assert shim_node, "Did not find nodejs or node system executable"
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
@@ -561,6 +565,8 @@ def install_activate(env_dir, opt):
         need_append = 0 if name in ('node', 'shim') else opt.python_virtualenv
         writefile(file_path, content, append=need_append)
         os.chmod(file_path, mode_0755)
+
+    os.symlink("node", join(bin_dir, "nodejs"))
 
 
 def create_environment(env_dir, opt):

@@ -102,8 +102,7 @@ def parse_args():
         usage="%prog [OPTIONS] ENV_DIR")
 
     parser.add_option(
-        '-n', '--node', dest='node',
-        metavar='NODE_VER', default=get_last_stable_node_version(),
+        '-n', '--node', dest='node', metavar='NODE_VER',
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version. '
@@ -654,6 +653,7 @@ def main():
     Entry point
     """
     opt, args = parse_args()
+    opt.node = opt.node or get_last_stable_node_version()
 
     if opt.list:
         print_node_versions()

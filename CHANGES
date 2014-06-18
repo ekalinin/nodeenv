@@ -8,7 +8,7 @@ Version 0.9.5
 - Improved args passing into shim script. See `# 75`_
 - Try to find ``nodejs`` if used system-wide node as well. See `# 76`_
 - Added ``assert`` if used system-wide node and it wasnt found. See `# 76`_
-- Added ``-l`` option into ``freeze`` command. See ``# 71`_
+- Added ``-l`` option into ``freeze`` command. See `# 71`_
 
 .. _# 71: https://github.com/ekalinin/nodeenv/issues/71
 .. _# 74: https://github.com/ekalinin/nodeenv/issues/74
@@ -54,8 +54,8 @@ Version 0.8.2
     - cp more choosy. See `# 64`_
     - exclude top-level files in prebuilt tar. See `# 63`_
 
-.. _#63: https://github.com/ekalinin/nodeenv/issues/63
-.. _#64: https://github.com/ekalinin/nodeenv/issues/64
+.. _# 63: https://github.com/ekalinin/nodeenv/issues/63
+.. _# 64: https://github.com/ekalinin/nodeenv/issues/64
 
 Version 0.8.1
 -------------

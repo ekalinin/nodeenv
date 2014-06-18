@@ -54,8 +54,8 @@ Version 0.8.2
     - cp more choosy. See `# 64`_
     - exclude top-level files in prebuilt tar. See `# 63`_
 
-.. _#63: https://github.com/ekalinin/nodeenv/issues/63
-.. _#64: https://github.com/ekalinin/nodeenv/issues/64
+.. _# 63: https://github.com/ekalinin/nodeenv/issues/63
+.. _# 64: https://github.com/ekalinin/nodeenv/issues/64
 
 Version 0.8.1
 -------------

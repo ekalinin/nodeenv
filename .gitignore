@@ -8,3 +8,7 @@ env
 /dist/
 /*.egg-info/
 .ropeproject/
+debian/files
+debian/nodeenv.substvars
+/debian/sdist/
+/debian/nodeenv/

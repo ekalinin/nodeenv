@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.9.6
+-------------
+- Removed ``os.symlink`` added in `# 76`_. See `# 84`
+
+.._# 84: https://github.com/ekalinin/nodeenv/issues/84
+
 Version 0.9.5
 -------------
 - Fixed a few spelling typos in README. See `# 74`_

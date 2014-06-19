@@ -207,6 +207,18 @@ use `shim` script::
     $ ./env-4.3/bin/shim --version
     v0.4.3
 
+Configuration
+-------------
+You can use the INI-style file ``~/.nodeenvrc`` to set default values for many options,
+the keys in that file are the long command-line option names.
+
+These are the available options and their defaults::
+
+    [nodeenv]
+    node = None
+    npm = latest
+    with_npm = False
+
 Alternatives
 ------------
 

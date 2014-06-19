@@ -45,7 +45,7 @@ class Config(object):
     with_npm = False
 
     @classmethod
-    def load(cls, configfile=None):
+    def _load(cls, configfile=None):
         """
         Load configuration from given file or "~/.nodeenvrc".
         """
@@ -56,7 +56,7 @@ class Config(object):
 
             section = "nodeenv"
             for attr, val in vars(cls).iteritems():
-                if attr.startswith('_') or attr in ("load",) or not ini_file.has_option(section, attr):
+                if attr.startswith('_') or not ini_file.has_option(section, attr):
                     continue
 
                 if isinstance(val, bool):
@@ -65,6 +65,16 @@ class Config(object):
                     val = ini_file.get(section, attr)
 
                 setattr(cls, attr, val)
+
+    @classmethod
+    def _dump(cls):
+        """
+        Print defaults for the README.
+        """
+        print "    [nodeenv]"
+        print "    " + "\n    ".join("%s = %s" % (k, v)
+            for k, v in sorted(vars(cls).iteritems())
+            if not k.startswith('_'))
 
 
 def clear_output(out):
@@ -684,7 +694,10 @@ def main():
     """
     Entry point
     """
-    Config.load()
+    if "--dump-config-defaults" in sys.argv: # quick&dirty way to help update the README
+        Config._dump()
+        return
+    Config._load()
     opt, args = parse_args()
     opt.node = opt.node or get_last_stable_node_version()
 

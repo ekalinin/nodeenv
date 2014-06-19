@@ -212,7 +212,7 @@ def parse_args():
 
     parser.add_option(
         '--with-npm', dest='with_npm',
-        action='store_true',  default=Config.with_npm,
+        action='store_true', default=Config.with_npm,
         help='Build without installing npm into the new virtual environment. '
         'Required for node.js < 0.6.3. By default, the npm included with '
         'node.js is used.')
@@ -704,8 +704,8 @@ def main():
     if "--dump-config-defaults" in sys.argv:
         Config._dump()
         return
-    Config._load()
 
+    Config._load()
     opt, args = parse_args()
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

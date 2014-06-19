@@ -12,11 +12,11 @@
 # and a recursive explosion ensues when symlinks are followed.
 
 clean:
+	test ! -d dist || rm -rf dist
+	test ! -d debian/sdist || rm -rf debian/sdist
 	dh $@ --with python-virtualenv
 
 build:
-	test ! -d dist || rm -rf dist
-	test ! -d debian/sdist || rm -rf debian/sdist
 	python setup.py sdist --formats zip
 	unzip -d debian/sdist dist/*.zip
 	dh $@ --with python-virtualenv --sourcedir debian/sdist/*

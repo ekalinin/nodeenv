@@ -43,6 +43,12 @@ class Config(object):
     node = 'latest'
     npm = 'latest'
     with_npm = False
+    jobs = '2'
+    without_ssl = False
+    debug = False
+    profile = False
+    make = 'make'
+    prebuilt = False
 
     @classmethod
     def _load(cls, configfile=None):
@@ -151,7 +157,7 @@ def parse_args():
         'Use `system` to use system-wide node.')
 
     parser.add_option(
-        '-j', '--jobs', dest='jobs', default='2',
+        '-j', '--jobs', dest='jobs', default=Config.jobs,
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
@@ -187,21 +193,21 @@ def parse_args():
     parser.add_option(
         '--update', dest='update',
         action='store_true', default=False,
-        help='Install npm packages form file without node')
+        help='Install npm packages from file without node')
 
     parser.add_option(
         '--without-ssl', dest='without_ssl',
-        action='store_true', default=False,
+        action='store_true', default=Config.without_ssl,
         help='Build node.js without SSL support')
 
     parser.add_option(
         '--debug', dest='debug',
-        action='store_true', default=False,
+        action='store_true', default=Config.debug,
         help='Build debug variant of the node.js')
 
     parser.add_option(
         '--profile', dest='profile',
-        action='store_true', default=False,
+        action='store_true', default=Config.profile,
         help='Enable profiling for node.js')
 
     parser.add_option(
@@ -242,11 +248,11 @@ def parse_args():
         '--make', '-m', dest='make_path',
         metavar='MAKE_PATH',
         help='Path to make command',
-        default='make')
+        default=Config.make)
 
     parser.add_option(
         '--prebuilt', dest='prebuilt',
-        action='store_true', default=False,
+        action='store_true', default=Config.prebuilt,
         help='Install node.js from prebuilt package')
 
     options, args = parser.parse_args()

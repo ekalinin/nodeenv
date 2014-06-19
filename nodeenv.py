@@ -40,7 +40,7 @@ class Config(object):
     """
 
     # Defaults
-    node = None
+    node = 'latest'
     npm = 'latest'
     with_npm = False
 
@@ -699,7 +699,8 @@ def main():
         return
     Config._load()
     opt, args = parse_args()
-    opt.node = opt.node or get_last_stable_node_version()
+    if not opt.node or opt.node.lower() == "latest":
+        opt.node = get_last_stable_node_version()
 
     if opt.list:
         print_node_versions()

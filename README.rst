@@ -215,7 +215,7 @@ the keys in that file are the long command-line option names.
 These are the available options and their defaults::
 
     [nodeenv]
-    node = None
+    node = latest
     npm = latest
     with_npm = False
 

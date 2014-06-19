@@ -566,6 +566,9 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
         os.chmod(file_path, mode_0755)
 
+    if not os.path.exists("nodejs"):
+        os.symlink("node", join(bin_dir, "nodejs"))
+
 
 def create_environment(env_dir, opt):
     """

@@ -21,18 +21,50 @@ import subprocess
 import pipes
 
 try:
-    import ConfigParser
+    from ConfigParser import SafeConfigParser as ConfigParser
 except ImportError:
     # Python 3
     from configparser import ConfigParser
 
 from pkg_resources import parse_version
+from contextlib import closing
 
 join = os.path.join
 abspath = os.path.abspath
 
 # ---------------------------------------------------------
 # Utils
+class Config(object):
+    """
+    Configuration namespace.
+    """
+
+    # Defaults
+    node = None
+    npm = 'latest'
+    with_npm = False
+
+    @classmethod
+    def load(cls, configfile=None):
+        """
+        Load configuration from given file or "~/.nodeenvrc".
+        """
+        configfile = configfile or os.path.expanduser("~/.nodeenvrc")
+        if os.path.exists(configfile):
+            ini_file = ConfigParser()
+            ini_file.read(configfile)
+
+            section = "nodeenv"
+            for attr, val in vars(cls).iteritems():
+                if attr.startswith('_') or attr in ("load",) or not ini_file.has_option(section, attr):
+                    continue
+
+                if isinstance(val, bool):
+                    val = ini_file.getboolean(section, attr)
+                else:
+                    val = ini_file.get(section, attr)
+
+                setattr(cls, attr, val)
 
 
 def clear_output(out):
@@ -102,7 +134,7 @@ def parse_args():
         usage="%prog [OPTIONS] ENV_DIR")
 
     parser.add_option(
-        '-n', '--node', dest='node', metavar='NODE_VER',
+        '-n', '--node', dest='node', metavar='NODE_VER', default=Config.node,
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version. '
@@ -164,14 +196,14 @@ def parse_args():
 
     parser.add_option(
         '--with-npm', dest='with_npm',
-        action='store_true', default=False,
+        action='store_true',  default=Config.with_npm,
         help='Build without installing npm into the new virtual environment. '
         'Required for node.js < 0.6.3. By default, the npm included with '
         'node.js is used.')
 
     parser.add_option(
         '--npm', dest='npm',
-        metavar='NPM_VER', default='latest',
+        metavar='NPM_VER', default=Config.npm,
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
         'tarball to install. The default is last available version.')
@@ -652,6 +684,7 @@ def main():
     """
     Entry point
     """
+    Config.load()
     opt, args = parse_args()
     opt.node = opt.node or get_last_stable_node_version()
 

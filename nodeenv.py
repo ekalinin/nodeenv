@@ -694,10 +694,12 @@ def main():
     """
     Entry point
     """
-    if "--dump-config-defaults" in sys.argv: # quick&dirty way to help update the README
+    # quick&dirty way to help update the README
+    if "--dump-config-defaults" in sys.argv:
         Config._dump()
         return
     Config._load()
+
     opt, args = parse_args()
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

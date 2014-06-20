@@ -24,9 +24,6 @@ or with `pip`_::
 
     $ sudo pip install nodeenv
 
-or with `pip`_ another way::
-
-    $ pip install -e git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv
 
 Local installation
 ^^^^^^^^^^^^^^^^^^
@@ -45,6 +42,10 @@ install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
     $ ./nodeenv/nodeenv.py --help
+
+or with `pip`_::
+
+    $ pip install -e git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv
 
 .. _repository: https://github.com/ekalinin/nodeenv
 .. _pip: http://pypi.python.org/pypi/pip

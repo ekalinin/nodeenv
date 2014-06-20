@@ -20,9 +20,13 @@ You can install nodeenv globally with `easy_install`_::
 
     $ sudo easy_install nodeenv
 
-or `pip`_::
+or with `pip`_::
 
     $ sudo pip install nodeenv
+
+or with `pip`_ another way::
+
+    $ pip install -e git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv
 
 Local installation
 ^^^^^^^^^^^^^^^^^^

@@ -739,7 +739,7 @@ freeze () {
             npmls="npm ls"
             shift
         fi
-        NPM_LIST=$($npmls| grep -E '^.{4}\w{1}'| grep -o -E "$re"| grep -v npm)
+        NPM_LIST=$(eval ${npmls} | grep -E '^.{4}\w{1}'| grep -o -E "$re"| grep -v npm)
     fi
 
     if [ -z "$@" ]; then

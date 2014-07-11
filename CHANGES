@@ -1,9 +1,20 @@
 Nodeenv changelog
 =================
 
+Version 0.10.0
+--------------
+- Added support for config file. See `# 85`_
+- Using of virtualenv detected via python not env variable. See `#  87`_
+- Fixed ``freeze`` for zsh. See ``# 88``_
+- Added ``nodejs`` symlink creation. See `# 84`_
+
+.. _# 85: https://github.com/ekalinin/nodeenv/pull/85
+.. _# 87: https://github.com/ekalinin/nodeenv/pull/87
+.. _# 88: https://github.com/ekalinin/nodeenv/pull/88
+
 Version 0.9.6
 -------------
-- Removed ``os.symlink`` added in `# 76`_. See `# 84`
+- Removed ``os.symlink`` added in `# 76`_. See `# 84`_
 
 .._# 84: https://github.com/ekalinin/nodeenv/issues/84
 

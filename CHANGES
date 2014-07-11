@@ -4,8 +4,8 @@ Nodeenv changelog
 Version 0.10.0
 --------------
 - Added support for config file. See `# 85`_
-- Using of virtualenv detected via python not env variable. See `#  87`_
-- Fixed ``freeze`` for zsh. See ``# 88``_
+- Using of virtualenv detected via python not env variable. See `# 87`_
+- Fixed ``freeze`` for zsh. See `# 88`_
 - Added ``nodejs`` symlink creation. See `# 84`_
 
 .. _# 85: https://github.com/ekalinin/nodeenv/pull/85

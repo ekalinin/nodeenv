@@ -77,10 +77,10 @@ class Config(object):
         """
         Print defaults for the README.
         """
-        print "    [nodeenv]"
-        print "    " + "\n    ".join("%s = %s" % (k, v)
+        print ("    [nodeenv]")
+        print ("    " + "\n    ".join("%s = %s" % (k, v)
             for k, v in sorted(vars(cls).iteritems())
-            if not k.startswith('_'))
+            if not k.startswith('_')))
 
 
 def clear_output(out):

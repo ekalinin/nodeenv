@@ -6,6 +6,10 @@ env
 /TODO
 /build/
 /dist/
+/bin/
+/include/
+/lib/
+/local/
 /*.egg-info/
 .ropeproject/
 debian/files

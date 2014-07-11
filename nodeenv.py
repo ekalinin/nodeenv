@@ -21,18 +21,66 @@ import subprocess
 import pipes
 
 try:
-    import ConfigParser
+    from ConfigParser import SafeConfigParser as ConfigParser
 except ImportError:
     # Python 3
     from configparser import ConfigParser
 
 from pkg_resources import parse_version
+from contextlib import closing
 
 join = os.path.join
 abspath = os.path.abspath
 
 # ---------------------------------------------------------
 # Utils
+class Config(object):
+    """
+    Configuration namespace.
+    """
+
+    # Defaults
+    node = 'latest'
+    npm = 'latest'
+    with_npm = False
+    jobs = '2'
+    without_ssl = False
+    debug = False
+    profile = False
+    make = 'make'
+    prebuilt = False
+
+    @classmethod
+    def _load(cls, configfile=None):
+        """
+        Load configuration from given file or "~/.nodeenvrc".
+        """
+        configfile = configfile or os.path.expanduser("~/.nodeenvrc")
+        if os.path.exists(configfile):
+            ini_file = ConfigParser()
+            ini_file.read(configfile)
+
+            section = "nodeenv"
+            for attr, val in vars(cls).iteritems():
+                if attr.startswith('_') or not ini_file.has_option(section, attr):
+                    continue
+
+                if isinstance(val, bool):
+                    val = ini_file.getboolean(section, attr)
+                else:
+                    val = ini_file.get(section, attr)
+
+                setattr(cls, attr, val)
+
+    @classmethod
+    def _dump(cls):
+        """
+        Print defaults for the README.
+        """
+        print "    [nodeenv]"
+        print "    " + "\n    ".join("%s = %s" % (k, v)
+            for k, v in sorted(vars(cls).iteritems())
+            if not k.startswith('_'))
 
 
 def clear_output(out):
@@ -102,14 +150,14 @@ def parse_args():
         usage="%prog [OPTIONS] ENV_DIR")
 
     parser.add_option(
-        '-n', '--node', dest='node', metavar='NODE_VER',
+        '-n', '--node', dest='node', metavar='NODE_VER', default=Config.node,
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. The default is last stable version. '
         'Use `system` to use system-wide node.')
 
     parser.add_option(
-        '-j', '--jobs', dest='jobs', default='2',
+        '-j', '--jobs', dest='jobs', default=Config.jobs,
         help='Sets number of parallel commands at node.js compilation. '
         'The default is 2 jobs.')
 
@@ -145,33 +193,33 @@ def parse_args():
     parser.add_option(
         '--update', dest='update',
         action='store_true', default=False,
-        help='Install npm packages form file without node')
+        help='Install npm packages from file without node')
 
     parser.add_option(
         '--without-ssl', dest='without_ssl',
-        action='store_true', default=False,
+        action='store_true', default=Config.without_ssl,
         help='Build node.js without SSL support')
 
     parser.add_option(
         '--debug', dest='debug',
-        action='store_true', default=False,
+        action='store_true', default=Config.debug,
         help='Build debug variant of the node.js')
 
     parser.add_option(
         '--profile', dest='profile',
-        action='store_true', default=False,
+        action='store_true', default=Config.profile,
         help='Enable profiling for node.js')
 
     parser.add_option(
         '--with-npm', dest='with_npm',
-        action='store_true', default=False,
+        action='store_true', default=Config.with_npm,
         help='Build without installing npm into the new virtual environment. '
         'Required for node.js < 0.6.3. By default, the npm included with '
         'node.js is used.')
 
     parser.add_option(
         '--npm', dest='npm',
-        metavar='NPM_VER', default='latest',
+        metavar='NPM_VER', default=Config.npm,
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
         'tarball to install. The default is last available version.')
@@ -200,11 +248,11 @@ def parse_args():
         '--make', '-m', dest='make_path',
         metavar='MAKE_PATH',
         help='Path to make command',
-        default='make')
+        default=Config.make)
 
     parser.add_option(
         '--prebuilt', dest='prebuilt',
-        action='store_true', default=False,
+        action='store_true', default=Config.prebuilt,
         help='Install node.js from prebuilt package')
 
     options, args = parser.parse_args()
@@ -654,8 +702,15 @@ def main():
     """
     Entry point
     """
+    # quick&dirty way to help update the README
+    if "--dump-config-defaults" in sys.argv:
+        Config._dump()
+        return
+
+    Config._load()
     opt, args = parse_args()
-    opt.node = opt.node or get_last_stable_node_version()
+    if not opt.node or opt.node.lower() == "latest":
+        opt.node = get_last_stable_node_version()
 
     if opt.list:
         print_node_versions()

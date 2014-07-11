@@ -4,7 +4,7 @@ default:
 	: do nothing when dpkg-buildpackage runs this project Makefile
 
 deploy-github:
-	git tag `grep "nodeenv_version =" nodeenv.py | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
+	git tag `grep "nodeenv_version =" nodeenv.py | grep -o -E '[0-9]\.[0-9]{1,2}\.[0-9]{1,2}'`
 	git push --tags origin master
 
 deploy-pypi:

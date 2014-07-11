@@ -536,6 +536,7 @@ def install_activate(env_dir, opt):
                  stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
 
     shim_node = join(bin_dir, "node")
+    shim_nodejs = join(bin_dir, "nodejs")
     if opt.node == "system":
         env = os.environ.copy()
         env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
@@ -566,8 +567,8 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
         os.chmod(file_path, mode_0755)
 
-    if not os.path.exists("nodejs"):
-        os.symlink("node", join(bin_dir, "nodejs"))
+    if not os.path.exists(shim_nodejs):
+        os.symlink("node", shim_nodejs)
 
 
 def create_environment(env_dir, opt):

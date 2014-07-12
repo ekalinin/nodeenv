@@ -21,8 +21,7 @@ clean:
 build-arch:
 	/usr/bin/python setup.py sdist --formats tar
 	mkdir -p debian/sdist
-	tar -x -C debian/sdist --strip-components=1 -f dist/*.tar
-	rm -rf debian/sdist/*.egg-info
+	tar -x -C debian/sdist --strip-components=1 --exclude '*.egg-info' -f dist/*.tar
 	dh $@ $(DH_VENV_ARGS) --sourcedir debian/sdist
 
 %:

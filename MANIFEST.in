@@ -1,3 +1,3 @@
-include *.py README README.rst LICENSE CHANGES
-exclude *.pyc *.swp
-recursive-include debian changelog compat control copyright rules nodeenv.links
+include README LICENSE CHANGES AUTHORS
+include *.py *.rst setup.cfg Makefile
+graft debian

@@ -1,3 +1,7 @@
 include README LICENSE CHANGES AUTHORS
 include *.py *.rst setup.cfg Makefile
+
 graft debian
+prune debian/nodeenv
+prune debian/sdist
+recursive-exclude debian *.log *.substvars files

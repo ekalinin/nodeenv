@@ -24,6 +24,11 @@ or with `pip`_::
 
     $ sudo pip install nodeenv
 
+or on Debian using `dpkg`_::
+
+    $ dpkg-buildpackage -uc -us -b
+    $ sudo dpkg -i $(ls -1rt ../nodeenv_*.deb | tail -n1)
+
 
 Local installation
 ^^^^^^^^^^^^^^^^^^

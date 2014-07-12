@@ -11,15 +11,20 @@
 # sourcedir ".", because that includes the debian build stage,
 # and a recursive explosion ensues when symlinks are followed.
 
+DH_VENV_ARGS=--with python-virtualenv --setuptools --python /usr/bin/python #-v
+
 clean:
 	test ! -d dist || rm -rf dist
 	test ! -d debian/sdist || rm -rf debian/sdist
-	dh $@ --with python-virtualenv
+	dh $@ $(DH_VENV_ARGS)
 
-build:
-	python setup.py sdist --formats zip
+build-arch:
+	/usr/bin/python setup.py sdist --formats zip
 	unzip -d debian/sdist dist/*.zip
-	dh $@ --with python-virtualenv --sourcedir debian/sdist/*
+	mv debian/sdist/nodeenv-*/* debian/sdist
+	rm -rf debian/sdist/*.egg-info
+	rmdir debian/sdist/nodeenv-*
+	dh $@ $(DH_VENV_ARGS) --sourcedir debian/sdist
 
 %:
-	dh $@ --with python-virtualenv --sourcedir debian/sdist/*
+	dh $@ $(DH_VENV_ARGS) --sourcedir debian/sdist

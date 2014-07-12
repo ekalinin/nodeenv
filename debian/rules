@@ -19,11 +19,10 @@ clean:
 	dh $@ $(DH_VENV_ARGS)
 
 build-arch:
-	/usr/bin/python setup.py sdist --formats zip
-	unzip -d debian/sdist dist/*.zip
-	mv debian/sdist/nodeenv-*/* debian/sdist
+	/usr/bin/python setup.py sdist --formats tar
+	mkdir -p debian/sdist
+	tar -x -C debian/sdist --strip-components=1 -f dist/*.tar
 	rm -rf debian/sdist/*.egg-info
-	rmdir debian/sdist/nodeenv-*
 	dh $@ $(DH_VENV_ARGS) --sourcedir debian/sdist
 
 %:

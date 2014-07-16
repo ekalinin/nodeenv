@@ -1,11 +1,24 @@
+nodeenv (0.10.0) unstable; urgency=low
+
+  * Issue 85: Added support for config file
+  * Issue 84: Added `nodejs` symlink creation
+
+  [Eugene Kalinin]
+  * Issue 87: Using of virtualenv detected via python not envvar
+  * Issue 88: Fixed `freeze` for zsh
+
+ -- Juergen Hermann <jh@web.de>  Sat, 12 Jul 2014 00:00:57 +0200
+
 nodeenv (0.9.5+git-1479d8f) unstable; urgency=low
 
   * Issue 77: Debian packaging using dh-virtualenv
+  * Issue 76: Try to find "nodejs" as well, when using system-wide node
+  * Issue 76: Added "assert" for checking if system-wide node is actually found
+
+  [Eugene Kalinin]
   * Issue 74: Fixed a few spelling typos in README
   * Issue 74: Fixed example of using "--update" option in README
   * Issue 75: Improved args passing within shim script
-  * Issue 76: Try to find "nodejs" as well, when using system-wide node
-  * Issue 76: Added "assert" for checking if system-wide node is actually found
   * Issue 71: Added "-l" option to "freeze" command
 
  -- Juergen Hermann <jh@web.de>  Wed, 18 Jun 2014 12:32:45 +0200

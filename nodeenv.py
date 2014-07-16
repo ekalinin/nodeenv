@@ -51,19 +51,22 @@ class Config(object):
     prebuilt = False
 
     @classmethod
-    def _load(cls, configfile):
+    def _load(cls, configfiles, verbose=False):
         """
-        Load configuration from given file or "~/.nodeenvrc".
+        Load configuration from the given files in reverse order,
+        if they exist and have a [nodeenv] section.
         """
-        if not configfile:
-            return
+        for configfile in reversed(configfiles):
+            configfile = os.path.expanduser(configfile)
+            if not os.path.exists(configfile):
+                continue
 
-        configfile = os.path.expanduser(configfile)
-        if os.path.exists(configfile):
             ini_file = ConfigParser()
             ini_file.read(configfile)
-
             section = "nodeenv"
+            if not ini_file.has_section(section):
+                continue
+
             for attr, val in vars(cls).iteritems():
                 if attr.startswith('_') or not ini_file.has_option(section, attr):
                     continue
@@ -73,6 +76,8 @@ class Config(object):
                 else:
                     val = ini_file.get(section, attr)
 
+                if verbose:
+                    print('CONFIG {0}: {1} = {2}'.format(os.path.basename(configfile), attr, val))
                 setattr(cls, attr, val)
 
     @classmethod
@@ -273,10 +278,14 @@ def parse_args(check=True):
 
     options, args = parser.parse_args()
     if options.config_file is None:
-        options.config_file = "~/.nodeenvrc"
-    elif options.config_file and not os.path.exists(options.config_file):
+        options.config_file = ["./setup.cfg", "~/.nodeenvrc"]
+    elif not options.config_file:
+        options.config_file = []
+    else:
         # Make sure that explicitly provided files exist
-        parser.error("Config file '{0}' doesn't exist!".format(options.config_file))
+        if not os.path.exists(options.config_file):
+            parser.error("Config file '{0}' doesn't exist!".format(options.config_file))
+        options.config_file = [options.config_file]
 
     if not check:
         return options, args
@@ -727,7 +736,7 @@ def main():
         return
 
     opt, args = parse_args(check=False)
-    Config._load(opt.config_file)
+    Config._load(opt.config_file, opt.verbose)
 
     opt, args = parse_args()
     if not opt.node or opt.node.lower() == "latest":

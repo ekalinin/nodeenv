@@ -51,16 +51,22 @@ class Config(object):
     prebuilt = False
 
     @classmethod
-    def _load(cls, configfile=None):
+    def _load(cls, configfiles, verbose=False):
         """
-        Load configuration from given file or "~/.nodeenvrc".
+        Load configuration from the given files in reverse order,
+        if they exist and have a [nodeenv] section.
         """
-        configfile = configfile or os.path.expanduser("~/.nodeenvrc")
-        if os.path.exists(configfile):
+        for configfile in reversed(configfiles):
+            configfile = os.path.expanduser(configfile)
+            if not os.path.exists(configfile):
+                continue
+
             ini_file = ConfigParser()
             ini_file.read(configfile)
-
             section = "nodeenv"
+            if not ini_file.has_section(section):
+                continue
+
             for attr, val in vars(cls).iteritems():
                 if attr.startswith('_') or not ini_file.has_option(section, attr):
                     continue
@@ -70,6 +76,8 @@ class Config(object):
                 else:
                     val = ini_file.get(section, attr)
 
+                if verbose:
+                    print('CONFIG {0}: {1} = {2}'.format(os.path.basename(configfile), attr, val))
                 setattr(cls, attr, val)
 
     @classmethod
@@ -81,6 +89,11 @@ class Config(object):
         print ("    " + "\n    ".join("%s = %s" % (k, v)
             for k, v in sorted(vars(cls).iteritems())
             if not k.startswith('_')))
+
+Config._default = dict((attr, val)
+    for attr, val in vars(Config).iteritems()
+    if not attr.startswith('_')
+)
 
 
 def clear_output(out):
@@ -141,9 +154,11 @@ def create_logger():
 logger = create_logger()
 
 
-def parse_args():
+def parse_args(check=True):
     """
-    Parses command line arguments
+    Parses command line arguments.
+
+    Set `check` to False to skip validation checks.
     """
     parser = optparse.OptionParser(
         version=nodeenv_version,
@@ -153,7 +168,8 @@ def parse_args():
         '-n', '--node', dest='node', metavar='NODE_VER', default=Config.node,
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
-        'to create the new environment. The default is last stable version. '
+        'to create the new environment. '
+        'The default is last stable version (`latest`). '
         'Use `system` to use system-wide node.')
 
     parser.add_option(
@@ -174,7 +190,12 @@ def parse_args():
     parser.add_option(
         '-q', '--quiet',
         action='store_true', dest='quiet', default=False,
-        help="Quete mode")
+        help="Quiet mode")
+
+    parser.add_option(
+        '-C', '--config-file', dest='config_file', default=None,
+        help="Load a different file than '~/.nodeenvrc'. "
+        "Pass an empty string for no config (use built-in defaults).")
 
     parser.add_option(
         '-r', '--requirements',
@@ -222,7 +243,7 @@ def parse_args():
         metavar='NPM_VER', default=Config.npm,
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
-        'tarball to install. The default is last available version.')
+        'tarball to install. The default is last available version (`latest`).')
 
     parser.add_option(
         '--no-npm-clean', dest='no_npm_clean',
@@ -256,19 +277,27 @@ def parse_args():
         help='Install node.js from prebuilt package')
 
     options, args = parser.parse_args()
+    if options.config_file is None:
+        options.config_file = ["./setup.cfg", "~/.nodeenvrc"]
+    elif not options.config_file:
+        options.config_file = []
+    else:
+        # Make sure that explicitly provided files exist
+        if not os.path.exists(options.config_file):
+            parser.error("Config file '{0}' doesn't exist!".format(options.config_file))
+        options.config_file = [options.config_file]
+
+    if not check:
+        return options, args
 
     if not options.list and not options.python_virtualenv:
         if not args:
-            print('You must provide a DEST_DIR or '
-                  'use current python virtualenv')
-            parser.print_help()
-            sys.exit(2)
+            parser.error('You must provide a DEST_DIR or '
+                'use current python virtualenv')
 
         if len(args) > 1:
-            print('There must be only one argument: DEST_DIR (you gave %s)' % (
-                ' '.join(args)))
-            parser.print_help()
-            sys.exit(2)
+            parser.error('There must be only one argument: DEST_DIR '
+                '(you gave: {0})'.format(' '.join(args)))
 
     return options, args
 
@@ -706,7 +735,9 @@ def main():
         Config._dump()
         return
 
-    Config._load()
+    opt, args = parse_args(check=False)
+    Config._load(opt.config_file, opt.verbose)
+
     opt, args = parse_args()
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

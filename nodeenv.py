@@ -22,9 +22,12 @@ import pipes
 
 try:
     from ConfigParser import SafeConfigParser as ConfigParser
+    iteritems = lambda dict_: dict_.iteritems()
 except ImportError:
     # Python 3
     from configparser import ConfigParser
+    iteritems = lambda dict_: dict_.items()
+    
 
 from pkg_resources import parse_version
 from contextlib import closing
@@ -67,7 +70,7 @@ class Config(object):
             if not ini_file.has_section(section):
                 continue
 
-            for attr, val in vars(cls).iteritems():
+            for attr, val in iteritems(vars(cls)):
                 if attr.startswith('_') or not ini_file.has_option(section, attr):
                     continue
 
@@ -87,11 +90,11 @@ class Config(object):
         """
         print ("    [nodeenv]")
         print ("    " + "\n    ".join("%s = %s" % (k, v)
-            for k, v in sorted(vars(cls).iteritems())
+            for k, v in sorted(iteritems(vars(cls)))
             if not k.startswith('_')))
 
 Config._default = dict((attr, val)
-    for attr, val in vars(Config).iteritems()
+    for attr, val in iteritems(vars(Config))
     if not attr.startswith('_')
 )
 
@@ -719,6 +722,8 @@ def get_last_stable_node_version():
 def get_env_dir(opt, args):
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
+            return sys.prefix
+        elif hasattr(sys, 'base_prefix') and sys.base_prefix!=sys.prefix:
             return sys.prefix
         logger.error('No python virtualenv is available')
         sys.exit(2)

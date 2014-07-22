@@ -77,4 +77,4 @@ contributors:
 	@git log --raw | grep "^Author: " | \
 		sort | uniq -c | sort -n -r | \
 		cut -d ':' -f 2 | sed 's/^/- /' | \
-		cut -d '<' -f1 | uniq | tail -n +3 >> AUTHORS
+		cut -d '<' -f1 | uniq | grep -v Kalinin >> AUTHORS

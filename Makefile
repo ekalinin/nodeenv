@@ -23,7 +23,9 @@ clean:
 	@rm -rf nodeenv/
 
 test1:
-	@echo " * test1: separate nodejs's env"
+	@echo " ="
+	@echo " = test1: separate nodejs's env"
+	@echo " ="
 	@rm -rf env                           && \
 		virtualenv --no-site-packages env && \
 		. env/bin/activate                && \
@@ -32,7 +34,9 @@ test1:
 		nodeenv -j 4 nodeenv
 
 test2:
-	@echo " * test2: the same virtualenv's env, with 4 jobs"
+	@echo " ="
+	@echo " = test2: the same virtualenv's env, with 4 jobs"
+	@echo " ="
 	@rm -rf env                           && \
 		virtualenv --no-site-packages env && \
 		. env/bin/activate                && \
@@ -40,7 +44,9 @@ test2:
 		nodeenv -j 4 -p
 
 test3:
-	@echo " * test3: the same virtualenv's env, without any params"
+	@echo " ="
+	@echo " = test3: the same virtualenv's env, without any params"
+	@echo " ="
 	@rm -rf env                           && \
 		virtualenv --no-site-packages env && \
 		. env/bin/activate                && \
@@ -49,7 +55,9 @@ test3:
 
 # https://github.com/ekalinin/nodeenv/issues/43
 test4:
-	@echo " * test4: separate nodejs's env for python3.4"
+	@echo " ="
+	@echo " = test4: separate nodejs's env for python3.4"
+	@echo " ="
 	@rm -rf env                                                 && \
 		virtualenv --no-site-packages --python=python3.4 env    && \
 		. env/bin/activate                                      && \
@@ -58,7 +66,9 @@ test4:
 		nodeenv -p --node=system
 
 test5:
-	@echo " * test5: prebuilt nodejs's env for python2"
+	@echo " ="
+	@echo " = test5: prebuilt nodejs's env for python2"
+	@echo " ="
 	@rm -rf env                                 && \
 		virtualenv --no-site-packages --python=python2.7 env    && \
 		. env/bin/activate                      && \

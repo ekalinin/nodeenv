@@ -1,6 +1,18 @@
 Nodeenv changelog
 =================
 
+Version 0.11.0
+--------------
+- Improved dpkg rules. See `# 90`_
+- Added --config-file option. See `# 91`_
+- Read "./setup.cfg" in addition to "~/.nodeenvrc" by default. See `# 91`_
+- Python3 compatibility. See `# 92`_, `# 93`_
+
+.. _# 90: https://github.com/ekalinin/nodeenv/pull/90
+.. _# 91: https://github.com/ekalinin/nodeenv/pull/91
+.. _# 92: https://github.com/ekalinin/nodeenv/pull/92
+.. _# 93: https://github.com/ekalinin/nodeenv/pull/93
+
 Version 0.10.0
 --------------
 - Added support for config file. See `# 85`_

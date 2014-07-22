@@ -60,7 +60,7 @@ test4:
 test5:
 	@echo " * test5: prebuilt nodejs's env for python2"
 	@rm -rf env                                 && \
-		virtualenv --no-site-packages env       && \
+		virtualenv --no-site-packages --python=python2.7 env    && \
 		. env/bin/activate                      && \
 		python setup.py install                 && \
 		nodeenv 4 -p --prebuilt                 && \

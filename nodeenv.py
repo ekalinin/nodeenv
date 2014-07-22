@@ -27,16 +27,17 @@ except ImportError:
     # Python 3
     from configparser import ConfigParser
     iteritems = lambda dict_: dict_.items()
-    
+
 
 from pkg_resources import parse_version
-from contextlib import closing
 
 join = os.path.join
 abspath = os.path.abspath
 
 # ---------------------------------------------------------
 # Utils
+
+
 class Config(object):
     """
     Configuration namespace.
@@ -71,7 +72,8 @@ class Config(object):
                 continue
 
             for attr, val in iteritems(vars(cls)):
-                if attr.startswith('_') or not ini_file.has_option(section, attr):
+                if attr.startswith('_') or not \
+                   ini_file.has_option(section, attr):
                     continue
 
                 if isinstance(val, bool):
@@ -80,7 +82,8 @@ class Config(object):
                     val = ini_file.get(section, attr)
 
                 if verbose:
-                    print('CONFIG {0}: {1} = {2}'.format(os.path.basename(configfile), attr, val))
+                    print('CONFIG {0}: {1} = {2}'.format(
+                        os.path.basename(configfile), attr, val))
                 setattr(cls, attr, val)
 
     @classmethod
@@ -89,12 +92,13 @@ class Config(object):
         Print defaults for the README.
         """
         print ("    [nodeenv]")
-        print ("    " + "\n    ".join("%s = %s" % (k, v)
-            for k, v in sorted(iteritems(vars(cls)))
+        print ("    " + "\n    ".join(
+            "%s = %s" % (k, v) for k, v in sorted(iteritems(vars(cls)))
             if not k.startswith('_')))
 
-Config._default = dict((attr, val)
-    for attr, val in iteritems(vars(Config))
+
+Config._default = dict(
+    (attr, val) for attr, val in iteritems(vars(Config))
     if not attr.startswith('_')
 )
 
@@ -246,7 +250,8 @@ def parse_args(check=True):
         metavar='NPM_VER', default=Config.npm,
         help='The npm version to use, e.g., '
         '--npm=0.3.18 will use the npm-0.3.18.tgz '
-        'tarball to install. The default is last available version (`latest`).')
+        'tarball to install. '
+        'The default is last available version (`latest`).')
 
     parser.add_option(
         '--no-npm-clean', dest='no_npm_clean',
@@ -287,7 +292,8 @@ def parse_args(check=True):
     else:
         # Make sure that explicitly provided files exist
         if not os.path.exists(options.config_file):
-            parser.error("Config file '{0}' doesn't exist!".format(options.config_file))
+            parser.error("Config file '{0}' doesn't exist!".format(
+                options.config_file))
         options.config_file = [options.config_file]
 
     if not check:
@@ -296,11 +302,11 @@ def parse_args(check=True):
     if not options.list and not options.python_virtualenv:
         if not args:
             parser.error('You must provide a DEST_DIR or '
-                'use current python virtualenv')
+                         'use current python virtualenv')
 
         if len(args) > 1:
             parser.error('There must be only one argument: DEST_DIR '
-                '(you gave: {0})'.format(' '.join(args)))
+                         '(you gave: {0})'.format(' '.join(args)))
 
     return options, args
 
@@ -538,7 +544,7 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js (%s)' % opt.node,
+    logger.info(' * Install node.js (%s' % opt.node,
                 extra=dict(continued=True))
 
     node_url = get_node_src_url(opt.node, get_node_src_url_postfix(opt))
@@ -725,7 +731,7 @@ def get_env_dir(opt, args):
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
             return sys.prefix
-        elif hasattr(sys, 'base_prefix') and sys.base_prefix!=sys.prefix:
+        elif hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
             return sys.prefix
         logger.error('No python virtualenv is available')
         sys.exit(2)
@@ -832,7 +838,8 @@ freeze () {
             npmls="npm ls"
             shift
         fi
-        NPM_LIST=$(eval ${npmls} | grep -E '^.{4}\w{1}'| grep -o -E "$re"| grep -v npm)
+        NPM_LIST=$(eval ${npmls} | grep -E '^.{4}\w{1}'| \
+                                   grep -o -E "$re"| grep -v npm)
     fi
 
     if [ -z "$@" ]; then

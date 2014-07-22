@@ -399,7 +399,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
         line = stdout.readline()
         if not line:
             break
-        line = line.rstrip()
+        line = line.decode('utf-8').rstrip()
         all_output.append(line)
         if show_stdout:
             logger.info(line)
@@ -496,8 +496,10 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
         # therefore we need to temporarily point python exec to the
         # python 2.* version in this case.
         try:
-            _, which_python2_output = callit(['which', 'python2'])
-            python2_path = which_python2_output[0].decode('utf-8')
+            _, which_python2_output = callit(
+                ['which', 'python2'], opt.verbose, True, node_src_dir, env
+            )
+            python2_path = which_python2_output[0]
         except (OSError, IndexError):
             raise OSError(
                 'Python >=3.0 virtualenv detected, but no python2 '
@@ -536,7 +538,7 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js (%s' % opt.node,
+    logger.info(' * Install node.js (%s)' % opt.node,
                 extra=dict(continued=True))
 
     node_url = get_node_src_url(opt.node, get_node_src_url_postfix(opt))
@@ -699,7 +701,7 @@ def print_node_versions():
         if not row:
             logger.info('\t'.join(rowx))
             break
-        rowx.append(row.replace('\n', ''))
+        rowx.append(row.decode('utf-8').replace('\n', ''))
         if pos % 8 == 0:
             logger.info('\t'.join(rowx))
             rowx = []

@@ -338,18 +338,19 @@ def writefile(dest, content, overwrite=True, append=False):
         f = open(dest, 'rb')
         c = f.read()
         f.close()
-        if c != content.encode('utf-8'):
-            if not overwrite:
-                logger.info(' * File %s exists with different content; '
-                            ' not overwriting', dest)
-                return
-            if append:
+
+        if append:
+            if content.encode('utf-8') not in c:
                 logger.info(' * Appending nodeenv settings to %s', dest)
                 f = open(dest, 'ab')
                 f.write(DISABLE_POMPT.encode('utf-8'))
                 f.write(content.encode('utf-8'))
                 f.write(ENABLE_PROMPT.encode('utf-8'))
                 f.close()
+        elif c != content.encode('utf-8'):
+            if not overwrite:
+                logger.info(' * File %s exists with different content; '
+                            ' not overwriting', dest)
                 return
             logger.info(' * Overwriting %s with new content', dest)
             f = open(dest, 'wb')

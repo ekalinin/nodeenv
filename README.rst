@@ -26,6 +26,7 @@ or with `pip`_::
 
 or on Debian using `dpkg`_::
 
+    $ ln -s debian-upstream debian
     $ dpkg-buildpackage -uc -us -b
     $ sudo dpkg -i $(ls -1rt ../nodeenv_*.deb | tail -n1)
 

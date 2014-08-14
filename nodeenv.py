@@ -327,10 +327,11 @@ def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
+    content = content.encode('utf-8')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         f = open(dest, 'wb')
-        f.write(content.encode('utf-8'))
+        f.write(content)
         f.close()
         logger.debug('done.')
         return
@@ -338,7 +339,7 @@ def writefile(dest, content, overwrite=True, append=False):
         f = open(dest, 'rb')
         c = f.read()
         f.close()
-        if c != content.encode('utf-8'):
+        if c != content:
             if not overwrite:
                 logger.info(' * File %s exists with different content; '
                             ' not overwriting', dest)
@@ -347,13 +348,13 @@ def writefile(dest, content, overwrite=True, append=False):
                 logger.info(' * Appending nodeenv settings to %s', dest)
                 f = open(dest, 'ab')
                 f.write(DISABLE_POMPT.encode('utf-8'))
-                f.write(content.encode('utf-8'))
+                f.write(content)
                 f.write(ENABLE_PROMPT.encode('utf-8'))
                 f.close()
                 return
             logger.info(' * Overwriting %s with new content', dest)
             f = open(dest, 'wb')
-            f.write(content.encode('utf-8'))
+            f.write(content)
             f.close()
         else:
             logger.debug(' * Content %s already in place', dest)

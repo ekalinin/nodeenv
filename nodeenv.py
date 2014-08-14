@@ -337,23 +337,26 @@ def writefile(dest, content, overwrite=True, append=False):
     else:
         with open(dest, 'rb') as f:
             c = f.read()
-        if c != content:
-            if not overwrite:
-                logger.info(' * File %s exists with different content; '
-                            ' not overwriting', dest)
-                return
-            if append:
-                logger.info(' * Appending data to %s', dest)
-                with open(dest, 'ab') as f:
-                    f.write(DISABLE_POMPT.encode('utf-8'))
-                    f.write(content)
-                    f.write(ENABLE_PROMPT.encode('utf-8'))
-                return
-            logger.info(' * Overwriting %s with new content', dest)
-            with open(dest, 'wb') as f:
-                f.write(content)
-        else:
+        if c == content:
             logger.debug(' * Content %s already in place', dest)
+            return
+
+        if not overwrite:
+            logger.info(' * File %s exists with different content; '
+                        ' not overwriting', dest)
+            return
+
+        if append:
+            logger.info(' * Appending data to %s', dest)
+            with open(dest, 'ab') as f:
+                f.write(DISABLE_POMPT.encode('utf-8'))
+                f.write(content)
+                f.write(ENABLE_PROMPT.encode('utf-8'))
+            return
+
+        logger.info(' * Overwriting %s with new content', dest)
+        with open(dest, 'wb') as f:
+            f.write(content)
 
 
 def callit(cmd, show_stdout=True, in_shell=False,

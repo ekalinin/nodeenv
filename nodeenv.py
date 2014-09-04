@@ -782,6 +782,7 @@ unset NODE_VIRTUAL_ENV_DISABLE_PROMPT
 SHIM = """#!/usr/bin/env bash
 export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
+export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
 """
 
@@ -804,6 +805,10 @@ deactivate_node () {
         NPM_CONFIG_PREFIX="$_OLD_NPM_CONFIG_PREFIX"
         export NPM_CONFIG_PREFIX
         unset _OLD_NPM_CONFIG_PREFIX
+
+        npm_config_prefix="$_OLD_npm_config_prefix"
+        export npm_config_prefix
+        unset _OLD_npm_config_prefix
     fi
 
     # This should detect bash and zsh, which have a hash command that must
@@ -881,6 +886,10 @@ export NODE_PATH
 _OLD_NPM_CONFIG_PREFIX="$NPM_CONFIG_PREFIX"
 NPM_CONFIG_PREFIX="$NODE_VIRTUAL_ENV"
 export NPM_CONFIG_PREFIX
+
+_OLD_npm_config_prefix="$npm_config_prefix"
+npm_config_prefix="$NODE_VIRTUAL_ENV"
+export npm_config_prefix
 
 if [ -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     _OLD_NODE_VIRTUAL_PS1="$PS1"

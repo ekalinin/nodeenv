@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.11.1
+--------------
+- Disallow prefix overridden by .npmrc. See `# 98`_, `# 100`_, `# 103`_
+
+.. _# 98: https://github.com/ekalinin/nodeenv/issue/98
+.. _# 100: https://github.com/ekalinin/nodeenv/pull/100
+.. _# 103: https://github.com/ekalinin/nodeenv/pull/103
+
 Version 0.11.0
 --------------
 - Improved dpkg rules. See `# 90`_

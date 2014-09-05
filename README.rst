@@ -10,9 +10,9 @@ that doesn't share libraries with other node.js virtual environments.
 Also new environment can be integrated with environment which was built
 by virtualenv_ (python).
 
-If you use nodeenv feel free to add your project on wiki_.
+If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
 
-.. _wiki: https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv
+.. _Who-Uses-Nodeenv: https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv
 
 Install
 -------

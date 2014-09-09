@@ -1,3 +1,18 @@
+nodeenv (0.11.1-1) unstable; urgency=low
+
+  * dh-virtualenv issue 48: Mirror any interpreter changes caused
+    by Python package updates
+
+  [Eugene Kalinin]
+  * Issues 98, 100, 103: Disallow prefix overridden by .npmrc
+  * Issue 90: Improved dpkg rules
+  * Issue 91: Added --config-file option
+  * Issue 91: Read "./setup.cfg" in addition to "~/.nodeenvrc"
+    by default
+  * Issues 92, 93: Python3 compatibility
+
+ -- Juergen Hermann <jh@web.de>  Mon, 08 Sep 2014 16:27:07 +0200
+
 nodeenv (0.10.0) unstable; urgency=low
 
   * Issue 85: Added support for config file

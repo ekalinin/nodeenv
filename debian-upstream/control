@@ -8,6 +8,7 @@ Homepage: https://github.com/ekalinin/nodeenv
 
 Package: nodeenv
 Architecture: any
+Pre-Depends: dpkg (>= 1.16.1), python2.7-minimal | python2.6-minimal
 Depends: ${python:Depends}, ${misc:Depends}
 Recommends: nodejs
 Description: Node.js virtual environment builder

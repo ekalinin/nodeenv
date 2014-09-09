@@ -17,7 +17,7 @@ safe_interpreter_update() {
         test -x "$interpreter_path" || continue
 
         # skip if already identical
-        if cmp "/usr/bin/$pythonX_Y" "$interpreter_path,new" >/dev/null 2>&1; then
+        if cmp "/usr/bin/$pythonX_Y" "$interpreter_path" >/dev/null 2>&1; then
             continue
         fi
 

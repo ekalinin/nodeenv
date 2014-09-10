@@ -12,7 +12,8 @@ env
 /local/
 /*.egg-info/
 .ropeproject/
-debian/files
-debian/nodeenv.substvars
-/debian/sdist/
-/debian/nodeenv/
+debian
+debian-upstream/files
+debian-upstream/nodeenv.substvars
+/debian-upstream/sdist/
+/debian-upstream/nodeenv/

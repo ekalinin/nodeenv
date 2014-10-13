@@ -15,5 +15,6 @@ env
 debian
 debian-upstream/files
 debian-upstream/nodeenv.substvars
+debian-upstream/nodeenv.*.debhelper
 /debian-upstream/sdist/
 /debian-upstream/nodeenv/

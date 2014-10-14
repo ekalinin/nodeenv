@@ -1,7 +1,7 @@
 nodeenv (0.11.1-1) unstable; urgency=low
 
   * dh-virtualenv issue 48: Mirror any interpreter changes caused
-    by Python package updates
+    by Python package updates; now using dh-virtualenv 0.8
 
   [Eugene Kalinin]
   * Issues 98, 100, 103: Disallow prefix overridden by .npmrc
@@ -11,7 +11,7 @@ nodeenv (0.11.1-1) unstable; urgency=low
     by default
   * Issues 92, 93: Python3 compatibility
 
- -- Juergen Hermann <jh@web.de>  Mon, 08 Sep 2014 16:27:07 +0200
+ -- Juergen Hermann <jh@web.de>  Mon, 13 Oct 2014 15:38:01 +0200
 
 nodeenv (0.10.0) unstable; urgency=low
 

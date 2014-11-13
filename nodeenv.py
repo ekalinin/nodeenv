@@ -15,7 +15,12 @@ nodeenv_version = '0.11.1'
 import sys
 import os
 import re
-import urllib2
+try:
+    # python 2
+    from urllib2 import urlopen
+except ImportError:
+    # python 3
+    from urllib.request import urlopen
 import stat
 import logging
 import optparse
@@ -721,7 +726,7 @@ def get_last_stable_node_version():
     """
     from lxml import etree
 
-    response = urllib2.urlopen('http://nodejs.org/dist/latest/')
+    response = urlopen('http://nodejs.org/dist/latest/')
     html = etree.HTML(response.read())
 
     links = []

@@ -21,7 +21,6 @@ import logging
 import optparse
 import subprocess
 import pipes
-from lxml import etree
 
 try:
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -720,6 +719,8 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
+    from lxml import etree
+
     response = urllib2.urlopen('http://nodejs.org/dist/latest/')
     html = etree.HTML(response.read())
 

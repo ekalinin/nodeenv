@@ -14,11 +14,14 @@ nodeenv_version = '0.11.1'
 
 import sys
 import os
+import re
+import urllib2
 import stat
 import logging
 import optparse
 import subprocess
 import pipes
+from lxml import etree
 
 try:
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -717,14 +720,32 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    p = subprocess.Popen(
-        "curl -s http://nodejs.org/dist/latest/ | "
-        "egrep -o 'node-v[0-9]+\.[0-9]+\.[0-9]+' | "
-        "sed -e 's/node-v//' | "
-        "sort -u -k 1,1n -k 2,2n -k 3,3n -t . | "
-        "tail -n1",
-        shell=True, stdout=subprocess.PIPE)
-    return p.stdout.read().decode("utf-8").replace("\n", "")
+    response = urllib2.urlopen('http://nodejs.org/dist/latest/')
+    html = etree.HTML(response.read())
+
+    links = []
+    pattern = re.compile(r'''node-v([0-9]+)\.([0-9]+)\.([0-9]+)\.tar\.gz''')
+
+    for a in html.xpath('//a'):
+        href = a.attrib.get('href', '')
+        match = pattern.match(href)
+        if match:
+            version = u'.'.join(match.groups())
+            major, minor, revision = map(int, match.groups())
+            links.append((version, major, minor, revision))
+
+    def url_cmp(a, b):
+        a_url, a_major, a_minor, a_rev = a
+        b_url, b_major, b_minor, b_rev = b
+
+        if a_major == b_major:
+            if a_minor == b_minor:
+                return cmp(a_rev, b_rev)
+            return cmp(a_minor, b_minor)
+        return cmp(a_major, b_major)
+
+    links.sort(cmp=url_cmp)
+    return links[-1][0]
 
 
 def get_env_dir(opt, args):

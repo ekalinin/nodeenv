@@ -26,6 +26,9 @@ setup(
     license='BSD',
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
+    install_requires = [
+        'lxml',
+    ],
     description="Node.js virtual environment builder",
     long_description=ldesc,
     py_modules=['nodeenv'],

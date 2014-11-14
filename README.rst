@@ -42,6 +42,7 @@ or on Debian using `dpkg`_::
     $ dpkg-buildpackage -uc -us -b
     $ sudo dpkg -i $(ls -1rt ../nodeenv_*.deb | tail -n1)
 
+.. _dpkg: https://www.debian.org/doc/manuals/debian-faq/ch-pkgtools.en.html
 
 Local installation
 ^^^^^^^^^^^^^^^^^^

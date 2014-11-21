@@ -268,3 +268,8 @@ There are several alternatives that create isolated environments:
 * virtualenv_ — Virtual Python Environment builder. For python only.
 
 .. _`virtualenv`: https://github.com/pypa/virtualenv
+
+LICENSE
+=======
+
+BSD / `LICENSE <https://github.com/ekalinin/nodeenv/blob/master/LICENSE>`_

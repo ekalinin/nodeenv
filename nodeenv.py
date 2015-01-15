@@ -751,18 +751,8 @@ def get_last_stable_node_version():
             version = u'.'.join(match.groups())
             major, minor, revision = map(int, match.groups())
             links.append((version, major, minor, revision))
+            break
 
-    def url_cmp(a, b):
-        a_url, a_major, a_minor, a_rev = a
-        b_url, b_major, b_minor, b_rev = b
-
-        if a_major == b_major:
-            if a_minor == b_minor:
-                return cmp(a_rev, b_rev)
-            return cmp(a_minor, b_minor)
-        return cmp(a_major, b_major)
-
-    links.sort(cmp=url_cmp)
     return links[-1][0]
 
 

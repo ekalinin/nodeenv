@@ -40,6 +40,7 @@ from pkg_resources import parse_version
 
 join = os.path.join
 abspath = os.path.abspath
+src_domain = "nodejs.org"
 
 # ---------------------------------------------------------
 # Utils
@@ -185,6 +186,11 @@ def parse_args(check=True):
         'to create the new environment. '
         'The default is last stable version (`latest`). '
         'Use `system` to use system-wide node.')
+
+    parser.add_option(
+        '-i', '--iojs',
+        action='store_true', dest='io', default=False,
+        help='Use iojs instead of nodejs.')
 
     parser.add_option(
         '-j', '--jobs', dest='jobs', default=Config.jobs,
@@ -430,12 +436,12 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 
 def get_node_src_url(version, postfix=''):
-    node_name = 'node-v%s%s' % (version, postfix)
+    node_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     tar_name = '%s.tar.gz' % (node_name)
     if parse_version(version) > parse_version("0.5.0"):
-        node_url = 'http://nodejs.org/dist/v%s/%s' % (version, tar_name)
+        node_url = 'http://%s/dist/v%s/%s' % (src_domain, version, tar_name)
     else:
-        node_url = 'http://nodejs.org/dist/%s' % (tar_name)
+        node_url = 'http://%s/dist/%s' % (src_domain, tar_name)
     return node_url
 
 
@@ -487,7 +493,8 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     Copy prebuilt binaries into environment
     """
     logger.info('.', extra=dict(continued=True))
-    callit(['cp', '-a', src_dir + '/node-v*/*', env_dir], True, env_dir)
+    prefix = get_binary_prefix()
+    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 
@@ -546,16 +553,20 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
     callit([make_cmd + ' install'], opt.verbose, True, node_src_dir, env)
 
 
+def get_binary_prefix():
+    return 'node' if src_domain == 'nodejs.org' else 'iojs'
+
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    logger.info(' * Install node.js (%s' % opt.node,
+    prefix = get_binary_prefix()
+    logger.info(' * Install %s (%s' % (prefix, opt.node),
                 extra=dict(continued=True))
 
     node_url = get_node_src_url(opt.node, get_node_src_url_postfix(opt))
-    node_src_dir = join(src_dir, 'node-v%s' % (opt.node))
+    node_src_dir = join(src_dir, '%s-v%s' % (prefix, opt.node))
     env_dir = abspath(env_dir)
 
     # get src if not downloaded yet
@@ -701,9 +712,9 @@ def print_node_versions():
     Prints into stdout all available node.js versions
     """
     p = subprocess.Popen(
-        "curl -s http://nodejs.org/dist/ | "
-        "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
-        "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ",
+        ("curl -s https://%s/dist/ | "
+         "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
+         "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ") % (src_domain),
         shell=True, stdout=subprocess.PIPE)
     # out, err = p.communicate()
     pos = 0
@@ -726,11 +737,12 @@ def get_last_stable_node_version():
     """
     from lxml import etree
 
-    response = urlopen('http://nodejs.org/dist/latest/')
+    response = urlopen('http://%s/dist/latest/' % (src_domain))
     html = etree.HTML(response.read())
 
     links = []
-    pattern = re.compile(r'''node-v([0-9]+)\.([0-9]+)\.([0-9]+)\.tar\.gz''')
+    pattern = re.compile(r'''%s-v([0-9]+)\.([0-9]+)\.([0-9]+)\.tar\.gz''' % (
+        get_binary_prefix()))
 
     for a in html.xpath('//a'):
         href = a.attrib.get('href', '')
@@ -779,6 +791,11 @@ def main():
     Config._load(opt.config_file, opt.verbose)
 
     opt, args = parse_args()
+
+    if opt.io:
+        global src_domain
+        src_domain = "iojs.org"
+
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()
 

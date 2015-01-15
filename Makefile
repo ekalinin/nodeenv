@@ -1,4 +1,4 @@
-.PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests
+.PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests env
 
 default:
 	: do nothing when dpkg-buildpackage runs this project Makefile
@@ -21,6 +21,12 @@ clean:
 	@rm -rf build/
 	@rm -rf env/
 	@rm -rf nodeenv/
+
+env:
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install
 
 test1:
 	@echo " ="
@@ -75,6 +81,16 @@ test5:
 		python setup.py install                 && \
 		nodeenv 4 -p --prebuilt                 && \
 		nodeenv -p --node=system
+
+test6:
+	@echo " ="
+	@echo " = test6: separate iojs's env"
+	@echo " ="
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		nodeenv -p --prebuilt --iojs
 
 tests: clean test1 clean test2 clean test3 clean test4 clean test5 clean
 

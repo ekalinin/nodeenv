@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.11.1'
+nodeenv_version = '0.12.0'
 
 import sys
 import os

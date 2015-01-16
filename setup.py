@@ -8,6 +8,7 @@ import os
 from setuptools import setup
 from nodeenv import nodeenv_version
 
+
 def read_file(file_name):
     return open(
         os.path.join(
@@ -26,9 +27,7 @@ setup(
     license='BSD',
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
-    install_requires = [
-        'lxml',
-    ],
+    install_requires=[],
     description="Node.js virtual environment builder",
     long_description=ldesc,
     py_modules=['nodeenv'],

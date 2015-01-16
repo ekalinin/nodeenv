@@ -15,26 +15,22 @@ nodeenv_version = '0.12.0'
 import sys
 import os
 import re
-try:
-    # python 2
-    from urllib2 import urlopen
-except ImportError:
-    # python 3
-    from urllib.request import urlopen
 import stat
 import logging
 import optparse
 import subprocess
 import pipes
 
-try:
+try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
+    from HTMLParser import HTMLParser
+    from urllib2 import urlopen
     iteritems = lambda dict_: dict_.iteritems()
-except ImportError:
-    # Python 3
+except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
+    from html.parser import HTMLParser
+    from urllib.request import urlopen
     iteritems = lambda dict_: dict_.items()
-
 
 from pkg_resources import parse_version
 
@@ -99,8 +95,8 @@ class Config(object):
         """
         Print defaults for the README.
         """
-        print ("    [nodeenv]")
-        print ("    " + "\n    ".join(
+        print("    [nodeenv]")
+        print("    " + "\n    ".join(
             "%s = %s" % (k, v) for k, v in sorted(iteritems(vars(cls)))
             if not k.startswith('_')))
 
@@ -556,6 +552,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
 def get_binary_prefix():
     return 'node' if src_domain == 'nodejs.org' else 'iojs'
 
+
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
@@ -731,21 +728,30 @@ def print_node_versions():
             rowx = []
 
 
+class GetsAHrefs(HTMLParser):
+    def __init__(self):
+        # Old style class in py2 :(
+        HTMLParser.__init__(self)
+        self.hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            self.hrefs.append(dict(attrs).get('href', ''))
+
+
 def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    from lxml import etree
-
     response = urlopen('http://%s/dist/latest/' % (src_domain))
-    html = etree.HTML(response.read())
+    href_parser = GetsAHrefs()
+    href_parser.feed(response.read().decode('UTF-8'))
 
     links = []
     pattern = re.compile(r'''%s-v([0-9]+)\.([0-9]+)\.([0-9]+)\.tar\.gz''' % (
         get_binary_prefix()))
 
-    for a in html.xpath('//a'):
-        href = a.attrib.get('href', '')
+    for href in href_parser.hrefs:
         match = pattern.match(href)
         if match:
             version = u'.'.join(match.groups())

@@ -14,6 +14,9 @@ If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
 
 .. _Who-Uses-Nodeenv: https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv
 
+.. image:: https://travis-ci.org/ekalinin/nodeenv.svg?branch=master
+    :target: https://travis-ci.org/ekalinin/nodeenv
+
 Install
 -------
 

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.12.0'
+nodeenv_version = '0.12.1'
 
 import sys
 import os
@@ -743,7 +743,7 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    response = urlopen('http://%s/dist/latest/' % (src_domain))
+    response = urlopen('https://%s/dist/latest/' % (src_domain))
     href_parser = GetsAHrefs()
     href_parser.feed(response.read().decode('UTF-8'))
 

@@ -1,6 +1,19 @@
 Nodeenv changelog
 =================
 
+Version 0.12.1
+--------------
+- Removed dep for lxml in favor of stdlib HTMLParser. See `# 109`_
+- Added integration with travis-ci. See `# 109`_
+- Added some tests. See `# 109`_
+
+.. _# 109: https://github.com/ekalinin/nodeenv/pull/109
+
+Version 0.12.0
+--------------
+- Added support for io.js (new option ``--iojs``)
+- Fixed ``get_last_stable_node_version`` for python3
+
 Version 0.11.1
 --------------
 - Disallow prefix overridden by .npmrc. See `# 98`_, `# 100`_, `# 103`_

@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.12.2
+--------------
+- Added check for installed curl/egrep/sort/tar. See `# 110`_
+
+.. _# 110: https://github.com/ekalinin/nodeenv/issues/110
+
 Version 0.12.1
 --------------
 - Removed dep for lxml in favor of stdlib HTMLParser. See `# 109`_

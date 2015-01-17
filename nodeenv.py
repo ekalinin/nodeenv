@@ -774,6 +774,16 @@ def get_env_dir(opt, args):
         return args[0]
 
 
+def is_installed(name):
+    try:
+        devnull = open(os.devnull)
+        subprocess.Popen([name], stdout=devnull, stderr=devnull)
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            return False
+    return True
+
+
 def main():
     """
     Entry point
@@ -782,6 +792,12 @@ def main():
     if "--dump-config-defaults" in sys.argv:
         Config._dump()
         return
+
+    for exe in ('curl', 'egrep', 'sort', 'tar'):
+        if not is_installed(exe):
+            print 'Error: "%s" not installed.' % exe
+            print 'Please, install it via apt/yum/etc and try again.'
+            return sys.exit(1)
 
     opt, args = parse_args(check=False)
     Config._load(opt.config_file, opt.verbose)

@@ -795,8 +795,8 @@ def main():
 
     for exe in ('curl', 'egrep', 'sort', 'tar'):
         if not is_installed(exe):
-            print 'Error: "%s" not installed.' % exe
-            print 'Please, install it via apt/yum/etc and try again.'
+            print ('Error: "%s" not installed.' % exe)
+            print ('Please, install it via apt/yum/etc and try again.')
             return sys.exit(1)
 
     opt, args = parse_args(check=False)

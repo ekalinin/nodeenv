@@ -24,7 +24,7 @@ Prepare
 ^^^^^^^
 
 As ``nodeenv`` uses ``lib-xml`` you need to install packages: ``libxml2-dev``,
-``libxslt1-dev`` and ``python-dev``. Example for Ubuntu:
+``libxslt1-dev`` and ``python-dev``. Example for Ubuntu::
 
     $ apt-get install python-dev libxml2-dev libxslt1-dev
 

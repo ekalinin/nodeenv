@@ -92,7 +92,7 @@ test6:
 		python setup.py install           && \
 		nodeenv -p --prebuilt --iojs
 
-tests: clean test1 clean test2 clean test3 clean test4 clean test5 clean
+tests: clean test1 clean test2 clean test3 clean test4 clean test5 test6 clean
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

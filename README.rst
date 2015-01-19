@@ -20,14 +20,6 @@ If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
 Install
 -------
 
-Prepare
-^^^^^^^
-
-As ``nodeenv`` uses ``lib-xml`` you need to install packages: ``libxml2-dev``,
-``libxslt1-dev`` and ``python-dev``. Example for Ubuntu::
-
-    $ apt-get install python-dev libxml2-dev libxslt1-dev
-
 Global installation
 ^^^^^^^^^^^^^^^^^^^
 

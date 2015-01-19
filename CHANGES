@@ -1,11 +1,16 @@
 Nodeenv changelog
 =================
 
+Version 0.12.3
+--------------
+- Fixed check for installed curl/tar/etc for py3.
+
 Version 0.12.2
 --------------
-- Added check for installed curl/egrep/sort/tar. See `# 110`_
+- Added check for installed curl/egrep/sort/tar. See `# 110`_, `# 61`_
 
 .. _# 110: https://github.com/ekalinin/nodeenv/issues/110
+.. _# 61: https://github.com/ekalinin/nodeenv/issues/61
 
 Version 0.12.1
 --------------

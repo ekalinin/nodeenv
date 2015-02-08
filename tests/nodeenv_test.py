@@ -5,16 +5,17 @@ import io
 import os.path
 import subprocess
 
+import mock
 import pytest
 
-from nodeenv import GetsAHrefs
+import nodeenv
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def test_gets_a_hrefs_trivial():
-    parser = GetsAHrefs()
+    parser = nodeenv.GetsAHrefs()
     parser.feed('')
     assert parser.hrefs == []
 
@@ -22,7 +23,7 @@ def test_gets_a_hrefs_trivial():
 def test_gets_a_hrefs_nodejs_org():
     # Retrieved 2015-01-15
     contents = io.open(os.path.join(HERE, 'nodejs.htm')).read()
-    parser = GetsAHrefs()
+    parser = nodeenv.GetsAHrefs()
     parser.feed(contents)
     # Smoke test
     assert parser.hrefs == [
@@ -41,7 +42,7 @@ def test_gets_a_hrefs_nodejs_org():
 def test_gets_a_hrefs_iojs_org():
     # Retrieved 2015-01-15
     contents = io.open(os.path.join(HERE, 'iojs.htm')).read()
-    parser = GetsAHrefs()
+    parser = nodeenv.GetsAHrefs()
     parser.feed(contents)
     # Smoke test
     assert parser.hrefs == [
@@ -68,3 +69,64 @@ def test_smoke(tmpdir):
     subprocess.check_call([
         'sh', '-c', '. {0}/bin/activate && nodejs --version'.format(nenv_path),
     ])
+
+
+@pytest.yield_fixture
+def returns_iojs_dist():
+    with io.open(os.path.join(HERE, 'iojs_dist.htm'), 'rb') as iojs_dist:
+        with mock.patch.object(nodeenv, 'urlopen', return_value=iojs_dist):
+            yield
+
+
+@pytest.yield_fixture
+def returns_nodejs_dist():
+    with io.open(os.path.join(HERE, 'nodejs_dist.htm'), 'rb') as node_dist:
+        with mock.patch.object(nodeenv, 'urlopen', return_value=node_dist):
+            yield
+
+
+@pytest.yield_fixture
+def cap_logging_info():
+    with mock.patch.object(nodeenv.logger, 'info') as mck:
+        yield mck
+
+
+def mck_to_out(mck):
+    return '\n'.join(call[0][0] for call in mck.call_args_list)
+
+
+@pytest.mark.usefixtures('returns_iojs_dist')
+def test_get_node_versions_iojs():
+    versions = nodeenv.get_node_versions()
+    assert versions == ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.1.0']
+
+
+@pytest.mark.usefixtures('returns_nodejs_dist')
+def test_get_node_versions_nodejs():
+    versions = nodeenv.get_node_versions()
+    # There's a lot of versions here, let's just do some sanity assertions
+    assert len(versions) == 227
+    assert versions[0:3] == ['0.0.1', '0.0.2', '0.0.3']
+    assert versions[-3:] == ['0.11.15', '0.11.16', '0.12.0']
+
+
+@pytest.mark.usefixtures('returns_iojs_dist')
+def test_print_node_versions_iojs(cap_logging_info):
+    nodeenv.print_node_versions()
+    printed = mck_to_out(cap_logging_info)
+    assert printed == '1.0.0\t1.0.1\t1.0.2\t1.0.3\t1.0.4\t1.1.0'
+
+
+@pytest.mark.usefixtures('returns_nodejs_dist')
+def test_print_node_versions_node(cap_logging_info):
+    nodeenv.print_node_versions()
+    printed = mck_to_out(cap_logging_info)
+    # There's a lot of output here, let's just assert a few things
+    assert printed.startswith(
+        '0.0.1\t0.0.2\t0.0.3\t0.0.4\t0.0.5\t0.0.6\t0.1.0\t0.1.1\n'
+    )
+    assert printed.endswith('\n0.11.15\t0.11.16\t0.12.0')
+    tabs_per_line = [line.count('\t') for line in printed.splitlines()]
+    # 8 items per line = 7 tabs
+    # The last line contains the remaning 3 items
+    assert tabs_per_line == [7] * 28 + [2]

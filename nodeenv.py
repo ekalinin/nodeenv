@@ -10,13 +10,12 @@
     :license: BSD, see LICENSE for more details.
 """
 
-nodeenv_version = '0.12.3'
-
 import sys
 import os
 import re
 import stat
 import logging
+import operator
 import optparse
 import subprocess
 import pipes
@@ -25,14 +24,17 @@ try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
     from HTMLParser import HTMLParser
     from urllib2 import urlopen
-    iteritems = lambda dict_: dict_.iteritems()
+    iteritems = operator.methodcaller('iteritems')
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
     from html.parser import HTMLParser
     from urllib.request import urlopen
-    iteritems = lambda dict_: dict_.items()
+    iteritems = operator.methodcaller('items')
 
 from pkg_resources import parse_version
+
+
+nodeenv_version = '0.12.3'
 
 join = os.path.join
 abspath = os.path.abspath
@@ -704,28 +706,32 @@ def create_environment(env_dir, opt):
         callit(['rm -rf', pipes.quote(src_dir)], opt.verbose, True, env_dir)
 
 
+VERSION_RE = re.compile('\d+\.\d+\.\d+')
+
+
+def get_node_versions():
+    response = urlopen('https://{0}/dist'.format(src_domain))
+    href_parser = GetsAHrefs()
+    href_parser.feed(response.read().decode('UTF-8'))
+    versions = set(
+        VERSION_RE.search(href).group()
+        for href in href_parser.hrefs
+        if VERSION_RE.search(href)
+    )
+    sorted_versions = sorted([parse_version(version) for version in versions])
+    return [v.public for v in sorted_versions]
+
+
 def print_node_versions():
     """
     Prints into stdout all available node.js versions
     """
-    p = subprocess.Popen(
-        ("curl -s https://%s/dist/ | "
-         "egrep -o '[0-9]+\.[0-9]+\.[0-9]+' | "
-         "sort -u -k 1,1n -k 2,2n -k 3,3n -t . ") % (src_domain),
-        shell=True, stdout=subprocess.PIPE)
-    # out, err = p.communicate()
-    pos = 0
-    rowx = []
-    while 1:
-        row = p.stdout.readline()
-        pos += 1
-        if not row:
-            logger.info('\t'.join(rowx))
-            break
-        rowx.append(row.decode('utf-8').replace('\n', ''))
-        if pos % 8 == 0:
-            logger.info('\t'.join(rowx))
-            rowx = []
+    versions = get_node_versions()
+    chunks_of_8 = [
+        versions[pos:pos + 8] for pos in range(0, len(versions), 8)
+    ]
+    for chunk in chunks_of_8:
+        logger.info('\t'.join(chunk))
 
 
 class GetsAHrefs(HTMLParser):
@@ -793,7 +799,7 @@ def main():
         Config._dump()
         return
 
-    for exe in ('curl', 'egrep', 'sort', 'tar'):
+    for exe in ('curl', 'tar'):
         if not is_installed(exe):
             print('Error: "%s" not installed.' % exe)
             print('Please, install it via apt/yum/etc and try again.')

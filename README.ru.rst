@@ -60,8 +60,6 @@ Nodeenv можно установить с помощью `easy_install`_::
 
 * make
 * curl
-* egrep
-* sort
 * tail
 * tar
 

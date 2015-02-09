@@ -75,8 +75,6 @@ For nodeenv
 * python (>= 2.6)
 * make
 * curl
-* egrep
-* sort
 * tail
 * tar
 

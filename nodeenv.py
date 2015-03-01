@@ -589,16 +589,27 @@ def install_npm(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
-    cmd = [
-        '. %s && curl --location --silent %s | '
-        'clean=%s npm_install=%s bash && deactivate_node' % (
-            pipes.quote(join(env_dir, 'bin', 'activate')),
-            'https://www.npmjs.org/install.sh',
-            'no' if opt.no_npm_clean else 'yes',
-            opt.npm
-        )
-    ]
-    callit(cmd, opt.verbose, True)
+    npm_contents = urlopen('https://www.npmjs.org/install.sh').read()
+    env = dict(
+        os.environ,
+        clean='no' if opt.no_npm_clean else 'yes',
+        npm_install=opt.npm,
+    )
+    proc = subprocess.Popen(
+        (
+            'bash', '-c',
+            '. {0} && exec bash'.format(
+                pipes.quote(join(env_dir, 'bin', 'activate')),
+            )
+        ),
+        env=env,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    out, _ = proc.communicate(npm_contents)
+    if opt.verbose:
+        logger.info(out)
     logger.info('done.')
 
 

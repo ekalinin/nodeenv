@@ -7,7 +7,7 @@ isolated node.js environments.
 It creates an environment that has its own installation directories, 
 that doesn't share libraries with other node.js virtual environments.
 
-Also new environment can be integrated with environment which was built
+Also the new environment can be integrated with the environment which was built
 by virtualenv_ (python).
 
 If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
@@ -135,7 +135,7 @@ Install node.js from prebuilt package::
 
     $ nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
 
-It much faster then install & compile node.js from source::
+It's much faster than installing & compiling node.js from source::
 
     $ time nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
      + Install node.js (0.10.25) ... done.
@@ -155,7 +155,7 @@ Create a new environment with the system-wide node.js::
 
     $ nodeenv --node=system
 
-Saving into the file versions of all installed packages::
+Saving the versions of all installed packages to a file::
 
     $ . env-4.3/bin/activate
     (env-4.3)$ npm install -g express
@@ -166,7 +166,7 @@ If you want to list locally installed packages use ``-l`` option::
 
     (env-4.3)$ freeze -l ../prod-requirements.txt
 
-Create environment copy from requirement file::
+Create an environment from a requirements file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
 
@@ -182,9 +182,9 @@ Requirements file example::
     npm@0.3.17
     qs@0.0.7
 
-If you're already have python virtualenv tool, and want to use nodeenv and
-virtualenv in conjunction, then you should create (or activate) python virtual
-environment::
+If you already have the python virtualenv tool, and want to use nodeenv and
+virtualenv in conjunction, then you should create (or activate) the python
+virtual environment::
 
     # in case of using virtualenv_wrapper
     $ mkvirtualenv my_env
@@ -192,11 +192,11 @@ environment::
     # in case of using virtualenv
     $ . my_env/bin/activate
 
-and add node virtual environment to this existing new_venv::
+and add a node virtual environment to this existing new_venv::
 
     $ nodeenv -p
     
-If you need to set the path to make used  to build node::
+If you need to set the path to make used to build node::
 
 	$ nodeenv -m /usr/local/bin/gmake ENV
 

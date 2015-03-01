@@ -10,6 +10,8 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import contextlib
+import io
 import sys
 import os
 import re
@@ -18,6 +20,7 @@ import logging
 import operator
 import optparse
 import subprocess
+import tarfile
 import pipes
 
 try:  # pragma: no cover (py2 only)
@@ -443,33 +446,24 @@ def get_node_src_url(version, postfix=''):
     return node_url
 
 
+@contextlib.contextmanager
+def tarfile_open(*args, **kwargs):
+    """Compatibility layer because py26."""
+    tf = tarfile.open(*args, **kwargs)
+    try:
+        yield tf
+    finally:
+        tf.close()
+
+
 def download_node(node_url, src_dir, env_dir, opt):
     """
     Download source code
     """
-    cmd = []
-    cmd.append('curl')
-    cmd.append('--silent')
-    cmd.append('-L')
-    cmd.append(node_url)
-    cmd.append('|')
-    cmd.append('tar')
-    cmd.append('xzf')
-    cmd.append('-')
-    cmd.append('-C')
-    cmd.append(pipes.quote(src_dir))
-    cmd.extend(['--exclude', 'ChangeLog'])
-    cmd.extend(['--exclude', 'LICENSE'])
-    cmd.extend(['--exclude', 'README.md'])
-    try:
-        callit(cmd, opt.verbose, True, env_dir)
-        logger.info(') ', extra=dict(continued=True))
-    except OSError:
-        postfix = '-RC1'
-        logger.info('%s) ' % postfix, extra=dict(continued=True))
-        new_node_url = get_node_src_url(opt.node, postfix)
-        cmd[cmd.index(node_url)] = new_node_url
-        callit(cmd, opt.verbose, True, env_dir)
+    tar_contents = io.BytesIO(urlopen(node_url).read())
+    with tarfile_open(fileobj=tar_contents) as tarfile_obj:
+        tarfile_obj.extractall(src_dir)
+    logger.info(')', extra=dict(continued=True))
 
 
 def get_node_src_url_postfix(opt):
@@ -809,12 +803,6 @@ def main():
     if "--dump-config-defaults" in sys.argv:
         Config._dump()
         return
-
-    for exe in ('curl', 'tar'):
-        if not is_installed(exe):
-            print('Error: "%s" not installed.' % exe)
-            print('Please, install it via apt/yum/etc and try again.')
-            return sys.exit(1)
 
     opt, args = parse_args(check=False)
     Config._load(opt.config_file, opt.verbose)

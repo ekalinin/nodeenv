@@ -74,9 +74,7 @@ For nodeenv
 
 * python (>= 2.6)
 * make
-* curl
 * tail
-* tar
 
 For node.js
 ^^^^^^^^^^^

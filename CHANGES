@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version 0.13.0
+--------------
+- Removed deps from ``sort``, ``egrep``, ``curl``, ``tar``.
+  See `# 114`_, `# 116`_.
+
+.. _# 114: https://github.com/ekalinin/nodeenv/pull/114
+.. _# 116: https://github.com/ekalinin/nodeenv/pull/116
+
 Version 0.12.3
 --------------
 - Fixed check for installed curl/tar/etc for py3.

@@ -724,7 +724,7 @@ def get_node_versions():
         if VERSION_RE.search(href)
     )
     sorted_versions = sorted([parse_version(version) for version in versions])
-    return [v.public for v in sorted_versions]
+    return [v.base_version for v in sorted_versions]
 
 
 def print_node_versions():

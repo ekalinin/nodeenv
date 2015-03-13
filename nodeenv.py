@@ -36,13 +36,15 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from pkg_resources import parse_version
 
-
 nodeenv_version = '0.13.0'
 
 join = os.path.join
 abspath = os.path.abspath
 src_domain = "nodejs.org"
 
+is_PY3 = sys.version_info[0] == 3
+if is_PY3:
+    from functools import cmp_to_key
 # ---------------------------------------------------------
 # Utils
 
@@ -711,20 +713,58 @@ def create_environment(env_dir, opt):
         callit(['rm -rf', pipes.quote(src_dir)], opt.verbose, True, env_dir)
 
 
+class GetsAHrefs(HTMLParser):
+    def __init__(self):
+        # Old style class in py2 :(
+        HTMLParser.__init__(self)
+        self.hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            self.hrefs.append(dict(attrs).get('href', ''))
+
 VERSION_RE = re.compile('\d+\.\d+\.\d+')
+
+
+def _py2_cmp(a, b):
+    # -1 = a < b, 0 = eq, 1 = a > b
+    return (a > b) - (a < b)
+
+
+def compare_versions(version, other_version):
+    version_tuple = version.split('.')
+    other_tuple = other_version.split('.')
+
+    version_length = len(version_tuple)
+    other_length = len(other_tuple)
+    version_dots = min(version_length, other_length)
+
+    for i in range(version_dots):
+        a = int(version_tuple[i])
+        b = int(other_tuple[i])
+        cmp_value = _py2_cmp(a, b)
+        if cmp_value != 0:
+            return cmp_value
+
+    return _py2_cmp(version_length, other_length)
 
 
 def get_node_versions():
     response = urlopen('https://{0}/dist'.format(src_domain))
     href_parser = GetsAHrefs()
     href_parser.feed(response.read().decode('UTF-8'))
+
     versions = set(
         VERSION_RE.search(href).group()
         for href in href_parser.hrefs
         if VERSION_RE.search(href)
     )
-    sorted_versions = sorted([parse_version(version) for version in versions])
-    return [v.public for v in sorted_versions]
+    if is_PY3:
+        key_compare = cmp_to_key(compare_versions)
+        versions = sorted(versions, key=key_compare)
+    else:
+        versions = sorted(versions, cmp=compare_versions)
+    return versions
 
 
 def print_node_versions():
@@ -737,17 +777,6 @@ def print_node_versions():
     ]
     for chunk in chunks_of_8:
         logger.info('\t'.join(chunk))
-
-
-class GetsAHrefs(HTMLParser):
-    def __init__(self):
-        # Old style class in py2 :(
-        HTMLParser.__init__(self)
-        self.hrefs = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'a':
-            self.hrefs.append(dict(attrs).get('href', ''))
 
 
 def get_last_stable_node_version():

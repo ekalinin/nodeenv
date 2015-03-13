@@ -14,6 +14,17 @@ import nodeenv
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+def test_compare_versions():
+    assert nodeenv.compare_versions('1', '2') == -1
+    assert nodeenv.compare_versions('1', '2') == -1
+    assert nodeenv.compare_versions('0.1', '0.2') == -1
+    assert nodeenv.compare_versions('0.9', '0.10') == -1
+    assert nodeenv.compare_versions('0.2', '0.2.1') == -1
+    assert nodeenv.compare_versions('0.2.1', '0.2.10') == -1
+    assert nodeenv.compare_versions('0.2.9', '0.2.10') == -1
+    assert nodeenv.compare_versions('0.2.1', '0.3') == -1
+
+
 def test_gets_a_hrefs_trivial():
     parser = nodeenv.GetsAHrefs()
     parser.feed('')

@@ -1,6 +1,13 @@
 Nodeenv changelog
 =================
 
+Version 0.13.1
+--------------
+- Fixed bug: ``nodeenv --list is raising TypeError``. See `# 117`_, `# 118`_
+
+.. _# 117: https://github.com/ekalinin/nodeenv/issues/117
+.. _# 118: https://github.com/ekalinin/nodeenv/pull/118
+
 Version 0.13.0
 --------------
 - Removed deps from ``sort``, ``egrep``, ``curl``, ``tar``.

@@ -923,7 +923,7 @@ deactivate_node () {
 freeze () {
     local NPM_VER=`npm -v | cut -d '.' -f 1`
     local re="[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*"
-    if [ "$NPM_VER" != '1' ]; then
+    if [ "$NPM_VER" = '0' ]; then
         NPM_LIST=`npm list installed active 2>/dev/null | \
                   cut -d ' ' -f 1 | grep -v npm`
     else

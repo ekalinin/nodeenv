@@ -92,7 +92,20 @@ test6:
 		python setup.py install           && \
 		nodeenv -p --prebuilt --iojs
 
-tests: clean test1 clean test2 clean test3 clean test4 clean test5 test6 clean
+test7:
+	@echo " ="
+	@echo " = test7: freeze for global installation"
+	@echo " ="
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		nodeenv -j 4 -p --prebuilt        && \
+		. env/bin/activate                && \
+		npm install -g sitemap 			  && \
+		test "`freeze | wc -l`" = "1";
+
+tests: clean test1 clean test2 clean test3 clean test4 clean test5 test6 test7 clean
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

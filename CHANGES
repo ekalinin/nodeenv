@@ -1,6 +1,12 @@
 Nodeenv changelog
 =================
 
+Version 0.13.2
+--------------
+- Fixed ``freeze`` command. See `# 121`_
+
+.. _# 121: https://github.com/ekalinin/nodeenv/issues/121
+
 Version 0.13.1
 --------------
 - Fixed bug: ``nodeenv --list is raising TypeError``. See `# 117`_, `# 118`_

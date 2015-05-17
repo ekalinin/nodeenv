@@ -628,6 +628,8 @@ def install_packages(env_dir, opt):
               ' && npm activate %(pack)s'
 
     for package in packages:
+        if not package:
+            continue
         callit(cmd=[
             cmd % {"pack": package}], show_stdout=opt.verbose, in_shell=True)
 

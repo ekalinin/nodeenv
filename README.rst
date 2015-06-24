@@ -268,7 +268,7 @@ There are several alternatives that create isolated environments:
   version.
   Can not pass additional arguments into configure (for example --without-ssl)
 
-* virtualenv_ — Virtual Python Environment builder. For python only.
+* virtualenv_ - Virtual Python Environment builder. For python only.
 
 .. _`virtualenv`: https://github.com/pypa/virtualenv
 

@@ -5,17 +5,20 @@ nodeenv
 
 Node.js Virtual Environment builder.
 """
+import codecs
 import os
-from setuptools import setup
+
 from nodeenv import nodeenv_version
+from setuptools import setup
 
 
 def read_file(file_name):
-    return open(
+    return codecs.open(
         os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             file_name
-        )
+        ),
+        encoding='utf-8',
     ).read()
 
 ldesc = read_file('README.rst')

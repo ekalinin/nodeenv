@@ -174,7 +174,7 @@ def create_logger():
     def emit(self, record):
         msg = self.format(record)
         fs = "%s" if getattr(record, "continued", False) else "%s\n"
-        self.stream.write(fs % msg)
+        self.stream.write(fs % to_utf8(msg))
         self.flush()
     logging.StreamHandler.emit = emit
 

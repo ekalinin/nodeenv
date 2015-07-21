@@ -45,8 +45,30 @@ src_domain = "nodejs.org"
 is_PY3 = sys.version_info[0] == 3
 if is_PY3:
     from functools import cmp_to_key
+
 # ---------------------------------------------------------
 # Utils
+
+
+# https://github.com/jhermann/waif/blob/master/python/to_uft8.py
+def to_utf8(text):
+    """Convert given text to UTF-8 encoding (as far as possible)."""
+    if not text:
+        return text
+
+    try:            # unicode or pure ascii
+        return text.encode("utf8")
+    except UnicodeDecodeError:
+        try:        # successful UTF-8 decode means it's pretty sure UTF-8
+            text.decode("utf8")
+            return text
+        except UnicodeDecodeError:
+            try:    # get desperate; and yes, this has a western hemisphere bias
+                return text.decode("cp1252").encode("utf8")
+            except UnicodeDecodeError:
+                pass
+
+    return text     # return unchanged, hope for the best
 
 
 class Config(object):
@@ -343,7 +365,7 @@ def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
-    content = content.encode('utf-8')
+    content = to_utf8(content)
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         with open(dest, 'wb') as f:
@@ -548,7 +570,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
 
 
 def get_binary_prefix():
-    return 'node' if src_domain == 'nodejs.org' else 'iojs'
+    return to_utf8('node' if src_domain == 'nodejs.org' else 'iojs')
 
 
 def install_node(env_dir, src_dir, opt):
@@ -561,7 +583,7 @@ def install_node(env_dir, src_dir, opt):
                 extra=dict(continued=True))
 
     node_url = get_node_src_url(opt.node, get_node_src_url_postfix(opt))
-    node_src_dir = join(src_dir, '%s-v%s' % (prefix, opt.node))
+    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
     env_dir = abspath(env_dir)
 
     # get src if not downloaded yet
@@ -693,7 +715,7 @@ def create_environment(env_dir, opt):
         logger.info(' * Environment already exists: %s', env_dir)
         if not opt.force:
             sys.exit(2)
-    src_dir = abspath(join(env_dir, 'src'))
+    src_dir = to_utf8(abspath(join(env_dir, 'src')))
     mkdir(src_dir)
 
     if opt.node != "system":
@@ -805,15 +827,16 @@ def get_last_stable_node_version():
 
 
 def get_env_dir(opt, args):
+    res = args[0]
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
-            return sys.prefix
+            res = sys.prefix
         elif hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
-            return sys.prefix
-        logger.error('No python virtualenv is available')
-        sys.exit(2)
-    else:
-        return args[0]
+            res = sys.prefix
+        else:
+            logger.error('No python virtualenv is available')
+            sys.exit(2)
+    return to_utf8(res)
 
 
 def is_installed(name):

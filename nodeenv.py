@@ -53,7 +53,7 @@ if is_PY3:
 # https://github.com/jhermann/waif/blob/master/python/to_uft8.py
 def to_utf8(text):
     """Convert given text to UTF-8 encoding (as far as possible)."""
-    if not text:
+    if not text or is_PY3:
         return text
 
     try:            # unicode or pure ascii
@@ -366,6 +366,8 @@ def writefile(dest, content, overwrite=True, append=False):
     Create file and write content in it
     """
     content = to_utf8(content)
+    if is_PY3:
+        content = bytes(content, 'utf-8')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         with open(dest, 'wb') as f:
@@ -827,7 +829,6 @@ def get_last_stable_node_version():
 
 
 def get_env_dir(opt, args):
-    res = args[0]
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
             res = sys.prefix
@@ -836,6 +837,8 @@ def get_env_dir(opt, args):
         else:
             logger.error('No python virtualenv is available')
             sys.exit(2)
+    else:
+        res = args[0]
     return to_utf8(res)
 
 

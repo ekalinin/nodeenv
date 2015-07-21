@@ -105,6 +105,17 @@ test7:
 		npm install -g sitemap 			  && \
 		test "`freeze | wc -l`" = "1";
 
+test8: clean
+	@echo " ="
+	@echo " = test8: unicode paths, #49"
+	@echo " ="
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		rm -rf öäü && mkdir öäü && cd öäü && \
+		nodeenv -j 4 --prebuilt env
+
 tests: clean test1 clean test2 clean test3 clean test4 clean test5 test6 test7 clean
 
 contributors:

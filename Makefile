@@ -116,7 +116,7 @@ test8: clean
 		rm -rf öäü && mkdir öäü && cd öäü && \
 		nodeenv -j 4 --prebuilt env
 
-tests: clean test1 test2 test3 test4 test5 test6 test7 clean
+tests: clean test1 test2 test3 test4 test5 test6 test7 test8 clean
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

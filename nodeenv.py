@@ -63,7 +63,8 @@ def to_utf8(text):
             text.decode("utf8")
             return text
         except UnicodeDecodeError:
-            try:    # get desperate; and yes, this has a western hemisphere bias
+            try:    # get desperate; and yes,
+                    # this has a western hemisphere bias
                 return text.decode("cp1252").encode("utf8")
             except UnicodeDecodeError:
                 pass

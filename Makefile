@@ -28,7 +28,7 @@ env:
 		. env/bin/activate                && \
 		python setup.py install
 
-test1:
+test1: clean
 	@echo " ="
 	@echo " = test1: separate nodejs's env"
 	@echo " ="
@@ -39,7 +39,7 @@ test1:
 		rm -rf nodeenv                    && \
 		nodeenv -j 4 nodeenv
 
-test2:
+test2: clean
 	@echo " ="
 	@echo " = test2: the same virtualenv's env, with 4 jobs"
 	@echo " ="
@@ -49,7 +49,7 @@ test2:
 		python setup.py install           && \
 		nodeenv -j 4 -p
 
-test3:
+test3: clean
 	@echo " ="
 	@echo " = test3: the same virtualenv's env, without any params"
 	@echo " ="
@@ -60,7 +60,7 @@ test3:
 		nodeenv -p
 
 # https://github.com/ekalinin/nodeenv/issues/43
-test4:
+test4: clean
 	@echo " ="
 	@echo " = test4: separate nodejs's env for python3.4"
 	@echo " ="
@@ -71,7 +71,7 @@ test4:
 		nodeenv 4 -p --prebuilt                                 && \
 		nodeenv -p --node=system
 
-test5:
+test5: clean
 	@echo " ="
 	@echo " = test5: prebuilt nodejs's env for python2"
 	@echo " ="
@@ -82,7 +82,7 @@ test5:
 		nodeenv 4 -p --prebuilt                 && \
 		nodeenv -p --node=system
 
-test6:
+test6: clean
 	@echo " ="
 	@echo " = test6: separate iojs's env"
 	@echo " ="
@@ -92,7 +92,7 @@ test6:
 		python setup.py install           && \
 		nodeenv -p --prebuilt --iojs
 
-test7:
+test7: clean
 	@echo " ="
 	@echo " = test7: freeze for global installation"
 	@echo " ="
@@ -116,7 +116,7 @@ test8: clean
 		rm -rf öäü && mkdir öäü && cd öäü && \
 		nodeenv -j 4 --prebuilt env
 
-tests: clean test1 clean test2 clean test3 clean test4 clean test5 test6 test7 clean
+tests: clean test1 test2 test3 test4 test5 test6 test7 clean
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

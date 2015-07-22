@@ -1,6 +1,18 @@
 Nodeenv changelog
 =================
 
+Version 0.13.3
+--------------
+- Fixed env creation with non-ASCII chars in path. See `# 49`_
+- Fixed logging with unicode chars. See `# 96`_
+- Skip new lines at the end of requirements.txt. See `# 122`_ 
+- Fixed UnicodeDecodeError at build on non UTF-8 environment. See `# 124`_
+
+.. _# 49: https://github.com/ekalinin/nodeenv/issues/49
+.. _# 96: https://github.com/ekalinin/nodeenv/issues/96
+.. _# 122: https://github.com/ekalinin/nodeenv/issues/122
+.. _# 124: https://github.com/ekalinin/nodeenv/pull/124
+
 Version 0.13.2
 --------------
 - Fixed ``freeze`` command. See `# 121`_

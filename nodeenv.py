@@ -505,7 +505,7 @@ def get_node_src_url_postfix(opt):
 
 
 def urlopen(url):
-    headers = { 'User-Agent' : 'nodeenv v.' + nodeenv_version }
+    headers = {'User-Agent': 'nodeenv v.' + nodeenv_version}
     req = urllib2.Request(url, None, headers)
     return urllib2.urlopen(req)
 

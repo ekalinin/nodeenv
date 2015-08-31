@@ -26,17 +26,17 @@ import pipes
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
     from HTMLParser import HTMLParser
-    from urllib2 import urlopen
+    import urllib2
     iteritems = operator.methodcaller('iteritems')
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
     from html.parser import HTMLParser
-    from urllib.request import urlopen
+    import urllib.request as urllib2
     iteritems = operator.methodcaller('items')
 
 from pkg_resources import parse_version
 
-nodeenv_version = '0.13.3'
+nodeenv_version = '0.13.4'
 
 join = os.path.join
 abspath = os.path.abspath
@@ -502,6 +502,12 @@ def get_node_src_url_postfix(opt):
     arches = {'x86_64': 'x64', 'i686': 'x86'}
     postfix_arch = arches[platform.machine()]
     return '-{0}-{1}'.format(postfix_system, postfix_arch)
+
+
+def urlopen(url):
+    headers = { 'User-Agent' : 'nodeenv v.' + nodeenv_version }
+    req = urllib2.Request(url, None, headers)
+    return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
 # Virtual environment functions

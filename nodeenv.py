@@ -390,7 +390,7 @@ def writefile(dest, content, overwrite=True, append=False):
         if append:
             logger.info(' * Appending data to %s', dest)
             with open(dest, 'ab') as f:
-                f.write(DISABLE_POMPT.encode('utf-8'))
+                f.write(DISABLE_PROMPT.encode('utf-8'))
                 f.write(content)
                 f.write(ENABLE_PROMPT.encode('utf-8'))
             return
@@ -893,7 +893,7 @@ def main():
 # ---------------------------------------------------------
 # Shell scripts content
 
-DISABLE_POMPT = """
+DISABLE_PROMPT = """
 # disable nodeenv's prompt
 # (prompt already changed by original virtualenv's script)
 # https://github.com/ekalinin/nodeenv/issues/26

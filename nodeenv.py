@@ -505,7 +505,8 @@ def get_node_src_url_postfix(opt):
 
 
 def urlopen(url):
-    headers = {'User-Agent': 'nodeenv v.' + nodeenv_version}
+    home_url = "https://github.com/ekalinin/nodeenv/"
+    headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
     req = urllib2.Request(url, None, headers)
     return urllib2.urlopen(req)
 

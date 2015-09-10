@@ -467,9 +467,9 @@ def get_node_src_url(version, postfix=''):
     node_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     tar_name = '%s.tar.gz' % (node_name)
     if parse_version(version) > parse_version("0.5.0"):
-        node_url = 'http://%s/dist/v%s/%s' % (src_domain, version, tar_name)
+        node_url = 'https://%s/dist/v%s/%s' % (src_domain, version, tar_name)
     else:
-        node_url = 'http://%s/dist/%s' % (src_domain, tar_name)
+        node_url = 'https://%s/dist/%s' % (src_domain, tar_name)
     return node_url
 
 

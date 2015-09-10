@@ -1,6 +1,24 @@
 Nodeenv changelog
 =================
 
+Version 0.13.6
+--------------
+- Use https for nodejs.org. See `# 129`_
+
+.. _# 129: https://github.com/ekalinin/nodeenv/issues/129
+
+Version 0.13.5
+--------------
+- Improved user-agent identification
+
+Version 0.13.4
+--------------
+- Custom ``user-agent``. See `# 125`_, `# 127`_
+
+.. _# 125: https://github.com/ekalinin/nodeenv/issues/125
+.. _# 127: https://github.com/ekalinin/nodeenv/issues/127
+
+
 Version 0.13.3
 --------------
 - Fixed env creation with non-ASCII chars in path. See `# 49`_

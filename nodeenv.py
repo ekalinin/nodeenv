@@ -988,7 +988,7 @@ if [ "${BASH_SOURCE}" ] ; then
     SOURCE="${BASH_SOURCE[0]}"
 
     while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    DIR="$( command cd -P "$( dirname "$SOURCE" )" && pwd )"
 
     NODE_VIRTUAL_ENV="$(dirname "$DIR")"
 else

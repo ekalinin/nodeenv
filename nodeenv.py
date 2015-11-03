@@ -468,8 +468,7 @@ def get_node_src_url(version, prebuilt=False):
         postfix = get_node_src_url_postfix()
     else:
         postfix = ''
-    node_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
-    tar_name = '%s.tar.gz' % (node_name)
+    tar_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     if parse_version(version) > parse_version("0.5.0"):
         node_url = 'https://%s/dist/v%s/%s' % (src_domain, version, tar_name)
     else:
@@ -501,7 +500,7 @@ def get_node_src_url_postfix():
     postfix_system = platform.system().lower()
     arches = {'x86': 'x86', 'x86_64': 'x64', 'i686': 'x86'}
     postfix_arch = arches[platform.machine()]
-    return '-{0}-{1}'.format(postfix_system, postfix_arch)
+    return '-{0}-{1}.tar.gz'.format(postfix_system, postfix_arch)
 
 
 def urlopen(url):

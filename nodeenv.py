@@ -490,7 +490,6 @@ def download_node(node_url, src_dir, env_dir, opt):
     tar_contents = io.BytesIO(urlopen(node_url).read())
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
         tarfile_obj.extractall(src_dir)
-    logger.info(')', extra=dict(continued=True))
 
 
 def get_node_src_url_postfix(opt):
@@ -598,6 +597,8 @@ def install_node(env_dir, src_dir, opt):
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
+        logger.info(')')
+        logger.info('   Downloading %s' % node_url)
         download_node(node_url, src_dir, env_dir, opt)
 
     logger.info('.', extra=dict(continued=True))

@@ -498,7 +498,7 @@ def get_node_src_url_postfix(opt):
 
     import platform
     postfix_system = platform.system().lower()
-    arches = {'x86_64': 'x64', 'i686': 'x86'}
+    arches = {'x86': 'x86', 'x86_64': 'x64', 'i686': 'x86'}
     postfix_arch = arches[platform.machine()]
     return '-{0}-{1}'.format(postfix_system, postfix_arch)
 

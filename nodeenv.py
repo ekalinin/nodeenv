@@ -366,6 +366,8 @@ def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
+    mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
+                 stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
     content = to_utf8(content)
     if is_PY3:
         content = bytes(content, 'utf-8')
@@ -373,6 +375,7 @@ def writefile(dest, content, overwrite=True, append=False):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         with open(dest, 'wb') as f:
             f.write(content)
+        os.chmod(dest, mode_0755)
         logger.debug('done.')
         return
     else:
@@ -679,8 +682,6 @@ def install_activate(env_dir, opt):
     bin_dir = join(env_dir, 'bin')
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
-    mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
-                 stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
 
     shim_node = join(bin_dir, "node")
     shim_nodejs = join(bin_dir, "nodejs")
@@ -712,7 +713,6 @@ def install_activate(env_dir, opt):
         # existing python's virtual environment
         need_append = 0 if name in ('node', 'shim') else opt.python_virtualenv
         writefile(file_path, content, append=need_append)
-        os.chmod(file_path, mode_0755)
 
     if not os.path.exists(shim_nodejs):
         os.symlink("node", shim_nodejs)

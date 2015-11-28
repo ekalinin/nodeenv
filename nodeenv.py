@@ -486,13 +486,21 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node(node_url, src_dir, env_dir, opt):
+def download_node(node_url, src_dir, env_dir, opt, prefix):
     """
     Download source code
     """
     tar_contents = io.BytesIO(urlopen(node_url).read())
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
-        tarfile_obj.extractall(src_dir)
+        member_list = tarfile_obj.getmembers()
+        extract_list = []
+        for member in member_list:
+            node_ver = opt.node.replace('.','\.')
+            regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
+                % (prefix, node_ver)
+            if re.match(regex_string, member.name) is None:
+                extract_list.append(member)
+        tarfile_obj.extractall(src_dir, extract_list)
 
 
 def get_node_src_url_postfix(opt):
@@ -602,7 +610,7 @@ def install_node(env_dir, src_dir, opt):
     if not os.path.exists(node_src_dir):
         logger.info(')')
         logger.info('   Downloading %s' % node_url)
-        download_node(node_url, src_dir, env_dir, opt)
+        download_node(node_url, src_dir, env_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))
 

@@ -495,7 +495,7 @@ def download_node(node_url, src_dir, env_dir, opt, prefix):
         member_list = tarfile_obj.getmembers()
         extract_list = []
         for member in member_list:
-            node_ver = opt.node.replace('.','\.')
+            node_ver = opt.node.replace('.', '\.')
             regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
                 % (prefix, node_ver)
             if re.match(regex_string, member.name) is None:

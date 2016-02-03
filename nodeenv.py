@@ -466,9 +466,12 @@ def callit(cmd, show_stdout=True, in_shell=False,
     return proc.returncode, all_output
 
 
-def get_node_src_url(version, postfix=''):
-    node_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
-    tar_name = '%s.tar.gz' % (node_name)
+def get_node_src_url(version, prebuilt=False):
+    if prebuilt:
+        postfix = get_node_src_url_postfix()
+    else:
+        postfix = '.tar.gz'
+    tar_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     if parse_version(version) > parse_version("0.5.0"):
         node_url = 'https://%s/dist/v%s/%s' % (src_domain, version, tar_name)
     else:
@@ -503,15 +506,12 @@ def download_node(node_url, src_dir, env_dir, opt, prefix):
         tarfile_obj.extractall(src_dir, extract_list)
 
 
-def get_node_src_url_postfix(opt):
-    if not opt.prebuilt:
-        return ''
-
+def get_node_src_url_postfix():
     import platform
     postfix_system = platform.system().lower()
-    arches = {'x86_64': 'x64', 'i686': 'x86'}
+    arches = {'x86': 'x86', 'x86_64': 'x64', 'i686': 'x86'}
     postfix_arch = arches[platform.machine()]
-    return '-{0}-{1}'.format(postfix_system, postfix_arch)
+    return '-{0}-{1}.tar.gz'.format(postfix_system, postfix_arch)
 
 
 def urlopen(url):
@@ -602,7 +602,7 @@ def install_node(env_dir, src_dir, opt):
     logger.info(' * Install %s (%s' % (prefix, opt.node),
                 extra=dict(continued=True))
 
-    node_url = get_node_src_url(opt.node, get_node_src_url_postfix(opt))
+    node_url = get_node_src_url(opt.node, opt.prebuilt)
     node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
     env_dir = abspath(env_dir)
 

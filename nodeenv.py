@@ -511,7 +511,7 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node_src(node_url, src_dir, env_dir, opt, prefix):
+def download_node_src(node_url, src_dir, opt, prefix):
     """
     Download source code
     """
@@ -612,6 +612,7 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
+    env_dir = abspath(env_dir)
     prefix = get_binary_prefix()
     logger.info(' * Install %s (%s' % (prefix, opt.node),
                 extra=dict(continued=True))
@@ -621,13 +622,12 @@ def install_node(env_dir, src_dir, opt):
     else:
         node_url = get_node_src_url(opt.node)
     node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
-    env_dir = abspath(env_dir)
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
         logger.info(')')
         logger.info('   Downloading %s' % node_url)
-        download_node_src(node_url, src_dir, env_dir, opt, prefix)
+        download_node_src(node_url, src_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))
 

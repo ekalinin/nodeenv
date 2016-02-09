@@ -521,35 +521,32 @@ def download_node_bin(node_url, env_dir):
         fp = open(os.path.join(bin_dir, os.path.basename(node_url)), 'wb+')
         fp.write(urlopen(node_url).read())
     else:
-        # remove first directory level
-        #node_url = "https://nodejs.org/dist/v5.5.0/node-v5.5.0-linux-x86.tar.gz"
-        tar_contents = io.BytesIO(urlopen(node_url).read())
-        with tarfile_open(fileobj=tar_contents) as tarfile_obj:
-            extract_list = []
-            for member in tarfile_obj.getmembers():
-                # members can be renamed before extraction !
-                # strip leading dir and all files there
-                newstart = member.name.find('/')+1
-                if newstart:
-                    member.name = member.name[newstart:]
-                    extract_list.append(member)
-            tarfile_obj.extractall(env_dir, extract_list)
+        download_node_tar(node_url, env_dir, strip=True)
 
 
-def download_node_src(node_url, src_dir, opt, prefix):
+def download_node_tar(node_url, src_dir, strip=False):
     """
-    Download source code
+    Download and unpack tar contents. If strip is set, also strips
+    root directory and all files in it (archive with node binary).
     """
     tar_contents = io.BytesIO(urlopen(node_url).read())
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
         member_list = tarfile_obj.getmembers()
         extract_list = []
         for member in member_list:
-            node_ver = opt.node.replace('.', '\.')
-            regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
-                % (prefix, node_ver)
-            if re.match(regex_string, member.name) is None:
-                extract_list.append(member)
+            # skip leading dir
+            newstart = member.name.find('/')+1
+            newname = member.name[newstart:]
+            if strip:
+                if not newstart:
+                    continue
+                # members can be renamed before extraction !
+                member.name = newname
+                regex_string = "^(README\.md|CHANGELOG\.md|LICENSE)"
+                if re.match(regex_string, newname) is not None:
+                    logger.debug('    Stripping %s ', newname)
+                    continue
+            extract_list.append(member)
         tarfile_obj.extractall(src_dir, extract_list)
 
 
@@ -645,7 +642,7 @@ def install_node(env_dir, src_dir, opt):
         # get src if not downloaded yet
         if not os.path.exists(node_src_dir):
             logger.info('   Downloading %s' % node_url)
-            download_node_src(node_url, src_dir, opt, prefix)
+            download_node_tar(node_url, src_dir)
 
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 

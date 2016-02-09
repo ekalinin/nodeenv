@@ -473,12 +473,14 @@ def get_root_url(version):
         return 'https://%s/dist/' % (src_domain)
 
 
-def get_node_src_url(version, prebuilt=False):
-    if prebuilt:
-        postfix = get_node_src_url_postfix()
-    else:
-        postfix = '.tar.gz'
-    tar_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+def get_node_bin_url(version):
+    postfix = get_node_src_url_postfix()
+    filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    return get_root_url(version) + filename
+
+
+def get_node_src_url(version):
+    tar_name = '%s-v%s.tar.gz' % (get_binary_prefix(), version)
     return get_root_url(version) + tar_name
 
 
@@ -605,7 +607,10 @@ def install_node(env_dir, src_dir, opt):
     logger.info(' * Install %s (%s' % (prefix, opt.node),
                 extra=dict(continued=True))
 
-    node_url = get_node_src_url(opt.node, opt.prebuilt)
+    if opt.prebuilt:
+        node_url = get_node_bin_url(opt.node)
+    else:
+        node_url = get_node_src_url(opt.node)
     node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
     env_dir = abspath(env_dir)
 

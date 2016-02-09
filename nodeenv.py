@@ -466,17 +466,20 @@ def callit(cmd, show_stdout=True, in_shell=False,
     return proc.returncode, all_output
 
 
+def get_root_url(version):
+    if parse_version(version) > parse_version("0.5.0"):
+        return 'https://%s/dist/v%s/' % (src_domain, version)
+    else:
+        return 'https://%s/dist/' % (src_domain)
+
+
 def get_node_src_url(version, prebuilt=False):
     if prebuilt:
         postfix = get_node_src_url_postfix()
     else:
         postfix = '.tar.gz'
     tar_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
-    if parse_version(version) > parse_version("0.5.0"):
-        node_url = 'https://%s/dist/v%s/%s' % (src_domain, version, tar_name)
-    else:
-        node_url = 'https://%s/dist/%s' % (src_domain, tar_name)
-    return node_url
+    return get_root_url(version) + tar_name
 
 
 @contextlib.contextmanager

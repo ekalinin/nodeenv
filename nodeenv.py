@@ -511,12 +511,29 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node_bin(node_url, path):
+def download_node_bin(node_url, env_dir):
     """
-    Download file from node_url into specified directory
+    Download node binaries directly into environment
     """
-    fp = open(os.path.join(path, os.path.basename(node_url)), 'wb+')
-    fp.write(urlopen(node_url).read())
+    if is_WIN:
+        bin_dir = os.path.join(env_dir, 'bin')
+        mkdir(bin_dir)
+        fp = open(os.path.join(bin_dir, os.path.basename(node_url)), 'wb+')
+        fp.write(urlopen(node_url).read())
+    else:
+        # remove first directory level
+        #node_url = "https://nodejs.org/dist/v5.5.0/node-v5.5.0-linux-x86.tar.gz"
+        tar_contents = io.BytesIO(urlopen(node_url).read())
+        with tarfile_open(fileobj=tar_contents) as tarfile_obj:
+            extract_list = []
+            for member in tarfile_obj.getmembers():
+                # members can be renamed before extraction !
+                # strip leading dir and all files there
+                newstart = member.name.find('/')+1
+                if newstart:
+                    member.name = member.name[newstart:]
+                    extract_list.append(member)
+            tarfile_obj.extractall(env_dir, extract_list)
 
 
 def download_node_src(node_url, src_dir, opt, prefix):
@@ -611,22 +628,15 @@ def install_node(env_dir, src_dir, opt):
     and install it in virtual environment.
     """
     env_dir = abspath(env_dir)
-
     prefix = get_binary_prefix()
     if opt.prebuilt:
         logger.info(' * Installing binary %s (%s)' % (prefix, opt.node))
         node_url = get_node_bin_url(opt.node)
-        #node_url = "https://nodejs.org/dist/v5.5.0/node-v5.5.0-linux-x86.tar.gz"
 
         # get binary if not downloaded yet
-        env_bin_dir = join(env_dir, 'bin')
-        if not os.path.exists(env_bin_dir):
-            mkdir(env_bin_dir)
+        if not os.path.exists(os.path.join(env_dir, 'bin')):
             logger.info('   Downloading %s' % node_url)
-            if is_WIN:
-                download_node_bin(node_url, env_bin_dir)
-            else:
-                download_node_src(node_url, env_dir, opt, prefix)
+            download_node_bin(node_url, env_dir)
     else:
         logger.info(' * Installing %s (%s) from source' % (prefix, opt.node))
         node_url = get_node_src_url(opt.node)

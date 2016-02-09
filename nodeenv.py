@@ -22,6 +22,7 @@ import optparse
 import subprocess
 import tarfile
 import pipes
+import platform
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -45,6 +46,9 @@ src_domain = "nodejs.org"
 is_PY3 = sys.version_info[0] == 3
 if is_PY3:
     from functools import cmp_to_key
+
+is_WIN = platform.system() == 'Windows'
+
 
 # ---------------------------------------------------------
 # Utils
@@ -466,17 +470,35 @@ def callit(cmd, show_stdout=True, in_shell=False,
     return proc.returncode, all_output
 
 
-def get_node_src_url(version, prebuilt=False):
-    if prebuilt:
-        postfix = get_node_src_url_postfix()
-    else:
-        postfix = '.tar.gz'
-    tar_name = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
-        node_url = 'https://%s/dist/v%s/%s' % (src_domain, version, tar_name)
+        return 'https://%s/dist/v%s/' % (src_domain, version)
     else:
-        node_url = 'https://%s/dist/%s' % (src_domain, tar_name)
-    return node_url
+        return 'https://%s/dist/' % (src_domain)
+
+
+def get_node_bin_url(version):
+    archmap = {
+      'x86':    'x86',  # Windows Vista 32
+      'i686':   'x86',
+      'x86_64': 'x64',  # Linux Ubuntu 64
+      'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
+    }
+    sysinfo = {
+      'system': platform.system().lower(),
+      'arch': archmap[platform.machine()],
+    }
+    if is_WIN:
+        filename = 'win-%(arch)s/node.exe' % sysinfo
+    else:
+        postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
+        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    return get_root_url(version) + filename
+
+
+def get_node_src_url(version):
+    tar_name = '%s-v%s.tar.gz' % (get_binary_prefix(), version)
+    return get_root_url(version) + tar_name
 
 
 @contextlib.contextmanager
@@ -489,7 +511,7 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node(node_url, src_dir, env_dir, opt, prefix):
+def download_node_src(node_url, src_dir, env_dir, opt, prefix):
     """
     Download source code
     """
@@ -504,14 +526,6 @@ def download_node(node_url, src_dir, env_dir, opt, prefix):
             if re.match(regex_string, member.name) is None:
                 extract_list.append(member)
         tarfile_obj.extractall(src_dir, extract_list)
-
-
-def get_node_src_url_postfix():
-    import platform
-    postfix_system = platform.system().lower()
-    arches = {'x86': 'x86', 'x86_64': 'x64', 'i686': 'x86'}
-    postfix_arch = arches[platform.machine()]
-    return '-{0}-{1}.tar.gz'.format(postfix_system, postfix_arch)
 
 
 def urlopen(url):
@@ -602,7 +616,10 @@ def install_node(env_dir, src_dir, opt):
     logger.info(' * Install %s (%s' % (prefix, opt.node),
                 extra=dict(continued=True))
 
-    node_url = get_node_src_url(opt.node, opt.prebuilt)
+    if opt.prebuilt:
+        node_url = get_node_bin_url(opt.node)
+    else:
+        node_url = get_node_src_url(opt.node)
     node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
     env_dir = abspath(env_dir)
 
@@ -610,7 +627,7 @@ def install_node(env_dir, src_dir, opt):
     if not os.path.exists(node_src_dir):
         logger.info(')')
         logger.info('   Downloading %s' % node_url)
-        download_node(node_url, src_dir, env_dir, opt, prefix)
+        download_node_src(node_url, src_dir, env_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))
 

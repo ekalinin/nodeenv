@@ -489,7 +489,7 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node(node_url, src_dir, env_dir, opt, prefix):
+def download_node_src(node_url, src_dir, env_dir, opt, prefix):
     """
     Download source code
     """
@@ -610,7 +610,7 @@ def install_node(env_dir, src_dir, opt):
     if not os.path.exists(node_src_dir):
         logger.info(')')
         logger.info('   Downloading %s' % node_url)
-        download_node(node_url, src_dir, env_dir, opt, prefix)
+        download_node_src(node_url, src_dir, env_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))
 

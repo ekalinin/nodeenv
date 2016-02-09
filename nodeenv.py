@@ -511,6 +511,14 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
+def download_node_bin(node_url, path):
+    """
+    Download file from node_url into specified directory
+    """
+    fp = open(os.path.join(path, os.path.basename(node_url)), 'wb+')
+    fp.write(urlopen(node_url).read())
+
+
 def download_node_src(node_url, src_dir, opt, prefix):
     """
     Download source code
@@ -536,16 +544,6 @@ def urlopen(url):
 
 # ---------------------------------------------------------
 # Virtual environment functions
-
-
-def copy_node_from_prebuilt(env_dir, src_dir):
-    """
-    Copy prebuilt binaries into environment
-    """
-    logger.info('.', extra=dict(continued=True))
-    prefix = get_binary_prefix()
-    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
-    logger.info('.', extra=dict(continued=True))
 
 
 def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
@@ -613,30 +611,35 @@ def install_node(env_dir, src_dir, opt):
     and install it in virtual environment.
     """
     env_dir = abspath(env_dir)
+
     prefix = get_binary_prefix()
-    logger.info(' * Install %s (%s' % (prefix, opt.node),
-                extra=dict(continued=True))
-
     if opt.prebuilt:
+        logger.info(' * Installing binary %s (%s)' % (prefix, opt.node))
         node_url = get_node_bin_url(opt.node)
+        #node_url = "https://nodejs.org/dist/v5.5.0/node-v5.5.0-linux-x86.tar.gz"
+
+        # get binary if not downloaded yet
+        env_bin_dir = join(env_dir, 'bin')
+        if not os.path.exists(env_bin_dir):
+            mkdir(env_bin_dir)
+            logger.info('   Downloading %s' % node_url)
+            if is_WIN:
+                download_node_bin(node_url, env_bin_dir)
+            else:
+                download_node_src(node_url, env_dir, opt, prefix)
     else:
+        logger.info(' * Installing %s (%s) from source' % (prefix, opt.node))
         node_url = get_node_src_url(opt.node)
-    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
+        node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
 
-    # get src if not downloaded yet
-    if not os.path.exists(node_src_dir):
-        logger.info(')')
-        logger.info('   Downloading %s' % node_url)
-        download_node_src(node_url, src_dir, opt, prefix)
+        # get src if not downloaded yet
+        if not os.path.exists(node_src_dir):
+            logger.info('   Downloading %s' % node_url)
+            download_node_src(node_url, src_dir, opt, prefix)
 
-    logger.info('.', extra=dict(continued=True))
-
-    if opt.prebuilt:
-        copy_node_from_prebuilt(env_dir, src_dir)
-    else:
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 
-    logger.info(' done.')
+    logger.info('   Done.')
 
 
 def install_npm(env_dir, src_dir, opt):

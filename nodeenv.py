@@ -750,7 +750,9 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
-        os.symlink("node", shim_nodejs)
+        if getattr(os, "symlink", None):
+            # ^ there is no os.symlink on Windows Python 2.x
+            os.symlink("node", shim_nodejs)
 
 
 def create_environment(env_dir, opt):

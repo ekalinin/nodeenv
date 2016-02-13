@@ -511,20 +511,42 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node_src(node_url, src_dir, env_dir, opt, prefix):
+def download_node_bin(node_url, env_dir):
     """
-    Download source code
+    Download node binaries directly into environment
+    """
+    if is_WIN:
+        bin_dir = os.path.join(env_dir, 'bin')
+        mkdir(bin_dir)
+        fp = open(os.path.join(bin_dir, os.path.basename(node_url)), 'wb+')
+        fp.write(urlopen(node_url).read())
+    else:
+        download_node_tar(node_url, env_dir, strip=True)
+
+
+def download_node_tar(node_url, src_dir, strip=False):
+    """
+    Download and unpack tar contents. If strip is set, also strips
+    root directory and all files in it (archive with node binary).
     """
     tar_contents = io.BytesIO(urlopen(node_url).read())
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
         member_list = tarfile_obj.getmembers()
         extract_list = []
         for member in member_list:
-            node_ver = opt.node.replace('.', '\.')
-            regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
-                % (prefix, node_ver)
-            if re.match(regex_string, member.name) is None:
-                extract_list.append(member)
+            # skip leading dir
+            newstart = member.name.find('/')+1
+            newname = member.name[newstart:]
+            if strip:
+                if not newstart:
+                    continue
+                # members can be renamed before extraction !
+                member.name = newname
+                regex_string = "^(README\.md|CHANGELOG\.md|LICENSE)"
+                if re.match(regex_string, newname) is not None:
+                    logger.debug('    Stripping %s ', newname)
+                    continue
+            extract_list.append(member)
         tarfile_obj.extractall(src_dir, extract_list)
 
 
@@ -536,16 +558,6 @@ def urlopen(url):
 
 # ---------------------------------------------------------
 # Virtual environment functions
-
-
-def copy_node_from_prebuilt(env_dir, src_dir):
-    """
-    Copy prebuilt binaries into environment
-    """
-    logger.info('.', extra=dict(continued=True))
-    prefix = get_binary_prefix()
-    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
-    logger.info('.', extra=dict(continued=True))
 
 
 def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
@@ -612,31 +624,29 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
-    prefix = get_binary_prefix()
-    logger.info(' * Install %s (%s' % (prefix, opt.node),
-                extra=dict(continued=True))
-
-    if opt.prebuilt:
-        node_url = get_node_bin_url(opt.node)
-    else:
-        node_url = get_node_src_url(opt.node)
-    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
     env_dir = abspath(env_dir)
-
-    # get src if not downloaded yet
-    if not os.path.exists(node_src_dir):
-        logger.info(')')
-        logger.info('   Downloading %s' % node_url)
-        download_node_src(node_url, src_dir, env_dir, opt, prefix)
-
-    logger.info('.', extra=dict(continued=True))
-
+    prefix = get_binary_prefix()
     if opt.prebuilt:
-        copy_node_from_prebuilt(env_dir, src_dir)
+        logger.info(' * Installing binary %s (%s)' % (prefix, opt.node))
+        node_url = get_node_bin_url(opt.node)
+
+        # get binary if not downloaded yet
+        if not os.path.exists(os.path.join(env_dir, 'bin')):
+            logger.info('   Downloading %s' % node_url)
+            download_node_bin(node_url, env_dir)
     else:
+        logger.info(' * Installing %s (%s) from source' % (prefix, opt.node))
+        node_url = get_node_src_url(opt.node)
+        node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
+
+        # get src if not downloaded yet
+        if not os.path.exists(node_src_dir):
+            logger.info('   Downloading %s' % node_url)
+            download_node_tar(node_url, src_dir)
+
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 
-    logger.info(' done.')
+    logger.info('   Done.')
 
 
 def install_npm(env_dir, src_dir, opt):

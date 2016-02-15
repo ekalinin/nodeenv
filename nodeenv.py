@@ -711,7 +711,10 @@ def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
     """
-    files = {'activate': ACTIVATE_SH, 'shim': SHIM}
+    if not is_WIN:
+        files = {'activate': ACTIVATE_SH, 'shim': SHIM}
+    else:
+        files = {'activate.bat': ACTIVATE_BAT}
     if opt.node == "system":
         files["node"] = SHIM
     bin_dir = join(env_dir, 'bin')
@@ -750,7 +753,9 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
-        os.symlink("node", shim_nodejs)
+        if getattr(os, "symlink", None):
+            # ^ there is no os.symlink on Windows Python 2.x
+            os.symlink("node", shim_nodejs)
 
 
 def create_environment(env_dir, opt):
@@ -946,6 +951,37 @@ export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
 export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
+"""
+
+# virtualenv script adapted for node environment
+ACTIVATE_BAT = """\
+@echo off
+set NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+
+if defined _OLD_VIRTUAL_PROMPT (
+    set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
+) else (
+    if not defined PROMPT (
+        set "PROMPT=$P$G"
+    )
+	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"	
+)
+set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
+
+if not defined _OLD_VIRTUAL_NODE_PATH (
+    set "_OLD_VIRTUAL_NODE_PATH=%NODE_PATH%"
+)
+set NODE_PATH=__NODE_VIRTUAL_ENV__\\lib\\node_modules
+
+if defined _OLD_VIRTUAL_NODE_PATH (
+    set "PATH=%_OLD_VIRTUAL_NODE_PATH%"
+) else (
+    set "_OLD_VIRTUAL_NODE_PATH=%PATH%"
+)
+set "PATH=%NODE_VIRTUAL_ENV%\\bin;%PATH%"
+
+:END
+
 """
 
 ACTIVATE_SH = """

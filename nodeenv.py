@@ -511,42 +511,20 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node_bin(node_url, env_dir):
+def download_node_src(node_url, src_dir, opt, prefix):
     """
-    Download node binaries directly into environment
-    """
-    if is_WIN:
-        bin_dir = os.path.join(env_dir, 'bin')
-        mkdir(bin_dir)
-        fp = open(os.path.join(bin_dir, os.path.basename(node_url)), 'wb+')
-        fp.write(urlopen(node_url).read())
-    else:
-        download_node_tar(node_url, env_dir, strip=True)
-
-
-def download_node_tar(node_url, src_dir, strip=False):
-    """
-    Download and unpack tar contents. If strip is set, also strips
-    root directory and all files in it (archive with node binary).
+    Download source code
     """
     tar_contents = io.BytesIO(urlopen(node_url).read())
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
         member_list = tarfile_obj.getmembers()
         extract_list = []
         for member in member_list:
-            # skip leading dir
-            newstart = member.name.find('/')+1
-            newname = member.name[newstart:]
-            if strip:
-                if not newstart:
-                    continue
-                # members can be renamed before extraction !
-                member.name = newname
-                regex_string = "^(README\.md|CHANGELOG\.md|LICENSE)"
-                if re.match(regex_string, newname) is not None:
-                    logger.debug('    Stripping %s ', newname)
-                    continue
-            extract_list.append(member)
+            node_ver = opt.node.replace('.', '\.')
+            regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
+                % (prefix, node_ver)
+            if re.match(regex_string, member.name) is None:
+                extract_list.append(member)
         tarfile_obj.extractall(src_dir, extract_list)
 
 
@@ -558,6 +536,16 @@ def urlopen(url):
 
 # ---------------------------------------------------------
 # Virtual environment functions
+
+
+def copy_node_from_prebuilt(env_dir, src_dir):
+    """
+    Copy prebuilt binaries into environment
+    """
+    logger.info('.', extra=dict(continued=True))
+    prefix = get_binary_prefix()
+    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
+    logger.info('.', extra=dict(continued=True))
 
 
 def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
@@ -626,27 +614,29 @@ def install_node(env_dir, src_dir, opt):
     """
     env_dir = abspath(env_dir)
     prefix = get_binary_prefix()
+    logger.info(' * Install %s (%s' % (prefix, opt.node),
+                extra=dict(continued=True))
+
     if opt.prebuilt:
-        logger.info(' * Installing binary %s (%s)' % (prefix, opt.node))
         node_url = get_node_bin_url(opt.node)
-
-        # get binary if not downloaded yet
-        if not os.path.exists(os.path.join(env_dir, 'bin')):
-            logger.info('   Downloading %s' % node_url)
-            download_node_bin(node_url, env_dir)
     else:
-        logger.info(' * Installing %s (%s) from source' % (prefix, opt.node))
         node_url = get_node_src_url(opt.node)
-        node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
+    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
 
-        # get src if not downloaded yet
-        if not os.path.exists(node_src_dir):
-            logger.info('   Downloading %s' % node_url)
-            download_node_tar(node_url, src_dir)
+    # get src if not downloaded yet
+    if not os.path.exists(node_src_dir):
+        logger.info(')')
+        logger.info('   Downloading %s' % node_url)
+        download_node_src(node_url, src_dir, opt, prefix)
 
+    logger.info('.', extra=dict(continued=True))
+
+    if opt.prebuilt:
+        copy_node_from_prebuilt(env_dir, src_dir)
+    else:
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 
-    logger.info('   Done.')
+    logger.info(' done.')
 
 
 def install_npm(env_dir, src_dir, opt):
@@ -711,10 +701,7 @@ def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
     """
-    if not is_WIN:
-        files = {'activate': ACTIVATE_SH, 'shim': SHIM}
-    else:
-        files = {'activate.bat': ACTIVATE_BAT}
+    files = {'activate': ACTIVATE_SH, 'shim': SHIM}
     if opt.node == "system":
         files["node"] = SHIM
     bin_dir = join(env_dir, 'bin')
@@ -753,9 +740,7 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
-        if getattr(os, "symlink", None):
-            # ^ there is no os.symlink on Windows Python 2.x
-            os.symlink("node", shim_nodejs)
+        os.symlink("node", shim_nodejs)
 
 
 def create_environment(env_dir, opt):
@@ -951,37 +936,6 @@ export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
 export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
-"""
-
-# virtualenv script adapted for node environment
-ACTIVATE_BAT = """\
-@echo off
-set NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
-
-if defined _OLD_VIRTUAL_PROMPT (
-    set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
-) else (
-    if not defined PROMPT (
-        set "PROMPT=$P$G"
-    )
-	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"	
-)
-set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
-
-if not defined _OLD_VIRTUAL_NODE_PATH (
-    set "_OLD_VIRTUAL_NODE_PATH=%NODE_PATH%"
-)
-set NODE_PATH=__NODE_VIRTUAL_ENV__\\lib\\node_modules
-
-if defined _OLD_VIRTUAL_NODE_PATH (
-    set "PATH=%_OLD_VIRTUAL_NODE_PATH%"
-) else (
-    set "_OLD_VIRTUAL_NODE_PATH=%PATH%"
-)
-set "PATH=%NODE_VIRTUAL_ENV%\\bin;%PATH%"
-
-:END
-
 """
 
 ACTIVATE_SH = """

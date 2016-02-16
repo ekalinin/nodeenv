@@ -479,14 +479,14 @@ def get_root_url(version):
 
 def get_node_bin_url(version):
     archmap = {
-      'x86':    'x86',  # Windows Vista 32
-      'i686':   'x86',
-      'x86_64': 'x64',  # Linux Ubuntu 64
-      'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
+        'x86':    'x86',  # Windows Vista 32
+        'i686':   'x86',
+        'x86_64': 'x64',  # Linux Ubuntu 64
+        'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
     }
     sysinfo = {
-      'system': platform.system().lower(),
-      'arch': archmap[platform.machine()],
+        'system': platform.system().lower(),
+        'arch': archmap[platform.machine()],
     }
     if is_WIN:
         filename = 'win-%(arch)s/node.exe' % sysinfo

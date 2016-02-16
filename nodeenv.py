@@ -515,7 +515,9 @@ def download_node_src(node_url, src_dir, opt, prefix):
     """
     Download source code
     """
+    logger.info('.', extra=dict(continued=True))
     tar_contents = io.BytesIO(urlopen(node_url).read())
+    logger.info('.', extra=dict(continued=True))
     with tarfile_open(fileobj=tar_contents) as tarfile_obj:
         member_list = tarfile_obj.getmembers()
         extract_list = []
@@ -614,19 +616,19 @@ def install_node(env_dir, src_dir, opt):
     """
     env_dir = abspath(env_dir)
     prefix = get_binary_prefix()
-    logger.info(' * Install %s (%s' % (prefix, opt.node),
+    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
+    src_type = "prebuilt" if opt.prebuilt else "source"
+
+    logger.info(' * Install %s %s (%s) ' % (src_type, prefix, opt.node),
                 extra=dict(continued=True))
 
     if opt.prebuilt:
         node_url = get_node_bin_url(opt.node)
     else:
         node_url = get_node_src_url(opt.node)
-    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
-        logger.info(')')
-        logger.info('   Downloading %s' % node_url)
         download_node_src(node_url, src_dir, opt, prefix)
 
     logger.info('.', extra=dict(continued=True))

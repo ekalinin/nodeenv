@@ -118,6 +118,9 @@ test8: clean
 
 tests: clean test1 test2 test3 test4 test5 test6 test7 test8 clean
 
+ut:
+	@. env/bin/activate && tox -e py27
+
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS
 	@echo "" >> AUTHORS

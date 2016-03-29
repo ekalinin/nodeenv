@@ -90,7 +90,7 @@ class Config(object):
     debug = False
     profile = False
     make = 'make'
-    prebuilt = False
+    prebuilt = True
 
     @classmethod
     def _load(cls, configfiles, verbose=False):

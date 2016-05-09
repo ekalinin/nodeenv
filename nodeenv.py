@@ -385,7 +385,7 @@ def writefile(dest, content, overwrite=True, append=False):
     else:
         with open(dest, 'rb') as f:
             c = f.read()
-        if c == content:
+        if content in c:
             logger.debug(' * Content %s already in place', dest)
             return
 

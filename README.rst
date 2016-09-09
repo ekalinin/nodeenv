@@ -132,11 +132,12 @@ for compilation and npm.js "0.3.17"::
 
     $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --jobs=4 env-4.3
 
-Install node.js from prebuilt package::
+Install node.js from the source::
 
-    $ nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
+    $ nodeenv --node=0.10.25 --source env-0.10.25-prebuilt
 
-It's much faster than installing & compiling node.js from source::
+It's much faster to install from the prebuilt package than Install & compile
+node.js from source::
 
     $ time nodeenv --node=0.10.25 --prebuilt env-0.10.25-prebuilt
      + Install node.js (0.10.25) ... done.
@@ -145,7 +146,7 @@ It's much faster than installing & compiling node.js from source::
     user    0m0.408s
     sys     0m1.144s
 
-    $ time nodeenv --node=0.10.25 env-0.10.25-src
+    $ time nodeenv --node=0.10.25 --source env-0.10.25-src
      + Install node.js (0.10.25) ... done.
 
     real    4m12.602s

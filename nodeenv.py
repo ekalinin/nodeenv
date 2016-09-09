@@ -325,7 +325,12 @@ def parse_args(check=True):
     parser.add_option(
         '--prebuilt', dest='prebuilt',
         action='store_true', default=Config.prebuilt,
-        help='Install node.js from prebuilt package')
+        help='Install node.js from prebuilt package (default)')
+
+    parser.add_option(
+        '--source', dest='prebuilt',
+        action='store_false', default=Config.prebuilt,
+        help='Install node.js from the source')
 
     options, args = parser.parse_args()
     if options.config_file is None:

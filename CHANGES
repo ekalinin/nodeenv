@@ -1,6 +1,17 @@
 Nodeenv changelog
 =================
 
+Version 1.0.0
+-------------
+- `--prebuilt` is default. See `# 161`_
+- Added `--source` option
+- Added support for the `ARM`. See `# 171`_
+- Fixed issue with `$PATH`. See `# 86`_
+
+.. _# 171: https://github.com/ekalinin/nodeenv/issues/171
+.. _# 161: https://github.com/ekalinin/nodeenv/issues/161
+.. _# 86: https://github.com/ekalinin/nodeenv/issues/86
+
 Version 0.13.6
 --------------
 - Use https for nodejs.org. See `# 129`_

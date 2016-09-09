@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from pkg_resources import parse_version
 
-nodeenv_version = '0.13.6'
+nodeenv_version = '1.0.0'
 
 join = os.path.join
 abspath = os.path.abspath

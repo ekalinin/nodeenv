@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from pkg_resources import parse_version
 
-nodeenv_version = '0.13.6'
+nodeenv_version = '1.0.0'
 
 join = os.path.join
 abspath = os.path.abspath
@@ -325,7 +325,12 @@ def parse_args(check=True):
     parser.add_option(
         '--prebuilt', dest='prebuilt',
         action='store_true', default=Config.prebuilt,
-        help='Install node.js from prebuilt package')
+        help='Install node.js from prebuilt package (default)')
+
+    parser.add_option(
+        '--source', dest='prebuilt',
+        action='store_false', default=Config.prebuilt,
+        help='Install node.js from the source')
 
     options, args = parser.parse_args()
     if options.config_file is None:

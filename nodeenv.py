@@ -753,6 +753,11 @@ def install_activate(env_dir, opt):
         os.symlink("node", shim_nodejs)
 
 
+def set_predeactivate_hook(env_dir):
+    with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
+        hook.write(PREDEACTIVATE_SH)
+
+
 def create_environment(env_dir, opt):
     """
     Creates a new environment in ``env_dir``.
@@ -778,6 +783,8 @@ def create_environment(env_dir, opt):
         install_npm(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)
+    if opt.python_virtualenv:
+        set_predeactivate_hook(env_dir)
     # Cleanup
     if opt.clean_src:
         callit(['rm -rf', pipes.quote(src_dir)], opt.verbose, True, env_dir)
@@ -1073,6 +1080,10 @@ fi
 if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
     hash -r
 fi
+"""
+
+PREDEACTIVATE_SH = """
+if type -p deactivate_node > /dev/null; then deactivate_node;fi
 """
 
 if __name__ == '__main__':

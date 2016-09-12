@@ -141,3 +141,16 @@ def test_print_node_versions_node(cap_logging_info):
     # 8 items per line = 7 tabs
     # The last line contains the remaning 3 items
     assert tabs_per_line == [7] * 28 + [2]
+
+
+def test_predeactivate_hook(tmpdir):
+    # Throw error if the environment directory is not a string
+    with pytest.raises((TypeError, AttributeError)):
+        nodeenv.set_predeactivate_hook(tmpdir)
+    # Throw error if environment directory has no bin path
+    with pytest.raises((OSError, IOError)):
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+    tmpdir.mkdir('bin')
+    nodeenv.set_predeactivate_hook(tmpdir.strpath)
+    p = tmpdir.join('bin').join('predeactivate')
+    assert 'deactivate_node' in p.read()

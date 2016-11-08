@@ -564,7 +564,7 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     if is_WIN:
         callit(['copy', '/Y', '/L', join(src_dir, 'node.exe'), join(env_dir, 'Scripts', 'node.exe')], False, True)
     else:
-        callit(['cp', '-a', join(src_dir, '/%s-v*/*' % prefix), env_dir], True, env_dir)
+        callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 

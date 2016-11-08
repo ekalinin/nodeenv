@@ -23,6 +23,8 @@ import subprocess
 import tarfile
 import pipes
 import platform
+import zipfile
+import shutil
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -84,7 +86,7 @@ class Config(object):
     # Defaults
     node = 'latest'
     npm = 'latest'
-    with_npm = False
+    with_npm = True if is_WIN else False
     jobs = '2'
     without_ssl = False
     debug = False
@@ -222,15 +224,42 @@ def parse_args(check=True):
         action='store_true', dest='io', default=False,
         help='Use iojs instead of nodejs.')
 
-    parser.add_option(
-        '-j', '--jobs', dest='jobs', default=Config.jobs,
-        help='Sets number of parallel commands at node.js compilation. '
-        'The default is 2 jobs.')
+    if not is_WIN:
+        parser.add_option(
+            '-j', '--jobs', dest='jobs', default=Config.jobs,
+            help='Sets number of parallel commands at node.js compilation. '
+            'The default is 2 jobs.')
 
-    parser.add_option(
-        '--load-average', dest='load_average',
-        help='Sets maximum load average for executing parallel commands '
-             'at node.js compilation.')
+        parser.add_option(
+            '--load-average', dest='load_average',
+            help='Sets maximum load average for executing parallel commands '
+                'at node.js compilation.')
+
+        parser.add_option(
+        '--without-ssl', dest='without_ssl',
+            action='store_true', default=Config.without_ssl,
+            help='Build node.js without SSL support')
+
+        parser.add_option(
+            '--debug', dest='debug',
+            action='store_true', default=Config.debug,
+            help='Build debug variant of the node.js')
+
+        parser.add_option(
+            '--profile', dest='profile',
+            action='store_true', default=Config.profile,
+            help='Enable profiling for node.js')
+
+        parser.add_option(
+            '--make', '-m', dest='make_path',
+            metavar='MAKE_PATH',
+            help='Path to make command',
+            default=Config.make)
+
+        parser.add_option(
+            '--source', dest='prebuilt',
+            action='store_false', default=Config.prebuilt,
+            help='Install node.js from the source')
 
     parser.add_option(
         '-v', '--verbose',
@@ -267,26 +296,11 @@ def parse_args(check=True):
         help='Install npm packages from file without node')
 
     parser.add_option(
-        '--without-ssl', dest='without_ssl',
-        action='store_true', default=Config.without_ssl,
-        help='Build node.js without SSL support')
-
-    parser.add_option(
-        '--debug', dest='debug',
-        action='store_true', default=Config.debug,
-        help='Build debug variant of the node.js')
-
-    parser.add_option(
-        '--profile', dest='profile',
-        action='store_true', default=Config.profile,
-        help='Enable profiling for node.js')
-
-    parser.add_option(
         '--with-npm', dest='with_npm',
         action='store_true', default=Config.with_npm,
         help='Build without installing npm into the new virtual environment. '
         'Required for node.js < 0.6.3. By default, the npm included with '
-        'node.js is used.')
+        'node.js is used. Under Windows, this defaults to true.')
 
     parser.add_option(
         '--npm', dest='npm',
@@ -317,20 +331,9 @@ def parse_args(check=True):
         help='Force installation in a pre-existing directory')
 
     parser.add_option(
-        '--make', '-m', dest='make_path',
-        metavar='MAKE_PATH',
-        help='Path to make command',
-        default=Config.make)
-
-    parser.add_option(
         '--prebuilt', dest='prebuilt',
         action='store_true', default=Config.prebuilt,
         help='Install node.js from prebuilt package (default)')
-
-    parser.add_option(
-        '--source', dest='prebuilt',
-        action='store_false', default=Config.prebuilt,
-        help='Install node.js from the source')
 
     options, args = parser.parse_args()
     if options.config_file is None:
@@ -378,7 +381,7 @@ def writefile(dest, content, overwrite=True, append=False):
     mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
                  stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
     content = to_utf8(content)
-    if is_PY3:
+    if is_PY3 and type(content) != bytes:
         content = bytes(content, 'utf-8')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
@@ -402,9 +405,9 @@ def writefile(dest, content, overwrite=True, append=False):
         if append:
             logger.info(' * Appending data to %s', dest)
             with open(dest, 'ab') as f:
-                f.write(DISABLE_PROMPT.encode('utf-8'))
+                if not is_WIN: f.write(DISABLE_PROMPT.encode('utf-8'))
                 f.write(content)
-                f.write(ENABLE_PROMPT.encode('utf-8'))
+                if not is_WIN: f.write(ENABLE_PROMPT.encode('utf-8'))
             return
 
         logger.info(' * Overwriting %s with new content', dest)
@@ -524,18 +527,22 @@ def download_node_src(node_url, src_dir, opt, prefix):
     Download source code
     """
     logger.info('.', extra=dict(continued=True))
-    tar_contents = io.BytesIO(urlopen(node_url).read())
+    dl_contents = io.BytesIO(urlopen(node_url).read())
     logger.info('.', extra=dict(continued=True))
-    with tarfile_open(fileobj=tar_contents) as tarfile_obj:
-        member_list = tarfile_obj.getmembers()
-        extract_list = []
-        for member in member_list:
-            node_ver = opt.node.replace('.', '\.')
-            regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
-                % (prefix, node_ver)
-            if re.match(regex_string, member.name) is None:
-                extract_list.append(member)
-        tarfile_obj.extractall(src_dir, extract_list)
+
+    if is_WIN:
+        writefile(join(src_dir, 'node.exe'), dl_contents.read())
+    else:
+        with tarfile_open(fileobj=dl_contents) as tarfile_obj:
+            member_list = tarfile_obj.getmembers()
+            extract_list = []
+            for member in member_list:
+                node_ver = opt.node.replace('.', '\.')
+                regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
+                    % (prefix, node_ver)
+                if re.match(regex_string, member.name) is None:
+                    extract_list.append(member)
+            tarfile_obj.extractall(src_dir, extract_list)
 
 
 def urlopen(url):
@@ -554,7 +561,10 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     """
     logger.info('.', extra=dict(continued=True))
     prefix = get_binary_prefix()
-    callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
+    if is_WIN:
+        callit(['copy', '/Y', '/L', join(src_dir, 'node.exe'), join(env_dir, 'Scripts', 'node.exe')], False, True)
+    else:
+        callit(['cp', '-a', join(src_dir, '/%s-v*/*' % prefix), env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 
@@ -680,6 +690,35 @@ def install_npm(env_dir, src_dir, opt):
     logger.info('done.')
 
 
+def install_npm_win(env_dir, src_dir, opt):
+    """
+    Download source code for npm, unpack it
+    and install it in virtual environment.
+    """
+    logger.info(' * Install npm.js (%s) ... ' % opt.npm,
+                extra=dict(continued=True))
+    npm_contents = io.BytesIO(urlopen('https://github.com/npm/npm/archive/%s.zip' % opt.npm).read())
+
+    bin_path = join(env_dir, 'Scripts')
+    node_modules_path = join(bin_path, 'node_modules', 'npm')
+
+    if os.path.exists(node_modules_path):
+        shutil.rmtree(node_modules_path)
+
+    if os.path.exists(join(bin_path, 'npm.cmd')):
+        os.remove(join(bin_path, 'npm.cmd'))
+
+    if os.path.exists(join(bin_path, 'npm-cli.js')):
+        os.remove(join(bin_path, 'npm-cli.js'))
+
+    with zipfile.ZipFile(npm_contents, 'r') as zipf:
+        zipf.extractall(src_dir)
+
+    shutil.copytree(join(src_dir, 'npm-%s' % opt.npm), node_modules_path)
+    shutil.copy(join(src_dir, 'npm-%s' % opt.npm, 'bin', 'npm.cmd'), join(bin_path, 'npm.cmd'))
+    shutil.copy(join(src_dir, 'npm-%s' % opt.npm, 'bin', 'npm-cli.js'), join(bin_path, 'npm-cli.js'))
+
+
 def install_packages(env_dir, opt):
     """
     Install node.js packages via npm
@@ -711,15 +750,23 @@ def install_activate(env_dir, opt):
     """
     Install virtual environment activation script
     """
-    files = {'activate': ACTIVATE_SH, 'shim': SHIM}
+    if is_WIN:
+        files = {'activate.bat': ACTIVATE_BAT}
+        bin_dir = join(env_dir, 'Scripts')
+        shim_node = join(bin_dir, "node.exe")
+        shim_nodejs = join(bin_dir, "nodejs.exe")
+    else:
+        files = {'activate': ACTIVATE_SH, 'shim': SHIM}
+        bin_dir = join(env_dir, 'bin')
+        shim_node = join(bin_dir, "node")
+        shim_nodejs = join(bin_dir, "nodejs")
+
     if opt.node == "system":
         files["node"] = SHIM
-    bin_dir = join(env_dir, 'bin')
+
     mod_dir = join('lib', 'node_modules')
     prompt = opt.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
-    shim_node = join(bin_dir, "node")
-    shim_nodejs = join(bin_dir, "nodejs")
     if opt.node == "system":
         env = os.environ.copy()
         env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
@@ -750,12 +797,16 @@ def install_activate(env_dir, opt):
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
-        os.symlink("node", shim_nodejs)
+        if is_WIN:
+            callit(['mklink', shim_nodejs, 'node.exe'], True, True)
+        else:
+            os.symlink("node", shim_nodejs)
 
 
 def set_predeactivate_hook(env_dir):
-    with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
-        hook.write(PREDEACTIVATE_SH)
+    if not is_WIN:
+        with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
+            hook.write(PREDEACTIVATE_SH)
 
 
 def create_environment(env_dir, opt):
@@ -780,14 +831,15 @@ def create_environment(env_dir, opt):
     # for install
     install_activate(env_dir, opt)
     if node_version_from_opt(opt) < parse_version("0.6.3") or opt.with_npm:
-        install_npm(env_dir, src_dir, opt)
+        instfunc = install_npm_win if is_WIN else install_npm
+        instfunc(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)
     if opt.python_virtualenv:
         set_predeactivate_hook(env_dir)
     # Cleanup
     if opt.clean_src:
-        callit(['rm -rf', pipes.quote(src_dir)], opt.verbose, True, env_dir)
+        shutil.rmtree(src_dir)
 
 
 class GetsAHrefs(HTMLParser):
@@ -917,6 +969,10 @@ def main():
 
     opt, args = parse_args()
 
+    if opt.node.lower() == 'system' and is_WIN:
+        logger.error('Installing system node.js on win32 is not supported!')
+        exit(1)
+
     if opt.io:
         global src_domain
         src_domain = "iojs.org"
@@ -953,6 +1009,31 @@ export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules
 export NPM_CONFIG_PREFIX=__NODE_VIRTUAL_ENV__
 export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
+"""
+
+ACTIVATE_BAT = """\
+@echo off
+set NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+if defined _OLD_VIRTUAL_PROMPT (
+    set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
+) else (
+    if not defined PROMPT (
+        set "PROMPT=$P$G"
+    )
+	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
+)
+set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
+if not defined _OLD_VIRTUAL_NODE_PATH (
+    set "_OLD_VIRTUAL_NODE_PATH=%NODE_PATH%"
+)
+set NODE_PATH=__NODE_VIRTUAL_ENV__\\lib\\node_modules
+if defined _OLD_VIRTUAL_NODE_PATH (
+    set "PATH=%_OLD_VIRTUAL_NODE_PATH%"
+) else (
+    set "_OLD_VIRTUAL_NODE_PATH=%PATH%"
+)
+set "PATH=%NODE_VIRTUAL_ENV%\\Scripts;%PATH%"
+:END
 """
 
 ACTIVATE_SH = """

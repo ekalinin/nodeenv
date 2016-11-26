@@ -196,6 +196,8 @@ def create_logger():
     # add ch to logger
     logger.addHandler(ch)
     return logger
+
+
 logger = create_logger()
 
 
@@ -799,6 +801,7 @@ class GetsAHrefs(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag == 'a':
             self.hrefs.append(dict(attrs).get('href', ''))
+
 
 VERSION_RE = re.compile('\d+\.\d+\.\d+')
 

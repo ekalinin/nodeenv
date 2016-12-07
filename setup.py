@@ -21,6 +21,7 @@ def read_file(file_name):
         encoding='utf-8',
     ).read()
 
+
 ldesc = read_file('README.rst')
 ldesc += "\n\n" + read_file('CHANGES')
 

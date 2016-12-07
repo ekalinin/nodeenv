@@ -62,10 +62,10 @@ test3: clean
 # https://github.com/ekalinin/nodeenv/issues/43
 test4: clean
 	@echo " ="
-	@echo " = test4: separate nodejs's env for python3.4"
+	@echo " = test4: separate nodejs's env for python3.5"
 	@echo " ="
 	@rm -rf env                                                 && \
-		virtualenv --no-site-packages --python=python3.4 env    && \
+		virtualenv --no-site-packages --python=python3.5 env    && \
 		. env/bin/activate                                      && \
 		python setup.py install                                 && \
 		nodeenv 4 -p --prebuilt                                 && \
@@ -116,7 +116,7 @@ test8: clean
 		rm -rf öäü && mkdir öäü && cd öäü && \
 		nodeenv -j 4 --prebuilt env
 
-tests: clean test1 test2 test3 test4 test5 test6 test7 test8 clean
+tests: clean test1 test2 test3 test4 test5 test7 test8 clean
 
 ut:
 	@. env/bin/activate && tox -e py27

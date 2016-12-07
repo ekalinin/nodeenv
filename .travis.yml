@@ -8,7 +8,7 @@ env: # These should match the tox env list
     - TOXENV=py35
     - TOXENV=pypy
     - TOXENV=pypy3
-install: pip install coveralls tox --use-mirrors
+install: pip install coveralls tox
 script: tox
 after_success:
     - coveralls

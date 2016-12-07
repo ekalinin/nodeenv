@@ -235,10 +235,10 @@ def parse_args(check=True):
         parser.add_option(
             '--load-average', dest='load_average',
             help='Sets maximum load average for executing parallel commands '
-                'at node.js compilation.')
+            'at node.js compilation.')
 
         parser.add_option(
-        '--without-ssl', dest='without_ssl',
+            '--without-ssl', dest='without_ssl',
             action='store_true', default=Config.without_ssl,
             help='Build node.js without SSL support')
 
@@ -407,9 +407,11 @@ def writefile(dest, content, overwrite=True, append=False):
         if append:
             logger.info(' * Appending data to %s', dest)
             with open(dest, 'ab') as f:
-                if not is_WIN: f.write(DISABLE_PROMPT.encode('utf-8'))
+                if not is_WIN:
+                    f.write(DISABLE_PROMPT.encode('utf-8'))
                 f.write(content)
-                if not is_WIN: f.write(ENABLE_PROMPT.encode('utf-8'))
+                if not is_WIN:
+                    f.write(ENABLE_PROMPT.encode('utf-8'))
             return
 
         logger.info(' * Overwriting %s with new content', dest)
@@ -540,9 +542,9 @@ def download_node_src(node_url, src_dir, opt, prefix):
             extract_list = []
             for member in member_list:
                 node_ver = opt.node.replace('.', '\.')
-                regex_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)" \
+                rexp_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)"\
                     % (prefix, node_ver)
-                if re.match(regex_string, member.name) is None:
+                if re.match(rexp_string, member.name) is None:
                     extract_list.append(member)
             tarfile_obj.extractall(src_dir, extract_list)
 
@@ -564,9 +566,12 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     logger.info('.', extra=dict(continued=True))
     prefix = get_binary_prefix()
     if is_WIN:
-        callit(['copy', '/Y', '/L', join(src_dir, 'node.exe'), join(env_dir, 'Scripts', 'node.exe')], False, True)
+        src_exe = join(src_dir, 'node.exe')
+        dst_exe = join(env_dir, 'Scripts', 'node.exe')
+        callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
     else:
-        callit(['cp', '-a', src_dir + '/%s-v*/*' % prefix, env_dir], True, env_dir)
+        src_folder = src_dir + '/%s-v*/*' % prefix
+        callit(['cp', '-a', src_folder, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 
@@ -699,7 +704,8 @@ def install_npm_win(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
-    npm_contents = io.BytesIO(urlopen('https://github.com/npm/npm/archive/%s.zip' % opt.npm).read())
+    npm_url = 'https://github.com/npm/npm/archive/%s.zip' % opt.npm
+    npm_contents = io.BytesIO(urlopen(npm_url).read())
 
     bin_path = join(env_dir, 'Scripts')
     node_modules_path = join(bin_path, 'node_modules', 'npm')
@@ -716,9 +722,12 @@ def install_npm_win(env_dir, src_dir, opt):
     with zipfile.ZipFile(npm_contents, 'r') as zipf:
         zipf.extractall(src_dir)
 
-    shutil.copytree(join(src_dir, 'npm-%s' % opt.npm), node_modules_path)
-    shutil.copy(join(src_dir, 'npm-%s' % opt.npm, 'bin', 'npm.cmd'), join(bin_path, 'npm.cmd'))
-    shutil.copy(join(src_dir, 'npm-%s' % opt.npm, 'bin', 'npm-cli.js'), join(bin_path, 'npm-cli.js'))
+    npm_ver = 'npm-%s' % opt.npm
+    shutil.copytree(join(src_dir, npm_ver), node_modules_path)
+    shutil.copy(join(src_dir, npm_ver, 'bin', 'npm.cmd'),
+                join(bin_path, 'npm.cmd'))
+    shutil.copy(join(src_dir, npm_ver, 'bin', 'npm-cli.js'),
+                join(bin_path, 'npm-cli.js'))
 
 
 def install_packages(env_dir, opt):
@@ -1023,7 +1032,7 @@ if defined _OLD_VIRTUAL_PROMPT (
     if not defined PROMPT (
         set "PROMPT=$P$G"
     )
-	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
+    set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
 set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
 if not defined _OLD_VIRTUAL_NODE_PATH (

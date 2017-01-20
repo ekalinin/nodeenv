@@ -568,6 +568,7 @@ def copy_node_from_prebuilt(env_dir, src_dir):
     if is_WIN:
         src_exe = join(src_dir, 'node.exe')
         dst_exe = join(env_dir, 'Scripts', 'node.exe')
+        mkdir(join(env_dir, 'Scripts'))
         callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
     else:
         src_folder = src_dir + '/%s-v*/*' % prefix

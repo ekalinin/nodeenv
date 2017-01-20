@@ -62,13 +62,12 @@ test3: clean
 # https://github.com/ekalinin/nodeenv/issues/43
 test4: clean
 	@echo " ="
-	@echo " = test4: separate nodejs's env for python3.5"
+	@echo " = test4: system nodejs's for python3.5"
 	@echo " ="
 	@rm -rf env                                                 && \
 		virtualenv --no-site-packages --python=python3.5 env    && \
 		. env/bin/activate                                      && \
 		python setup.py install                                 && \
-		nodeenv 4 -p --prebuilt                                 && \
 		nodeenv -p --node=system
 
 test5: clean
@@ -79,8 +78,7 @@ test5: clean
 		virtualenv --no-site-packages --python=python2.7 env    && \
 		. env/bin/activate                      && \
 		python setup.py install                 && \
-		nodeenv 4 -p --prebuilt                 && \
-		nodeenv -p --node=system
+		nodeenv -p --prebuilt
 
 test6: clean
 	@echo " ="

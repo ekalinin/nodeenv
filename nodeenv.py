@@ -810,7 +810,10 @@ def install_activate(env_dir, opt):
 
     if not os.path.exists(shim_nodejs):
         if is_WIN:
-            callit(['mklink', shim_nodejs, 'node.exe'], True, True)
+            try:
+                callit(['mklink', shim_nodejs, 'node.exe'], True, True)
+            except OSError:
+                logger.error('Error: Failed to create nodejs.exe link')
         else:
             os.symlink("node", shim_nodejs)
 

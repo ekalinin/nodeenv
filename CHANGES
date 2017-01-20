@@ -1,6 +1,10 @@
 Nodeenv changelog
 =================
 
+Version 1.1.0
+-------------
+- Windows support
+
 Version 1.0.0
 -------------
 - `--prebuilt` is default. See `# 161`_

@@ -763,7 +763,11 @@ def install_activate(env_dir, opt):
     Install virtual environment activation script
     """
     if is_WIN:
-        files = {'activate.bat': ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT, "Activate.ps1": ACTIVATE_PS1}
+        files = {
+            'activate.bat': ACTIVATE_BAT,
+            "deactivate.bat": DEACTIVATE_BAT,
+            "Activate.ps1": ACTIVATE_PS1
+        }
         bin_dir = join(env_dir, 'Scripts')
         shim_node = join(bin_dir, "node.exe")
         shim_nodejs = join(bin_dir, "nodejs.exe")

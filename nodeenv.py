@@ -763,7 +763,7 @@ def install_activate(env_dir, opt):
     Install virtual environment activation script
     """
     if is_WIN:
-        files = {'activate.bat': ACTIVATE_BAT}
+        files = {'activate.bat': ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT}
         bin_dir = join(env_dir, 'Scripts')
         shim_node = join(bin_dir, "node.exe")
         shim_nodejs = join(bin_dir, "nodejs.exe")
@@ -1029,26 +1029,47 @@ exec __SHIM_NODE__ "$@"
 
 ACTIVATE_BAT = """\
 @echo off
-set NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+set "NODE_VIRTUAL_ENV=__NODE_VIRTUAL_ENV__"
+if not defined PROMPT (
+    set "PROMPT=$P$G"
+)
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
-) else (
-    if not defined PROMPT (
-        set "PROMPT=$P$G"
-    )
-    set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
-set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
-if not defined _OLD_VIRTUAL_NODE_PATH (
-    set "_OLD_VIRTUAL_NODE_PATH=%NODE_PATH%"
-)
-set NODE_PATH=__NODE_VIRTUAL_ENV__\\lib\\node_modules
 if defined _OLD_VIRTUAL_NODE_PATH (
-    set "PATH=%_OLD_VIRTUAL_NODE_PATH%"
-) else (
-    set "_OLD_VIRTUAL_NODE_PATH=%PATH%"
+    set "NODE_PATH=%_OLD_VIRTUAL_NODE_PATH%"
 )
-set "PATH=%NODE_VIRTUAL_ENV%\\Scripts;%PATH%"
+set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
+set "PROMPT=__NODE_VIRTUAL_PROMPT__ %PROMPT%"
+if defined NODE_PATH (
+    set "_OLD_VIRTUAL_NODE_PATH=%NODE_PATH%"
+    set NODE_PATH=
+)
+if defined _OLD_VIRTUAL_PATH (
+    set "PATH=%_OLD_VIRTUAL_PATH%"
+) else (
+    set "_OLD_VIRTUAL_PATH=%PATH%"
+)
+set "PATH=%NODE_VIRTUAL_ENV%\Scripts;%PATH%"
+:END
+
+"""
+
+DEACTIVATE_BAT = """\
+@echo off
+if defined _OLD_VIRTUAL_PROMPT (
+    set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
+)
+set _OLD_VIRTUAL_PROMPT=
+if defined _OLD_VIRTUAL_NODE_PATH (
+    set "NODE_PATH=%_OLD_VIRTUAL_NODE_PATH%"
+    set _OLD_VIRTUAL_NODE_PATH=
+)
+if defined _OLD_VIRTUAL_PATH (
+    set "PATH=%_OLD_VIRTUAL_PATH%"
+)
+set _OLD_VIRTUAL_PATH=
+set NODE_VIRTUAL_ENV=
 :END
 """
 

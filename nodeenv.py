@@ -763,7 +763,7 @@ def install_activate(env_dir, opt):
     Install virtual environment activation script
     """
     if is_WIN:
-        files = {'activate.bat': ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT}
+        files = {'activate.bat': ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT, "Activate.ps1": ACTIVATE_PS1}
         bin_dir = join(env_dir, 'Scripts')
         shim_node = join(bin_dir, "node.exe")
         shim_nodejs = join(bin_dir, "nodejs.exe")
@@ -1071,6 +1071,53 @@ if defined _OLD_VIRTUAL_PATH (
 set _OLD_VIRTUAL_PATH=
 set NODE_VIRTUAL_ENV=
 :END
+"""
+
+ACTIVATE_PS1 = """\
+function global:deactivate ([switch]$NonDestructive) {
+    # Revert to original values
+    if (Test-Path function:_OLD_VIRTUAL_PROMPT) {
+        copy-item function:_OLD_VIRTUAL_PROMPT function:prompt
+        remove-item function:_OLD_VIRTUAL_PROMPT
+    }
+    if (Test-Path env:_OLD_VIRTUAL_NODE_PATH) {
+        copy-item env:_OLD_VIRTUAL_NODE_PATH env:NODE_PATH
+        remove-item env:_OLD_VIRTUAL_NODE_PATH
+    }
+    if (Test-Path env:_OLD_VIRTUAL_PATH) {
+        copy-item env:_OLD_VIRTUAL_PATH env:PATH
+        remove-item env:_OLD_VIRTUAL_PATH
+    }
+    if (Test-Path env:NODE_VIRTUAL_ENV) {
+        remove-item env:NODE_VIRTUAL_ENV
+    }
+    if (!$NonDestructive) {
+        # Self destruct!
+        remove-item function:deactivate
+    }
+}
+
+deactivate -nondestructive
+$env:NODE_VIRTUAL_ENV="__NODE_VIRTUAL_ENV__"
+
+# Set the prompt to include the env name
+# Make sure _OLD_VIRTUAL_PROMPT is global
+function global:_OLD_VIRTUAL_PROMPT {""}
+copy-item function:prompt function:_OLD_VIRTUAL_PROMPT
+function global:prompt {
+    Write-Host -NoNewline -ForegroundColor Green '__NODE_VIRTUAL_PROMPT__ '
+    _OLD_VIRTUAL_PROMPT
+}
+
+# Clear NODE_PATH
+if (Test-Path env:NODE_PATH) {
+    copy-item env:NODE_PATH env:_OLD_VIRTUAL_NODE_PATH
+    remove-item env:NODE_PATH
+}
+
+# Add the venv to the PATH
+copy-item env:PATH env:_OLD_VIRTUAL_PATH
+$env:PATH = "$env:NODE_VIRTUAL_ENV\Scripts;$env:PATH"
 """
 
 ACTIVATE_SH = """

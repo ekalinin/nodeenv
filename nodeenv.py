@@ -559,7 +559,7 @@ def urlopen(url):
 # Virtual environment functions
 
 
-def copy_node_from_prebuilt(env_dir, src_dir):
+def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     """
     Copy prebuilt binaries into environment
     """
@@ -571,7 +571,7 @@ def copy_node_from_prebuilt(env_dir, src_dir):
         mkdir(join(env_dir, 'Scripts'))
         callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
     else:
-        src_folder = src_dir + '/%s-v*/*' % prefix
+        src_folder = src_dir + '/%s-v%s*/*' % (prefix, node_version)
         callit(['cp', '-a', src_folder, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 
@@ -660,7 +660,7 @@ def install_node(env_dir, src_dir, opt):
     logger.info('.', extra=dict(continued=True))
 
     if opt.prebuilt:
-        copy_node_from_prebuilt(env_dir, src_dir)
+        copy_node_from_prebuilt(env_dir, src_dir, opt.node)
     else:
         build_node_from_src(env_dir, src_dir, node_src_dir, opt)
 

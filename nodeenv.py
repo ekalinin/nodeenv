@@ -571,7 +571,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
         mkdir(join(env_dir, 'Scripts'))
         callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
     else:
-        src_folder = src_dir + '/%s-v%s*/*' % (prefix, node_version)
+        src_folder = src_dir + to_utf8('/%s-v%s*/*' % (prefix, node_version))
         callit(['cp', '-a', src_folder, env_dir], True, env_dir)
     logger.info('.', extra=dict(continued=True))
 

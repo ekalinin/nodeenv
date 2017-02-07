@@ -43,7 +43,7 @@ nodeenv_version = '1.1.2'
 
 join = os.path.join
 abspath = os.path.abspath
-src_domain = "nodejs.org"
+src_domain = "npm.taobao.org/mirrors/node"
 
 is_PY3 = sys.version_info[0] == 3
 if is_PY3:
@@ -484,9 +484,9 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
-        return 'https://%s/dist/v%s/' % (src_domain, version)
+        return 'https://%s/v%s/' % (src_domain, version)
     else:
-        return 'https://%s/dist/' % (src_domain)
+        return 'https://%s/' % (src_domain)
 
 
 def get_node_bin_url(version):
@@ -632,7 +632,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
 
 
 def get_binary_prefix():
-    return to_utf8('node' if src_domain == 'nodejs.org' else 'iojs')
+    return to_utf8('node' if src_domain.find('node') != -1 else 'iojs')
 
 
 def install_node(env_dir, src_dir, opt):
@@ -899,7 +899,8 @@ def compare_versions(version, other_version):
 
 
 def get_node_versions():
-    response = urlopen('https://{0}/dist'.format(src_domain))
+    response = urlopen('https://{0}'.format(src_domain))
+
     href_parser = GetsAHrefs()
     href_parser.feed(response.read().decode('UTF-8'))
 
@@ -932,7 +933,7 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    response = urlopen('https://%s/dist/latest/' % (src_domain))
+    response = urlopen('https://{0}/latest/'.format(src_domain))
     href_parser = GetsAHrefs()
     href_parser.feed(response.read().decode('UTF-8'))
 
@@ -941,12 +942,13 @@ def get_last_stable_node_version():
         get_binary_prefix()))
 
     for href in href_parser.hrefs:
+        if href.startswith('/mirrors/node/latest/'):
+            href = href[len('/mirrors/node/latest/'):]
         match = pattern.match(href)
         if match:
             version = u'.'.join(match.groups())
             major, minor, revision = map(int, match.groups())
             links.append((version, major, minor, revision))
-            break
 
     return links[-1][0]
 
@@ -986,7 +988,6 @@ def main():
 
     opt, args = parse_args(check=False)
     Config._load(opt.config_file, opt.verbose)
-
     opt, args = parse_args()
 
     if opt.node.lower() == 'system' and is_WIN:

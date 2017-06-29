@@ -565,9 +565,15 @@ def copytree(src, dst, symlinks=False, ignore=None):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
         if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
+            try:
+                shutil.copytree(s, d, symlinks, ignore)
+            except OSError:
+                copytree(s, d, symlinks, ignore)
         else:
-            shutil.copy2(s, d)
+            if os.path.islink(s):
+                os.symlink(os.readlink(s), d)
+            else:
+                shutil.copy2(s, d)
 
 
 def copy_node_from_prebuilt(env_dir, src_dir, node_version):
@@ -584,7 +590,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     else:
         src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
         for src_folder in glob.glob(src_folder_tpl):
-            copytree(src_folder, env_dir)
+            copytree(src_folder, env_dir, True)
     logger.info('.', extra=dict(continued=True))
 
 

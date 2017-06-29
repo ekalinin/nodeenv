@@ -4,6 +4,7 @@
 *.swp
 *.swo
 env
+env-dev
 /nodeenv
 /TODO
 /build/

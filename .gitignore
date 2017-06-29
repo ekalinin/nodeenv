@@ -16,6 +16,8 @@ env
 /*.egg-info/
 .ropeproject/
 .tox/
+.idea/
+.cache/
 debian
 debian-upstream/files
 debian-upstream/nodeenv.substvars

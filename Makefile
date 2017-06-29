@@ -28,6 +28,12 @@ env:
 		. env/bin/activate                && \
 		python setup.py install
 
+env-dev:
+	@rm -rf env-dev                           && \
+		virtualenv --no-site-packages env-dev && \
+		. env-dev/bin/activate                && \
+		pip install -r requirements-dev.txt
+
 test1: clean
 	@echo " ="
 	@echo " = test1: separate nodejs's env"
@@ -116,8 +122,8 @@ test8: clean
 
 tests: clean test1 test2 test3 test4 test5 test7 test8 clean
 
-ut:
-	@. env/bin/activate && tox -e py27
+ut: env-dev
+	@. env-dev/bin/activate && tox -e py27
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

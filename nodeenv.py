@@ -25,6 +25,7 @@ import pipes
 import platform
 import zipfile
 import shutil
+import glob
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -559,6 +560,16 @@ def urlopen(url):
 # Virtual environment functions
 
 
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
+
 def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     """
     Copy prebuilt binaries into environment
@@ -571,8 +582,9 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
         mkdir(join(env_dir, 'Scripts'))
         callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
     else:
-        src_folder = src_dir + to_utf8('/%s-v%s*/*' % (prefix, node_version))
-        callit(['cp', '-a', src_folder, env_dir], True, env_dir)
+        src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
+        for src_folder in glob.glob(src_folder_tpl):
+            copytree(src_folder, env_dir)
     logger.info('.', extra=dict(continued=True))
 
 

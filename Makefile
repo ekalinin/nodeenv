@@ -107,6 +107,8 @@ test7: clean
 		nodeenv -j 4 -p --prebuilt        && \
 		. env/bin/activate                && \
 		npm install -g sitemap 			  && \
+		npm -v                            && \
+		node -v                           && \
 		test "`freeze | wc -l`" = "1";
 
 test8: clean
@@ -118,9 +120,22 @@ test8: clean
 		. env/bin/activate                && \
 		python setup.py install           && \
 		rm -rf öäü && mkdir öäü && cd öäü && \
-		nodeenv -j 4 --prebuilt env
+		nodeenv -j 4 --prebuilt env       && \
+		rm -rf öäü
 
-tests: clean test1 test2 test3 test4 test5 test7 test8 clean
+test9: clean
+	@echo " ="
+	@echo " = test9: unicode paths, #187"
+	@echo " ="
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		rm -rf "test dir" && mkdir "test dir" && cd "test dir" && \
+		nodeenv -j 4 --prebuilt env       && \
+		rm -rf "test dir"
+
+tests: clean test1 test2 test3 test4 test5 test7 test8 test9 clean
 
 ut: env-dev
 	@. env-dev/bin/activate && tox -e py27

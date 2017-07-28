@@ -88,7 +88,7 @@ class Config(object):
     # Defaults
     node = 'latest'
     npm = 'latest'
-    with_npm = True if is_WIN else False
+    with_npm = True if is_WIN or is_CYGWIN else False
     jobs = '2'
     without_ssl = False
     debug = False
@@ -588,6 +588,12 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
         dst_exe = join(env_dir, 'Scripts', 'node.exe')
         mkdir(join(env_dir, 'Scripts'))
         callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
+    elif is_CYGWIN:
+        mkdir(join(env_dir, 'bin'))
+        writefile(join(env_dir, 'bin', 'node'), CYGWIN_NODE)
+        src_exe = join(src_dir, 'node.exe')
+        dst_exe = join(env_dir, 'bin', 'node.exe')
+        callit(['cp', '-a', src_exe, dst_exe], True, env_dir)
     else:
         src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
         for src_folder in glob.glob(src_folder_tpl):
@@ -749,6 +755,11 @@ def install_npm_win(env_dir, src_dir, opt):
     shutil.copy(join(src_dir, npm_ver, 'bin', 'npm-cli.js'),
                 join(bin_path, 'npm-cli.js'))
 
+    if is_CYGWIN:
+        shutil.copy(join(bin_path, 'npm-cli.js'), join(env_dir, 'bin', 'npm-cli.js'))
+        shutil.copytree(join(bin_path, 'node_modules'), join(env_dir, 'bin', 'node_modules'))
+        writefile(join(env_dir, 'bin', 'npm'), urlopen('https://raw.githubusercontent.com/npm/npm/{}/bin/npm'.format(opt.npm)).read())
+
 
 def install_packages(env_dir, opt):
     """
@@ -824,6 +835,11 @@ def install_activate(env_dir, opt):
         content = content.replace('__SHIM_NODE__', shim_node)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
+        if is_CYGWIN:
+            _, cyg_bin_dir = callit(['cygpath', '-w', os.path.abspath(bin_dir)], show_stdout=False, in_shell=False)
+            content = content.replace('__NPM_CONFIG_PREFIX__', cyg_bin_dir[0])
+        else:
+            content = content.replace('__NPM_CONFIG_PREFIX__', '$NODE_VIRTUAL_ENV')
         # if we call in the same environment:
         #   $ nodeenv -p --prebuilt
         #   $ nodeenv -p --node=system
@@ -871,7 +887,7 @@ def create_environment(env_dir, opt):
     # for install
     install_activate(env_dir, opt)
     if node_version_from_opt(opt) < parse_version("0.6.3") or opt.with_npm:
-        instfunc = install_npm_win if is_WIN else install_npm
+        instfunc = install_npm_win if is_WIN or is_CYGWIN else install_npm
         instfunc(env_dir, src_dir, opt)
     if opt.requirements:
         install_packages(env_dir, opt)
@@ -1243,8 +1259,8 @@ export NODE_PATH
 
 _OLD_NPM_CONFIG_PREFIX="$NPM_CONFIG_PREFIX"
 _OLD_npm_config_prefix="$npm_config_prefix"
-NPM_CONFIG_PREFIX="$NODE_VIRTUAL_ENV"
-npm_config_prefix="$NODE_VIRTUAL_ENV"
+NPM_CONFIG_PREFIX="__NPM_CONFIG_PREFIX__"
+npm_config_prefix="__NPM_CONFIG_PREFIX__"
 export NPM_CONFIG_PREFIX
 export npm_config_prefix
 
@@ -1274,6 +1290,18 @@ fi
 
 PREDEACTIVATE_SH = """
 if type -p deactivate_node > /dev/null; then deactivate_node;fi
+"""
+
+CYGWIN_NODE = """#!/bin/sh
+
+if [ -r "$1" ]; then
+    SCRIPT_PATH=$(cygpath -w "$1")
+    shift
+    set - $SCRIPT_PATH $@
+    unset SCRIPT_PATH
+fi
+
+exec $(dirname "$0")/node.exe "$@"
 """
 
 if __name__ == '__main__':

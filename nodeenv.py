@@ -51,6 +51,7 @@ if is_PY3:
     from functools import cmp_to_key
 
 is_WIN = platform.system() == 'Windows'
+is_CYGWIN = platform.system().startswith('CYGWIN')
 
 
 # ---------------------------------------------------------
@@ -504,7 +505,7 @@ def get_node_bin_url(version):
         'system': platform.system().lower(),
         'arch': archmap[platform.machine()],
     }
-    if is_WIN:
+    if is_WIN or is_CYGWIN:
         filename = 'win-%(arch)s/node.exe' % sysinfo
     else:
         postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
@@ -535,7 +536,7 @@ def download_node_src(node_url, src_dir, opt, prefix):
     dl_contents = io.BytesIO(urlopen(node_url).read())
     logger.info('.', extra=dict(continued=True))
 
-    if is_WIN:
+    if is_WIN or is_CYGWIN:
         writefile(join(src_dir, 'node.exe'), dl_contents.read())
     else:
         with tarfile_open(fileobj=dl_contents) as tarfile_obj:
@@ -794,6 +795,8 @@ def install_activate(env_dir, opt):
         bin_dir = join(env_dir, 'bin')
         shim_node = join(bin_dir, "node")
         shim_nodejs = join(bin_dir, "nodejs")
+    if is_CYGWIN:
+        mkdir(bin_dir)
 
     if opt.node == "system":
         files["node"] = SHIM

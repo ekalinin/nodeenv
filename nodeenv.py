@@ -844,8 +844,9 @@ def install_activate(env_dir, opt):
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         if is_CYGWIN:
-            _, cyg_bin_dir = callit(['cygpath', '-w', os.path.abspath(bin_dir)],
-                                    show_stdout=False, in_shell=False)
+            _, cyg_bin_dir = callit(
+                ['cygpath', '-w', os.path.abspath(bin_dir)],
+                show_stdout=False, in_shell=False)
             content = content.replace('__NPM_CONFIG_PREFIX__', cyg_bin_dir[0])
         else:
             content = content.replace('__NPM_CONFIG_PREFIX__',

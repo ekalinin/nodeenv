@@ -29,11 +29,13 @@ import glob
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
+    # noinspection PyCompatibility
     from HTMLParser import HTMLParser
     import urllib2
     iteritems = operator.methodcaller('iteritems')
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
+    # noinspection PyUnresolvedReferences
     from html.parser import HTMLParser
     import urllib.request as urllib2
     iteritems = operator.methodcaller('items')
@@ -176,8 +178,8 @@ def create_logger():
     Create logger for diagnostic
     """
     # create logger
-    logger = logging.getLogger("nodeenv")
-    logger.setLevel(logging.INFO)
+    loggr = logging.getLogger("nodeenv")
+    loggr.setLevel(logging.INFO)
 
     # monkey patch
     def emit(self, record):
@@ -198,8 +200,8 @@ def create_logger():
     ch.setFormatter(formatter)
 
     # add ch to logger
-    logger.addHandler(ch)
-    return logger
+    loggr.addHandler(ch)
+    return loggr
 
 
 logger = create_logger()
@@ -378,6 +380,7 @@ def mkdir(path):
         logger.debug(' * Directory %s already exists', path)
 
 
+# noinspection PyArgumentList
 def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
@@ -488,7 +491,7 @@ def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
         return 'https://%s/dist/v%s/' % (src_domain, version)
     else:
-        return 'https://%s/dist/' % (src_domain)
+        return 'https://%s/dist/' % src_domain
 
 
 def get_node_bin_url(version):
@@ -637,9 +640,10 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
         env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
                                      os.environ.get('PATH', ''))
 
-    conf_cmd = []
-    conf_cmd.append('./configure')
-    conf_cmd.append('--prefix=%s' % pipes.quote(env_dir))
+    conf_cmd = [
+        './configure',
+        '--prefix=%s' % pipes.quote(env_dir)
+    ]
     if opt.without_ssl:
         conf_cmd.append('--without-ssl')
     if opt.debug:
@@ -692,7 +696,7 @@ def install_node(env_dir, src_dir, opt):
     logger.info(' done.')
 
 
-def install_npm(env_dir, src_dir, opt):
+def install_npm(env_dir, _src_dir, opt):
     """
     Download source code for npm, unpack it
     and install it in virtual environment.
@@ -756,9 +760,13 @@ def install_npm_win(env_dir, src_dir, opt):
                 join(bin_path, 'npm-cli.js'))
 
     if is_CYGWIN:
-        shutil.copy(join(bin_path, 'npm-cli.js'), join(env_dir, 'bin', 'npm-cli.js'))
-        shutil.copytree(join(bin_path, 'node_modules'), join(env_dir, 'bin', 'node_modules'))
-        writefile(join(env_dir, 'bin', 'npm'), urlopen('https://raw.githubusercontent.com/npm/npm/{}/bin/npm'.format(opt.npm)).read())
+        shutil.copy(join(bin_path, 'npm-cli.js'),
+                    join(env_dir, 'bin', 'npm-cli.js'))
+        shutil.copytree(join(bin_path, 'node_modules'),
+                        join(env_dir, 'bin', 'node_modules'))
+        npm_gh_url = 'https://raw.githubusercontent.com/npm/npm'
+        npm_bin_url = '{}/{}/bin/npm'.format(npm_gh_url, opt.npm)
+        writefile(join(env_dir, 'bin', 'npm'), urlopen(npm_bin_url).read())
 
 
 def install_packages(env_dir, opt):
@@ -836,10 +844,12 @@ def install_activate(env_dir, opt):
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         content = content.replace('__MOD_NAME__', mod_dir)
         if is_CYGWIN:
-            _, cyg_bin_dir = callit(['cygpath', '-w', os.path.abspath(bin_dir)], show_stdout=False, in_shell=False)
+            _, cyg_bin_dir = callit(['cygpath', '-w', os.path.abspath(bin_dir)],
+                                    show_stdout=False, in_shell=False)
             content = content.replace('__NPM_CONFIG_PREFIX__', cyg_bin_dir[0])
         else:
-            content = content.replace('__NPM_CONFIG_PREFIX__', '$NODE_VIRTUAL_ENV')
+            content = content.replace('__NPM_CONFIG_PREFIX__',
+                                      '$NODE_VIRTUAL_ENV')
         # if we call in the same environment:
         #   $ nodeenv -p --prebuilt
         #   $ nodeenv -p --node=system
@@ -969,7 +979,7 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    response = urlopen('https://%s/dist/latest/' % (src_domain))
+    response = urlopen('https://%s/dist/latest/' % src_domain)
     href_parser = GetsAHrefs()
     href_parser.feed(response.read().decode('UTF-8'))
 
@@ -1012,6 +1022,7 @@ def is_installed(name):
     return True
 
 
+# noinspection PyProtectedMember
 def main():
     """
     Entry point
@@ -1022,6 +1033,7 @@ def main():
         return
 
     opt, args = parse_args(check=False)
+    # noinspection PyProtectedMember
     Config._load(opt.config_file, opt.verbose)
 
     opt, args = parse_args()

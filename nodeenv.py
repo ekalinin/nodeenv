@@ -343,7 +343,7 @@ def parse_args(check=True):
 
     options, args = parser.parse_args()
     if options.config_file is None:
-        options.config_file = ["./setup.cfg", "~/.nodeenvrc"]
+        options.config_file = ["./tox.ini", "./setup.cfg", "~/.nodeenvrc"]
     elif not options.config_file:
         options.config_file = []
     else:

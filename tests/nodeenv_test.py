@@ -146,7 +146,7 @@ def test_print_node_versions_node(cap_logging_info):
 def test_predeactivate_hook(tmpdir):
     # Throw error if the environment directory is not a string
     with pytest.raises((TypeError, AttributeError)):
-        nodeenv.set_predeactivate_hook(tmpdir)
+        nodeenv.set_predeactivate_hook(1)
     # Throw error if environment directory has no bin path
     with pytest.raises((OSError, IOError)):
         nodeenv.set_predeactivate_hook(tmpdir.strpath)

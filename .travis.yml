@@ -1,13 +1,12 @@
 language: python
-python: 3.5
-env: # These should match the tox env list
-    - TOXENV=py27
-    - TOXENV=py33
-    - TOXENV=py34
-    - TOXENV=py35
-    - TOXENV=py36
-    - TOXENV=pypy
-install: pip install coveralls tox
+python:
+    - 2.7
+    - 3.3
+    - 3.4
+    - 3.5
+    - 3.6
+    - pypy
+install: pip install coveralls tox-travis
 script: tox
 after_success:
     - coveralls

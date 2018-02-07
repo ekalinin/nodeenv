@@ -470,7 +470,10 @@ def callit(cmd, show_stdout=True, in_shell=False,
         line = stdout.readline()
         if not line:
             break
-        line = line.decode('utf-8').rstrip()
+        try:
+            line = line.decode('utf8').rstrip()
+        except UnicodeDecodeError:
+            line = line.decode('cp866').rstrip()
         all_output.append(line)
         if show_stdout:
             logger.info(line)

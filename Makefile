@@ -135,6 +135,17 @@ test9: clean
 		nodeenv -j 4 --prebuilt env       && \
 		rm -rf "test dir"
 
+test10: clean
+	@echo " ="
+	@echo " = test10: unicode paths, #189"
+	@echo " ="
+	@rm -rf env                           && \
+		virtualenv --no-site-packages env && \
+		. env/bin/activate                && \
+		python setup.py install           && \
+		nodeenv -j 4 -p --prebuilt        && \
+		nodeenv -j 4 -p --prebuilt
+
 tests: clean test1 test2 test3 test4 test5 test7 test8 test9 clean
 
 ut: env-dev

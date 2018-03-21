@@ -578,7 +578,9 @@ def copytree(src, dst, symlinks=False, ignore=None):
                 copytree(s, d, symlinks, ignore)
         else:
             if os.path.islink(s):
-                os.symlink(os.readlink(s), d)
+                # copy link only if it not exists. #189
+                if not os.path.islink(d):
+                    os.symlink(os.readlink(s), d)
             else:
                 shutil.copy2(s, d)
 

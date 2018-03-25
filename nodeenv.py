@@ -471,7 +471,10 @@ def callit(cmd, show_stdout=True, in_shell=False,
         if not line:
             break
         try:
-            line = line.decode('utf8').rstrip()
+            if is_WIN:
+                line = line.decode('mbcs').rstrip()
+            else:
+                line = line.decode('utf8').rstrip()
         except UnicodeDecodeError:
             line = line.decode('cp866').rstrip()
         all_output.append(line)

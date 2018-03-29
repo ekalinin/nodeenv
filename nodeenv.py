@@ -508,7 +508,7 @@ def get_node_bin_url(version):
         'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
         'armv6l': 'armv6l',     # arm
         'armv7l': 'armv7l',
-        'aarch64': 'armv64',
+        'aarch64': 'arm64',
     }
     sysinfo = {
         'system': platform.system().lower(),

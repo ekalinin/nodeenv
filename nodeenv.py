@@ -412,11 +412,7 @@ def writefile(dest, content, overwrite=True, append=False):
         if append:
             logger.info(' * Appending data to %s', dest)
             with open(dest, 'ab') as f:
-                if not is_WIN:
-                    f.write(DISABLE_PROMPT.encode('utf-8'))
                 f.write(content)
-                if not is_WIN:
-                    f.write(ENABLE_PROMPT.encode('utf-8'))
             return
 
         logger.info(' * Overwriting %s with new content', dest)
@@ -869,7 +865,12 @@ def install_activate(env_dir, opt):
         # we should get `bin/node` not as binary+string.
         # `bin/activate` should be appended if we inside
         # existing python's virtual environment
-        need_append = 0 if name in ('node', 'shim') else opt.python_virtualenv
+        need_append = False
+        if opt.python_virtualenv:
+            disable_prompt = DISABLE_PROMPT.get(name, '')
+            enable_prompt = ENABLE_PROMPT.get(name, '')
+            content = disable_prompt + content + enable_prompt
+            need_append = bool(disable_prompt)
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
@@ -1077,16 +1078,29 @@ def main():
 # ---------------------------------------------------------
 # Shell scripts content
 
-DISABLE_PROMPT = """
+DISABLE_PROMPT = {
+    'activate': """
 # disable nodeenv's prompt
 # (prompt already changed by original virtualenv's script)
 # https://github.com/ekalinin/nodeenv/issues/26
 NODE_VIRTUAL_ENV_DISABLE_PROMPT=1
-"""
+""",
+    'activate.fish': """
+# disable nodeenv's prompt
+# (prompt already changed by original virtualenv's script)
+# https://github.com/ekalinin/nodeenv/issues/26
+set NODE_VIRTUAL_ENV_DISABLE_PROMPT 1
+""",
+}
 
-ENABLE_PROMPT = """
+ENABLE_PROMPT = {
+    'activate': """
 unset NODE_VIRTUAL_ENV_DISABLE_PROMPT
-"""
+""",
+    'activate.fish': """
+set -e NODE_VIRTUAL_ENV_DISABLE_PROMPT
+""",
+}
 
 SHIM = """#!/usr/bin/env bash
 export NODE_PATH=__NODE_VIRTUAL_ENV__/lib/node_modules

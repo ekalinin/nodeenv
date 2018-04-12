@@ -41,7 +41,6 @@ def fix_content(content, tmpdir):
     return content
 
 
-
 @pytest.mark.parametrize('name, content_var', FILES.items())
 def test_write(tmpdir, name, content_var):
     if nodeenv.is_WIN:

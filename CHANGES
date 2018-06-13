@@ -1,6 +1,22 @@
 Nodeenv changelog
 =================
 
+Version 1.3.1
+-------------
+- Windows related fix `#207 https://github.com/ekalinin/nodeenv/pull/207`
+- Fixed url for arm64 `#210 https://github.com/ekalinin/nodeenv/pull/210`_
+- Fixed fish support `#212 https://github.com/ekalinin/nodeenv/pull/212`_
+
+
+Version 1.3.0
+-------------
+- Fixed symlink creation `#189 https://github.com/ekalinin/nodeenv/issues/189`_
+- Python3.6 support `#200 https://github.com/ekalinin/nodeenv/pull/200`_
+- Added `activate` for fish `#201 https://github.com/ekalinin/nodeenv/pull/201`_
+- Fixed cp866 `#202 https://github.com/ekalinin/nodeenv/pull/202`_
+- Added Conda support `#203 https://github.com/ekalinin/nodeenv/pull/203`_
+
+
 Version 1.2.0
 -------------
 - Support for Cygwin `#194 https://github.com/ekalinin/nodeenv/pull/194`_ `#195

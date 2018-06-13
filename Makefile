@@ -8,7 +8,7 @@ deploy-github:
 	git push --tags origin master
 
 deploy-pypi:
-	python setup.py sdist upload
+	python setup.py sdist upload -r pypi
 
 update-pypi:
 	python setup.py register
@@ -146,7 +146,7 @@ test10: clean
 		nodeenv -j 4 -p --prebuilt        && \
 		nodeenv -j 4 -p --prebuilt
 
-tests: clean test1 test2 test3 test4 test5 test7 test8 test9 clean
+tests: test1 test2 test3 test4 test5 test7 test8 test9 test10 clean
 
 ut: env-dev
 	@. env-dev/bin/activate && tox -e py27

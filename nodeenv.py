@@ -566,11 +566,27 @@ def urlopen(url):
 # ---------------------------------------------------------
 # Virtual environment functions
 
+import platform
+is_windows = platform.system() == 'Windows'
+
+class ZipfileLongPaths(zipfile.ZipFile):
+    def _extract_member(self, member, targetpath, pwd):
+        targetpath = winapi_path(targetpath)
+        return zipfile.ZipFile._extract_member(self, member, targetpath, pwd)
+
+def winapi_path(dos_path, encoding=None):
+    if is_windows:
+        path = os.path.abspath(dos_path)
+        if path.startswith("\\\\"):
+            path = u"\\\\?\\UNC\\" + path[2:]
+        else:
+            path = u"\\\\?\\" + path
+    return path
 
 def copytree(src, dst, symlinks=False, ignore=None):
     for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
+        s = winapi_path(join(src, item))
+        d = winapi_path(join(dst, item))
         if os.path.isdir(s):
             try:
                 shutil.copytree(s, d, symlinks, ignore)
@@ -603,7 +619,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
         dst_exe = join(env_dir, 'bin', 'node.exe')
         callit(['cp', '-a', src_exe, dst_exe], True, env_dir)
     else:
-        src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
+        src_folder_tpl = src_dir + os.path.sep + to_utf8('%s-v%s*' % (prefix, node_version))
         for src_folder in glob.glob(src_folder_tpl):
             copytree(src_folder, env_dir, True)
     logger.info('.', extra=dict(continued=True))
@@ -731,7 +747,6 @@ def install_npm(env_dir, _src_dir, opt):
         logger.info(out)
     logger.info('done.')
 
-
 def install_npm_win(env_dir, src_dir, opt):
     """
     Download source code for npm, unpack it
@@ -754,11 +769,12 @@ def install_npm_win(env_dir, src_dir, opt):
     if os.path.exists(join(bin_path, 'npm-cli.js')):
         os.remove(join(bin_path, 'npm-cli.js'))
 
-    with zipfile.ZipFile(npm_contents, 'r') as zipf:
+
+    with ZipfileLongPaths(npm_contents, 'r') as zipf:
         zipf.extractall(src_dir)
 
     npm_ver = 'npm-%s' % opt.npm
-    shutil.copytree(join(src_dir, npm_ver), node_modules_path)
+    copytree(join(src_dir, npm_ver), node_modules_path)
     shutil.copy(join(src_dir, npm_ver, 'bin', 'npm.cmd'),
                 join(bin_path, 'npm.cmd'))
     shutil.copy(join(src_dir, npm_ver, 'bin', 'npm-cli.js'),
@@ -767,8 +783,8 @@ def install_npm_win(env_dir, src_dir, opt):
     if is_CYGWIN:
         shutil.copy(join(bin_path, 'npm-cli.js'),
                     join(env_dir, 'bin', 'npm-cli.js'))
-        shutil.copytree(join(bin_path, 'node_modules'),
-                        join(env_dir, 'bin', 'node_modules'))
+        copytree(join(bin_path, 'node_modules'),
+                 join(env_dir, 'bin', 'node_modules'))
         npm_gh_url = 'https://raw.githubusercontent.com/npm/npm'
         npm_bin_url = '{}/{}/bin/npm'.format(npm_gh_url, opt.npm)
         writefile(join(env_dir, 'bin', 'npm'), urlopen(npm_bin_url).read())

@@ -739,7 +739,7 @@ def install_npm_win(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
-    npm_url = 'https://github.com/npm/npm/archive/%s.zip' % opt.npm
+    npm_url = 'https://github.com/npm/cli/archive/%s.zip' % opt.npm
     npm_contents = io.BytesIO(urlopen(npm_url).read())
 
     bin_path = join(env_dir, 'Scripts')
@@ -757,7 +757,7 @@ def install_npm_win(env_dir, src_dir, opt):
     with zipfile.ZipFile(npm_contents, 'r') as zipf:
         zipf.extractall(src_dir)
 
-    npm_ver = 'npm-%s' % opt.npm
+    npm_ver = 'cli-%s' % opt.npm
     shutil.copytree(join(src_dir, npm_ver), node_modules_path)
     shutil.copy(join(src_dir, npm_ver, 'bin', 'npm.cmd'),
                 join(bin_path, 'npm.cmd'))

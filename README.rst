@@ -134,7 +134,7 @@ for compilation and npm.js "0.3.17"::
 
 Install node.js from the source::
 
-    $ nodeenv --node=0.10.25 --source env-0.10.25-prebuilt
+    $ nodeenv --node=0.10.25 --source env-0.10.25
 
 It's much faster to install from the prebuilt package than Install & compile
 node.js from source::

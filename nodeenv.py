@@ -708,7 +708,6 @@ def install_npm(env_dir, _src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
-    npm_contents = urlopen('https://www.npmjs.org/install.sh').read()
     env = dict(
         os.environ,
         clean='no' if opt.no_npm_clean else 'yes',
@@ -717,8 +716,9 @@ def install_npm(env_dir, _src_dir, opt):
     proc = subprocess.Popen(
         (
             'bash', '-c',
-            '. {0} && exec bash'.format(
+            '. {0} && npm install -g npm@{1}'.format(
                 pipes.quote(join(env_dir, 'bin', 'activate')),
+                opt.npm,
             )
         ),
         env=env,
@@ -726,7 +726,7 @@ def install_npm(env_dir, _src_dir, opt):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    out, _ = proc.communicate(npm_contents)
+    out, _ = proc.communicate()
     if opt.verbose:
         logger.info(out)
     logger.info('done.')

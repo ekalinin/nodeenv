@@ -8,7 +8,8 @@ deploy-github:
 	git push --tags origin master
 
 deploy-pypi:
-	python setup.py sdist upload -r pypi
+	python setup.py sdist
+	twine upload --repository pypi dist/*
 
 update-pypi:
 	python setup.py register

@@ -42,7 +42,7 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from pkg_resources import parse_version
 
-nodeenv_version = '1.3.2'
+nodeenv_version = '1.3.3'
 
 join = os.path.join
 abspath = os.path.abspath

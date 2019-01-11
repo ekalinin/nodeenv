@@ -90,7 +90,7 @@ class Config(object):
     # Defaults
     node = 'latest'
     npm = 'latest'
-    with_npm = True if is_WIN or is_CYGWIN else False
+    with_npm = False
     jobs = '2'
     without_ssl = False
     debug = False
@@ -380,13 +380,17 @@ def mkdir(path):
         logger.debug(' * Directory %s already exists', path)
 
 
+def make_executable(filename):
+    mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
+                 stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
+    os.chmod(filename, mode_0755)
+
+
 # noinspection PyArgumentList
 def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
-    mode_0755 = (stat.S_IRWXU | stat.S_IXGRP |
-                 stat.S_IRGRP | stat.S_IROTH | stat.S_IXOTH)
     content = to_utf8(content)
     if is_PY3 and type(content) != bytes:
         content = bytes(content, 'utf-8')
@@ -394,7 +398,7 @@ def writefile(dest, content, overwrite=True, append=False):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         with open(dest, 'wb') as f:
             f.write(content)
-        os.chmod(dest, mode_0755)
+        make_executable(dest)
         logger.debug('done.')
         return
     else:
@@ -512,7 +516,8 @@ def get_node_bin_url(version):
         'arch': archmap[platform.machine()],
     }
     if is_WIN or is_CYGWIN:
-        filename = 'win-%(arch)s/node.exe' % sysinfo
+        postfix = '-win-%(arch)s.zip' % sysinfo
+        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     else:
         postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
         filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
@@ -543,18 +548,24 @@ def download_node_src(node_url, src_dir, opt, prefix):
     logger.info('.', extra=dict(continued=True))
 
     if is_WIN or is_CYGWIN:
-        writefile(join(src_dir, 'node.exe'), dl_contents.read())
+        ctx = zipfile.ZipFile(dl_contents)
+        members = operator.methodcaller('namelist')
+        member_name = lambda s: s  # noqa: E731
     else:
-        with tarfile_open(fileobj=dl_contents) as tarfile_obj:
-            member_list = tarfile_obj.getmembers()
-            extract_list = []
-            for member in member_list:
-                node_ver = opt.node.replace('.', '\.')
-                rexp_string = "%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)"\
-                    % (prefix, node_ver)
-                if re.match(rexp_string, member.name) is None:
-                    extract_list.append(member)
-            tarfile_obj.extractall(src_dir, extract_list)
+        ctx = tarfile_open(fileobj=dl_contents)
+        members = operator.methodcaller('getmembers')
+        member_name = operator.attrgetter('name')
+
+    with ctx as archive:
+        node_ver = re.escape(opt.node)
+        rexp_string = r"%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)"\
+            % (prefix, node_ver)
+        extract_list = [
+            member
+            for member in members(archive)
+            if re.match(rexp_string, member_name(member)) is None
+        ]
+        archive.extractall(src_dir, extract_list)
 
 
 def urlopen(url):
@@ -592,20 +603,26 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     logger.info('.', extra=dict(continued=True))
     prefix = get_binary_prefix()
     if is_WIN:
-        src_exe = join(src_dir, 'node.exe')
-        dst_exe = join(env_dir, 'Scripts', 'node.exe')
-        mkdir(join(env_dir, 'Scripts'))
-        callit(['copy', '/Y', '/L', src_exe, dst_exe], False, True)
+        dest = join(env_dir, 'Scripts')
+        os.makedirs(dest)
     elif is_CYGWIN:
-        mkdir(join(env_dir, 'bin'))
+        dest = join(env_dir, 'bin')
+        os.makedirs(dest)
+        # write here to avoid https://bugs.python.org/issue35650
         writefile(join(env_dir, 'bin', 'node'), CYGWIN_NODE)
-        src_exe = join(src_dir, 'node.exe')
-        dst_exe = join(env_dir, 'bin', 'node.exe')
-        callit(['cp', '-a', src_exe, dst_exe], True, env_dir)
     else:
-        src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
-        for src_folder in glob.glob(src_folder_tpl):
-            copytree(src_folder, env_dir, True)
+        dest = env_dir
+
+    src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
+    src_folder, = glob.glob(src_folder_tpl)
+    copytree(src_folder, dest, True)
+
+    if is_CYGWIN:
+        for filename in ('npm', 'npx', 'node.exe'):
+            filename = join(env_dir, 'bin', filename)
+            if os.path.exists(filename):
+                make_executable(filename)
+
     logger.info('.', extra=dict(continued=True))
 
 
@@ -934,7 +951,7 @@ class GetsAHrefs(HTMLParser):
             self.hrefs.append(dict(attrs).get('href', ''))
 
 
-VERSION_RE = re.compile('\d+\.\d+\.\d+')
+VERSION_RE = re.compile(r'\d+\.\d+\.\d+')
 
 
 def _py2_cmp(a, b):
@@ -1110,7 +1127,7 @@ export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
 """
 
-ACTIVATE_BAT = """\
+ACTIVATE_BAT = r"""\
 @echo off
 set "NODE_VIRTUAL_ENV=__NODE_VIRTUAL_ENV__"
 if not defined PROMPT (
@@ -1156,7 +1173,7 @@ set NODE_VIRTUAL_ENV=
 :END
 """
 
-ACTIVATE_PS1 = """\
+ACTIVATE_PS1 = r"""\
 function global:deactivate ([switch]$NonDestructive) {
     # Revert to original values
     if (Test-Path function:_OLD_VIRTUAL_PROMPT) {
@@ -1203,7 +1220,7 @@ copy-item env:PATH env:_OLD_VIRTUAL_PATH
 $env:PATH = "$env:NODE_VIRTUAL_ENV\Scripts;$env:PATH"
 """
 
-ACTIVATE_SH = """
+ACTIVATE_SH = r"""\
 
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly

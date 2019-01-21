@@ -3,47 +3,47 @@ Nodeenv changelog
 
 Version 1.3.1
 -------------
-- Windows related fix `#207 https://github.com/ekalinin/nodeenv/pull/207`
-- Fixed url for arm64 `#210 https://github.com/ekalinin/nodeenv/pull/210`_
-- Fixed fish support `#212 https://github.com/ekalinin/nodeenv/pull/212`_
+- Windows related fix `#207 <https://github.com/ekalinin/nodeenv/pull/207>`_
+- Fixed url for arm64 `#210 <https://github.com/ekalinin/nodeenv/pull/210>`_
+- Fixed fish support `#212 <https://github.com/ekalinin/nodeenv/pull/212>`_
 
 
 Version 1.3.0
 -------------
-- Fixed symlink creation `#189 https://github.com/ekalinin/nodeenv/issues/189`_
-- Python3.6 support `#200 https://github.com/ekalinin/nodeenv/pull/200`_
-- Added `activate` for fish `#201 https://github.com/ekalinin/nodeenv/pull/201`_
-- Fixed cp866 `#202 https://github.com/ekalinin/nodeenv/pull/202`_
-- Added Conda support `#203 https://github.com/ekalinin/nodeenv/pull/203`_
+- Fixed symlink creation `#189 <https://github.com/ekalinin/nodeenv/issues/189>`_
+- Python3.6 support `#200 <https://github.com/ekalinin/nodeenv/pull/200>`_
+- Added `activate` for fish `#201 <https://github.com/ekalinin/nodeenv/pull/201>`_
+- Fixed cp866 `#202 <https://github.com/ekalinin/nodeenv/pull/202>`_
+- Added Conda support `#203 <https://github.com/ekalinin/nodeenv/pull/203>`_
 
 
 Version 1.2.0
 -------------
-- Support for Cygwin `#194 https://github.com/ekalinin/nodeenv/pull/194`_ `#195
-  https://github.com/ekalinin/nodeenv/pull/195`_
+- Support for Cygwin `#194 <https://github.com/ekalinin/nodeenv/pull/194>`_ `#195
+  <https://github.com/ekalinin/nodeenv/pull/195>`_
 - tox.ini as default configuration file `#197
-  https://github.com/ekalinin/nodeenv/pull/197`_
+  <https://github.com/ekalinin/nodeenv/pull/197>`_
 
 Version 1.1.4
 -------------
-- Fixed directory copy `#188 https://github.com/ekalinin/nodeenv/issues/188`_
+- Fixed directory copy `#188 <https://github.com/ekalinin/nodeenv/issues/188>`_
 
 Version 1.1.3
 -------------
-- Fixed spaces in paths `#187 https://github.com/ekalinin/nodeenv/issues/187`_
+- Fixed spaces in paths `#187 <https://github.com/ekalinin/nodeenv/issues/187>`_
 
 Version 1.1.2
 -------------
-- Fixed MANIFEST.in `#184 https://github.com/ekalinin/nodeenv/issues/184`_
+- Fixed MANIFEST.in `#184 <https://github.com/ekalinin/nodeenv/issues/184>`_
 
 Version 1.1.1
 -------------
 - Improve Windows support. See `#181
-  https://github.com/ekalinin/nodeenv/pull/181`_
+  <https://github.com/ekalinin/nodeenv/pull/181>`_
 - Fix bug when downgrading using `--force`. See `#183
-  https://github.com/ekalinin/nodeenv/pull/183`_
+  <https://github.com/ekalinin/nodeenv/pull/183>`_
 - Environment creation fails with non-ASCII chars in path. See `#49
-  https://github.com/ekalinin/nodeenv/issues/49`_
+  <https://github.com/ekalinin/nodeenv/issues/49>`_
 
 Version 1.1.0
 -------------

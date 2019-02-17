@@ -66,20 +66,19 @@ def to_utf8(text):
     if not text or is_PY3:
         return text
 
-    try:            # unicode or pure ascii
+    try:           # unicode or pure ascii
         return text.encode("utf8")
     except UnicodeDecodeError:
-        try:        # successful UTF-8 decode means it's pretty sure UTF-8
+        try:       # successful UTF-8 decode means it's pretty sure UTF-8
             text.decode("utf8")
             return text
         except UnicodeDecodeError:
-            try:    # get desperate; and yes,
-                    # this has a western hemisphere bias
+            try:   # get desperate; and yes, this has a western hemisphere bias
                 return text.decode("cp1252").encode("utf8")
             except UnicodeDecodeError:
                 pass
 
-    return text     # return unchanged, hope for the best
+    return text    # return unchanged, hope for the best
 
 
 class Config(object):
@@ -1127,7 +1126,7 @@ export npm_config_prefix=__NODE_VIRTUAL_ENV__
 exec __SHIM_NODE__ "$@"
 """
 
-ACTIVATE_BAT = r"""\
+ACTIVATE_BAT = r"""
 @echo off
 set "NODE_VIRTUAL_ENV=__NODE_VIRTUAL_ENV__"
 if not defined PROMPT (
@@ -1173,7 +1172,7 @@ set NODE_VIRTUAL_ENV=
 :END
 """
 
-ACTIVATE_PS1 = r"""\
+ACTIVATE_PS1 = r"""
 function global:deactivate ([switch]$NonDestructive) {
     # Revert to original values
     if (Test-Path function:_OLD_VIRTUAL_PROMPT) {
@@ -1220,7 +1219,7 @@ copy-item env:PATH env:_OLD_VIRTUAL_PATH
 $env:PATH = "$env:NODE_VIRTUAL_ENV\Scripts;$env:PATH"
 """
 
-ACTIVATE_SH = r"""\
+ACTIVATE_SH = r"""
 
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly

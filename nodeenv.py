@@ -755,7 +755,7 @@ def install_npm_win(env_dir, src_dir, opt):
     """
     logger.info(' * Install npm.js (%s) ... ' % opt.npm,
                 extra=dict(continued=True))
-    npm_url = 'https://github.com/npm/cli/archive/%s.zip' % opt.npm
+    npm_url = 'https://github.com/npm/cli/archive/v%s.zip' % opt.npm
     npm_contents = io.BytesIO(urlopen(npm_url).read())
 
     bin_path = join(env_dir, 'Scripts')

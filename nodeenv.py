@@ -785,7 +785,7 @@ def install_npm_win(env_dir, src_dir, opt):
                     join(env_dir, 'bin', 'npm-cli.js'))
         shutil.copytree(join(bin_path, 'node_modules'),
                         join(env_dir, 'bin', 'node_modules'))
-        npm_gh_url = 'https://raw.githubusercontent.com/npm/npm'
+        npm_gh_url = 'https://raw.githubusercontent.com/npm/cli'
         npm_bin_url = '{}/{}/bin/npm'.format(npm_gh_url, opt.npm)
         writefile(join(env_dir, 'bin', 'npm'), urlopen(npm_bin_url).read())
 

@@ -26,6 +26,7 @@ import platform
 import zipfile
 import shutil
 import glob
+import psutil
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
@@ -52,8 +53,16 @@ is_PY3 = sys.version_info[0] == 3
 if is_PY3:
     from functools import cmp_to_key
 
-is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith('CYGWIN')
+if platform.system() == 'Windows':
+    is_WIN = True
+    # if a bash terminal is used in the process of activating this script, install as CYGWIN
+    proc_parent = psutil.Process(os.getpid()).parent()
+    while proc_parent is not None and proc_parent.name() != 'bash.exe':
+        proc_parent = proc_parent.parent()
+    if proc_parent is not None and proc_parent.name() == 'bash.exe':
+        is_WIN = False
+        is_CYGWIN = True
 
 
 # ---------------------------------------------------------

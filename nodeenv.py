@@ -48,7 +48,7 @@ join = os.path.join
 abspath = os.path.abspath
 src_domain = "nodejs.org"
 
-is_PY3 = sys.version_info[0] == 3
+is_PY3 = sys.version_info[0] >= 3
 if is_PY3:
     from functools import cmp_to_key
 

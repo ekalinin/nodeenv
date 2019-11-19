@@ -688,7 +688,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
 
 
 def get_binary_prefix():
-    return to_utf8('node' if iojs_taken is False else 'iojs')
+    return to_utf8('node' if not iojs_taken else 'iojs')
 
 
 def install_node(env_dir, src_dir, opt):

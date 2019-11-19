@@ -46,6 +46,7 @@ nodeenv_version = '1.3.3'
 
 join = os.path.join
 abspath = os.path.abspath
+iojs_taken = False
 src_domain = "nodejs.org"
 
 is_PY3 = sys.version_info[0] >= 3
@@ -228,6 +229,11 @@ def parse_args(check=True):
         '-i', '--iojs',
         action='store_true', dest='io', default=False,
         help='Use iojs instead of nodejs.')
+
+    parser.add_option(
+        '--mirror',
+        action="store", dest='mirror',
+        help='Set mirror server of nodejs.org or iojs.org to download from.')
 
     if not is_WIN:
         parser.add_option(
@@ -682,7 +688,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
 
 
 def get_binary_prefix():
-    return to_utf8('node' if src_domain == 'nodejs.org' else 'iojs')
+    return to_utf8('node' if iojs_taken is False else 'iojs')
 
 
 def install_node(env_dir, src_dir, opt):
@@ -1083,9 +1089,15 @@ def main():
         logger.error('Installing system node.js on win32 is not supported!')
         exit(1)
 
+    global iojs_taken
+    global src_domain
+
     if opt.io:
-        global src_domain
+        iojs_taken = True
         src_domain = "iojs.org"
+
+    if opt.mirror:
+        src_domain = opt.mirror
 
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

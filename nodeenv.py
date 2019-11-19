@@ -690,6 +690,14 @@ def install_node(env_dir, src_dir, opt):
     Download source code for node.js, unpack it
     and install it in virtual environment.
     """
+    try:
+        install_node_wrapped(env_dir, src_dir, opt)
+    except:
+        # this restores the newline suppressed by continued=True
+        logger.info()
+        raise
+
+def install_node_wrapped(env_dir, src_dir, opt):
     env_dir = abspath(env_dir)
     prefix = get_binary_prefix()
     node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))

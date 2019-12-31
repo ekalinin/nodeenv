@@ -700,7 +700,7 @@ def install_node(env_dir, src_dir, opt):
         install_node_wrapped(env_dir, src_dir, opt)
     except BaseException:
         # this restores the newline suppressed by continued=True
-        logger.info()
+        logger.info('')
         raise
 
 

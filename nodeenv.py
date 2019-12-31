@@ -698,10 +698,11 @@ def install_node(env_dir, src_dir, opt):
     """
     try:
         install_node_wrapped(env_dir, src_dir, opt)
-    except:
+    except BaseException:
         # this restores the newline suppressed by continued=True
         logger.info()
         raise
+
 
 def install_node_wrapped(env_dir, src_dir, opt):
     env_dir = abspath(env_dir)
@@ -1420,7 +1421,7 @@ end
 
 function freeze -d 'Show a list of installed packages - like `pip freeze`'
     set -l NPM_VER (npm -v | cut -d '.' -f 1)
-    set -l RE "[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*"
+    set -l RE "[a-zA-Z0-9\\.\\-]+@[0-9]+\\.[0-9]+\\.[0-9]+([\\+\\-][a-zA-Z0-9\\.\\-]+)*"
 
     if test "$NPM_VER" = "0"
         set -g NPM_LIST (npm list installed active >/dev/null ^/dev/null | \
@@ -1431,7 +1432,7 @@ function freeze -d 'Show a list of installed packages - like `pip freeze`'
             set NPM_LS "npm ls"
             set -e argv[1]
         end
-        set -l NPM_LIST (eval $NPM_LS | grep -E '^.{4}\w{1}' | \
+        set -l NPM_LIST (eval $NPM_LS | grep -E '^.{4}\\w{1}' | \
                                         grep -o -E "$re" | \
                                         grep -v npm)
     end
@@ -1494,7 +1495,7 @@ if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
 
     set -gx _OLD_NODE_FISH_PROMPT_OVERRIDE "$NODE_VIRTUAL_ENV"
 end
-"""  # noqa
+"""  # noqa: E501
 
 PREDEACTIVATE_SH = """
 if type -p deactivate_node > /dev/null; then deactivate_node;fi

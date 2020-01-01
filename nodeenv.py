@@ -26,6 +26,7 @@ import pipes
 import platform
 import zipfile
 import shutil
+import sysconfig
 import glob
 
 try:  # pragma: no cover (py2 only)
@@ -501,6 +502,10 @@ def get_root_url(version):
         return 'https://%s/download/release/' % src_domain
 
 
+def is_x86_64_musl():
+    return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
+
+
 def get_node_bin_url(version):
     archmap = {
         'x86':    'x86',  # Windows Vista 32
@@ -518,10 +523,11 @@ def get_node_bin_url(version):
     }
     if is_WIN or is_CYGWIN:
         postfix = '-win-%(arch)s.zip' % sysinfo
-        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    elif is_x86_64_musl():
+        postfix = '-linux-x64-musl.tar.gz'
     else:
         postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
-        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     return get_root_url(version) + filename
 
 
@@ -1023,6 +1029,9 @@ def main():
 
     if opt.mirror:
         src_domain = opt.mirror
+    # use unofficial builds only if musl and no explicitly chosen mirror
+    elif is_x86_64_musl():
+        src_domain = 'unofficial-builds.nodejs.org'
 
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

@@ -609,10 +609,10 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     prefix = get_binary_prefix()
     if is_WIN:
         dest = join(env_dir, 'Scripts')
-        os.makedirs(dest)
+        mkdir(dest)
     elif is_CYGWIN:
         dest = join(env_dir, 'bin')
-        os.makedirs(dest)
+        mkdir(dest)
         # write here to avoid https://bugs.python.org/issue35650
         writefile(join(env_dir, 'bin', 'node'), CYGWIN_NODE)
     else:

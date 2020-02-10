@@ -12,6 +12,7 @@
 
 import contextlib
 import io
+import json
 import sys
 import os
 import re
@@ -25,18 +26,17 @@ import pipes
 import platform
 import zipfile
 import shutil
+import sysconfig
 import glob
 
 try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser
     # noinspection PyCompatibility
-    from HTMLParser import HTMLParser
     import urllib2
     iteritems = operator.methodcaller('iteritems')
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
     # noinspection PyUnresolvedReferences
-    from html.parser import HTMLParser
     import urllib.request as urllib2
     iteritems = operator.methodcaller('items')
 
@@ -50,9 +50,6 @@ iojs_taken = False
 src_domain = "nodejs.org"
 
 is_PY3 = sys.version_info[0] >= 3
-if is_PY3:
-    from functools import cmp_to_key
-
 is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith('CYGWIN')
 
@@ -500,9 +497,13 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
-        return 'https://%s/dist/v%s/' % (src_domain, version)
+        return 'https://%s/download/release/v%s/' % (src_domain, version)
     else:
-        return 'https://%s/dist/' % src_domain
+        return 'https://%s/download/release/' % src_domain
+
+
+def is_x86_64_musl():
+    return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
 
 
 def get_node_bin_url(version):
@@ -522,10 +523,11 @@ def get_node_bin_url(version):
     }
     if is_WIN or is_CYGWIN:
         postfix = '-win-%(arch)s.zip' % sysinfo
-        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    elif is_x86_64_musl():
+        postfix = '-linux-x64-musl.tar.gz'
     else:
         postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
-        filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
     return get_root_url(version) + filename
 
 
@@ -954,59 +956,13 @@ def create_environment(env_dir, opt):
         shutil.rmtree(src_dir)
 
 
-class GetsAHrefs(HTMLParser):
-    def __init__(self):
-        # Old style class in py2 :(
-        HTMLParser.__init__(self)
-        self.hrefs = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'a':
-            self.hrefs.append(dict(attrs).get('href', ''))
-
-
-VERSION_RE = re.compile(r'\d+\.\d+\.\d+')
-
-
-def _py2_cmp(a, b):
-    # -1 = a < b, 0 = eq, 1 = a > b
-    return (a > b) - (a < b)
-
-
-def compare_versions(version, other_version):
-    version_tuple = version.split('.')
-    other_tuple = other_version.split('.')
-
-    version_length = len(version_tuple)
-    other_length = len(other_tuple)
-    version_dots = min(version_length, other_length)
-
-    for i in range(version_dots):
-        a = int(version_tuple[i])
-        b = int(other_tuple[i])
-        cmp_value = _py2_cmp(a, b)
-        if cmp_value != 0:
-            return cmp_value
-
-    return _py2_cmp(version_length, other_length)
+def _get_versions_json():
+    response = urlopen('https://%s/download/release/index.json' % src_domain)
+    return json.loads(response.read().decode('UTF-8'))
 
 
 def get_node_versions():
-    response = urlopen('https://{0}/dist'.format(src_domain))
-    href_parser = GetsAHrefs()
-    href_parser.feed(response.read().decode('UTF-8'))
-
-    versions = set(
-        VERSION_RE.search(href).group()
-        for href in href_parser.hrefs
-        if VERSION_RE.search(href)
-    )
-    if is_PY3:
-        key_compare = cmp_to_key(compare_versions)
-        versions = sorted(versions, key=key_compare)
-    else:
-        versions = sorted(versions, cmp=compare_versions)
-    return versions
+    return [dct['version'].lstrip('v') for dct in _get_versions_json()][::-1]
 
 
 def print_node_versions():
@@ -1025,23 +981,7 @@ def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    response = urlopen('https://%s/dist/latest/' % src_domain)
-    href_parser = GetsAHrefs()
-    href_parser.feed(response.read().decode('UTF-8'))
-
-    links = []
-    pattern = re.compile(r'''%s-v([0-9]+)\.([0-9]+)\.([0-9]+)\.tar\.gz''' % (
-        get_binary_prefix()))
-
-    for href in href_parser.hrefs:
-        match = pattern.match(href)
-        if match:
-            version = u'.'.join(match.groups())
-            major, minor, revision = map(int, match.groups())
-            links.append((version, major, minor, revision))
-            break
-
-    return links[-1][0]
+    return _get_versions_json()[0]['version'].lstrip('v')
 
 
 def get_env_dir(opt, args):
@@ -1058,16 +998,6 @@ def get_env_dir(opt, args):
     else:
         res = args[0]
     return to_utf8(res)
-
-
-def is_installed(name):
-    try:
-        devnull = open(os.devnull)
-        subprocess.Popen([name], stdout=devnull, stderr=devnull)
-    except OSError as e:
-        if e.errno == os.errno.ENOENT:
-            return False
-    return True
 
 
 # noinspection PyProtectedMember
@@ -1099,6 +1029,9 @@ def main():
 
     if opt.mirror:
         src_domain = opt.mirror
+    # use unofficial builds only if musl and no explicitly chosen mirror
+    elif is_x86_64_musl():
+        src_domain = 'unofficial-builds.nodejs.org'
 
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

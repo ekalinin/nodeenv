@@ -47,7 +47,7 @@ nodeenv_version = '1.3.5'
 join = os.path.join
 abspath = os.path.abspath
 iojs_taken = False
-src_domain = "nodejs.org"
+src_base_url = None
 
 is_PY3 = sys.version_info[0] >= 3
 is_WIN = platform.system() == 'Windows'
@@ -497,9 +497,9 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
-        return 'https://%s/download/release/v%s/' % (src_domain, version)
+        return '%s/v%s/' % (src_base_url, version)
     else:
-        return 'https://%s/download/release/' % src_domain
+        return src_base_url
 
 
 def is_x86_64_musl():
@@ -957,7 +957,7 @@ def create_environment(env_dir, opt):
 
 
 def _get_versions_json():
-    response = urlopen('https://%s/download/release/index.json' % src_domain)
+    response = urlopen('%s/index.json' % src_base_url)
     return json.loads(response.read().decode('UTF-8'))
 
 
@@ -1021,17 +1021,25 @@ def main():
         exit(1)
 
     global iojs_taken
-    global src_domain
+    global src_base_url
 
+    src_domain = None
     if opt.io:
         iojs_taken = True
         src_domain = "iojs.org"
 
     if opt.mirror:
-        src_domain = opt.mirror
+        if '://' in opt.mirror:
+            src_base_url = opt.mirror
+        else:
+            src_domain = opt.mirror
     # use unofficial builds only if musl and no explicitly chosen mirror
     elif is_x86_64_musl():
         src_domain = 'unofficial-builds.nodejs.org'
+    else:
+        src_domain = 'nodejs.org'
+    if src_base_url is None:
+        src_base_url = 'https://%s/download/release' % src_domain
 
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

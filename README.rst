@@ -136,6 +136,10 @@ Install node.js from the source::
 
     $ nodeenv --node=0.10.25 --source env-0.10.25
 
+Install node.js from a mirror::
+
+    $ nodeenv --node=10.19.0 --mirror=https://npm.taobao.org/mirrors/node
+
 It's much faster to install from the prebuilt package than Install & compile
 node.js from source::
 

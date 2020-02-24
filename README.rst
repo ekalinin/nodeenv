@@ -230,18 +230,6 @@ use `shim` script::
     $ ./env-4.3/bin/shim --version
     v0.4.3
 
-
-If you want to install iojs instead of nodejs then use ``--iojs``::
-
-    $ virtualenv env
-    $ . env/bin/activate
-    (env) $ nodeenv --iojs --list
-    1.0.0   1.0.1
-    (env) $ nodeenv --iojs -p --prebuilt
-     * Install iojs (1.0.1) ... done.
-     * Appending data to ~/tmp/env/bin/activate
-
-
 Configuration
 -------------
 You can use the INI-style file ``~/.nodeenvrc`` to set default values for many options,

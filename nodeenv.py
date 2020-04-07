@@ -46,8 +46,7 @@ nodeenv_version = '1.3.5'
 
 join = os.path.join
 abspath = os.path.abspath
-iojs_taken = False
-src_domain = "nodejs.org"
+src_base_url = None
 
 is_PY3 = sys.version_info[0] >= 3
 is_WIN = platform.system() == 'Windows'
@@ -223,14 +222,9 @@ def parse_args(check=True):
         'Use `system` to use system-wide node.')
 
     parser.add_option(
-        '-i', '--iojs',
-        action='store_true', dest='io', default=False,
-        help='Use iojs instead of nodejs.')
-
-    parser.add_option(
         '--mirror',
         action="store", dest='mirror',
-        help='Set mirror server of nodejs.org or iojs.org to download from.')
+        help='Set mirror server of nodejs.org to download from.')
 
     if not is_WIN:
         parser.add_option(
@@ -497,9 +491,9 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 def get_root_url(version):
     if parse_version(version) > parse_version("0.5.0"):
-        return 'https://%s/download/release/v%s/' % (src_domain, version)
+        return '%s/v%s/' % (src_base_url, version)
     else:
-        return 'https://%s/download/release/' % src_domain
+        return src_base_url
 
 
 def is_x86_64_musl():
@@ -527,12 +521,12 @@ def get_node_bin_url(version):
         postfix = '-linux-x64-musl.tar.gz'
     else:
         postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
-    filename = '%s-v%s%s' % (get_binary_prefix(), version, postfix)
+    filename = 'node-v%s%s' % (version, postfix)
     return get_root_url(version) + filename
 
 
 def get_node_src_url(version):
-    tar_name = '%s-v%s.tar.gz' % (get_binary_prefix(), version)
+    tar_name = 'node-v%s.tar.gz' % version
     return get_root_url(version) + tar_name
 
 
@@ -546,7 +540,7 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def download_node_src(node_url, src_dir, opt, prefix):
+def download_node_src(node_url, src_dir, opt):
     """
     Download source code
     """
@@ -565,8 +559,8 @@ def download_node_src(node_url, src_dir, opt, prefix):
 
     with ctx as archive:
         node_ver = re.escape(opt.node)
-        rexp_string = r"%s-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)"\
-            % (prefix, node_ver)
+        rexp_string = r"node-v%s[^/]*/(README\.md|CHANGELOG\.md|LICENSE)"\
+            % node_ver
         extract_list = [
             member
             for member in members(archive)
@@ -608,7 +602,6 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     Copy prebuilt binaries into environment
     """
     logger.info('.', extra=dict(continued=True))
-    prefix = get_binary_prefix()
     if is_WIN:
         dest = join(env_dir, 'Scripts')
         mkdir(dest)
@@ -620,7 +613,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     else:
         dest = env_dir
 
-    src_folder_tpl = src_dir + to_utf8('/%s-v%s*' % (prefix, node_version))
+    src_folder_tpl = src_dir + to_utf8('/node-v%s*' % node_version)
     src_folder, = glob.glob(src_folder_tpl)
     copytree(src_folder, dest, True)
 
@@ -689,10 +682,6 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, opt):
     callit([make_cmd + ' install'], opt.verbose, True, node_src_dir, env)
 
 
-def get_binary_prefix():
-    return to_utf8('node' if not iojs_taken else 'iojs')
-
-
 def install_node(env_dir, src_dir, opt):
     """
     Download source code for node.js, unpack it
@@ -708,11 +697,10 @@ def install_node(env_dir, src_dir, opt):
 
 def install_node_wrapped(env_dir, src_dir, opt):
     env_dir = abspath(env_dir)
-    prefix = get_binary_prefix()
-    node_src_dir = join(src_dir, to_utf8('%s-v%s' % (prefix, opt.node)))
+    node_src_dir = join(src_dir, to_utf8('node-v%s' % opt.node))
     src_type = "prebuilt" if opt.prebuilt else "source"
 
-    logger.info(' * Install %s %s (%s) ' % (src_type, prefix, opt.node),
+    logger.info(' * Install %s node (%s) ' % (src_type, opt.node),
                 extra=dict(continued=True))
 
     if opt.prebuilt:
@@ -722,7 +710,7 @@ def install_node_wrapped(env_dir, src_dir, opt):
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
-        download_node_src(node_url, src_dir, opt, prefix)
+        download_node_src(node_url, src_dir, opt)
 
     logger.info('.', extra=dict(continued=True))
 
@@ -957,7 +945,7 @@ def create_environment(env_dir, opt):
 
 
 def _get_versions_json():
-    response = urlopen('https://%s/download/release/index.json' % src_domain)
+    response = urlopen('%s/index.json' % src_base_url)
     return json.loads(response.read().decode('UTF-8'))
 
 
@@ -1020,18 +1008,21 @@ def main():
         logger.error('Installing system node.js on win32 is not supported!')
         exit(1)
 
-    global iojs_taken
-    global src_domain
+    global src_base_url
 
-    if opt.io:
-        iojs_taken = True
-        src_domain = "iojs.org"
-
+    src_domain = None
     if opt.mirror:
-        src_domain = opt.mirror
+        if '://' in opt.mirror:
+            src_base_url = opt.mirror
+        else:
+            src_domain = opt.mirror
     # use unofficial builds only if musl and no explicitly chosen mirror
     elif is_x86_64_musl():
         src_domain = 'unofficial-builds.nodejs.org'
+    else:
+        src_domain = 'nodejs.org'
+    if src_base_url is None:
+        src_base_url = 'https://%s/download/release' % src_domain
 
     if not opt.node or opt.node.lower() == "latest":
         opt.node = get_last_stable_node_version()

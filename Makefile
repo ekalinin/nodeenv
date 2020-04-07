@@ -87,16 +87,6 @@ test5: clean
 		python setup.py install                 && \
 		nodeenv -p --prebuilt
 
-test6: clean
-	@echo " ="
-	@echo " = test6: separate iojs's env"
-	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
-		nodeenv -p --prebuilt --iojs
-
 test7: clean
 	@echo " ="
 	@echo " = test7: freeze for global installation"

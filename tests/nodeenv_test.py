@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os.path
 import subprocess
+import sys
 
 import mock
 import pytest
@@ -79,3 +80,30 @@ def test_predeactivate_hook(tmpdir):
     nodeenv.set_predeactivate_hook(tmpdir.strpath)
     p = tmpdir.join('bin').join('predeactivate')
     assert 'deactivate_node' in p.read()
+
+
+def test_mirror_option():
+    urls = [('https://npm.taobao.org/mirrors/node',
+             'https://npm.taobao.org/mirrors/node/index.json'),
+            ('npm.some-mirror.com',
+             'https://npm.some-mirror.com/download/release/index.json'),
+            ('',
+             'https://nodejs.org/download/release/index.json')]
+    with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
+        def rewind(_):
+            f.seek(0)
+            return f
+        argv = [__file__, '--list']
+        for mirror, url in urls:
+            if mirror:
+                test_argv = argv + ['--mirror=' + mirror]
+            else:
+                test_argv = argv
+            with mock.patch.object(sys, 'argv', test_argv), \
+                 mock.patch.object(nodeenv.logger, 'info') as mock_logger, \
+                 mock.patch.object(nodeenv, 'urlopen',
+                                   side_effect=rewind) as mock_urlopen:
+                nodeenv.src_base_url = None
+                nodeenv.main()
+                mock_urlopen.assert_called_with(url)
+                mock_logger.assert_called()

@@ -136,6 +136,10 @@ Install node.js from the source::
 
     $ nodeenv --node=0.10.25 --source env-0.10.25
 
+Install node.js from a mirror::
+
+    $ nodeenv --node=10.19.0 --mirror=https://npm.taobao.org/mirrors/node
+
 It's much faster to install from the prebuilt package than Install & compile
 node.js from source::
 
@@ -225,18 +229,6 @@ use `shim` script::
 
     $ ./env-4.3/bin/shim --version
     v0.4.3
-
-
-If you want to install iojs instead of nodejs then use ``--iojs``::
-
-    $ virtualenv env
-    $ . env/bin/activate
-    (env) $ nodeenv --iojs --list
-    1.0.0   1.0.1
-    (env) $ nodeenv --iojs -p --prebuilt
-     * Install iojs (1.0.1) ... done.
-     * Appending data to ~/tmp/env/bin/activate
-
 
 Configuration
 -------------

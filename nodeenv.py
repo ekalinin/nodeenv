@@ -1337,6 +1337,8 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
         set -e _OLD_NODE_FISH_PROMPT_OVERRIDE
     end
 
+    set -e NODE_VIRTUAL_ENV
+
     if test (count $argv) = 0 -o "$argv[1]" != "nondestructive"
         # Self destruct!
         functions -e deactivate_node

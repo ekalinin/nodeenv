@@ -343,7 +343,7 @@ def parse_args(check=True):
     parser.add_option(
         '--ignore_ssl_certs', dest='ignore_ssl_certs',
         action='store_true', default=Config.ignore_ssl_certs,
-        help='Ignore certificates for package downloads - UNSAFE - (See ssl.SSLContext.verify_mode).')
+        help='Ignore certificates for package downloads. - UNSAFE -')
 
     options, args = parser.parse_args()
 
@@ -586,8 +586,7 @@ def urlopen(url):
         context = ssl.SSLContext()
         context.verify_mode = ssl.CERT_NONE
         return urllib2.urlopen(req, context=context)
-    else:
-        return urllib2.urlopen(req)
+    return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
 # Virtual environment functions

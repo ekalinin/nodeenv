@@ -34,11 +34,15 @@ try:  # pragma: no cover (py2 only)
     # noinspection PyCompatibility
     import urllib2
     iteritems = operator.methodcaller('iteritems')
+    import httplib
+    IncompleteRead = httplib.IncompleteRead
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
     # noinspection PyUnresolvedReferences
     import urllib.request as urllib2
     iteritems = operator.methodcaller('items')
+    import http
+    IncompleteRead = http.client.IncompleteRead
 
 from pkg_resources import parse_version
 
@@ -545,7 +549,12 @@ def download_node_src(node_url, src_dir, opt):
     Download source code
     """
     logger.info('.', extra=dict(continued=True))
-    dl_contents = io.BytesIO(urlopen(node_url).read())
+    try:
+        dl_contents = io.BytesIO(urlopen(node_url).read())
+    except IncompleteRead as e:
+        logger.warning('Incomplete read while reading'
+                       'from {}'.format(node_url))
+        dl_contents = e.partial
     logger.info('.', extra=dict(continued=True))
 
     if is_WIN or is_CYGWIN:

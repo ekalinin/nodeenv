@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os.path
+import pipes
 import subprocess
 import sys
 
@@ -23,8 +24,24 @@ def test_smoke(tmpdir):
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
     assert os.path.exists(nenv_path)
+    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
-        'sh', '-c', '. {0}/bin/activate && nodejs --version'.format(nenv_path),
+        'sh', '-c', '. {} && nodejs --version'.format(activate),
+    ])
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='-n system is posix only')
+def test_smoke_n_system_special_chars(tmpdir):
+    nenv_path = tmpdir.join('nenv (production env)').strpath
+    subprocess.check_call((
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '-n', 'system', nenv_path,
+    ))
+    assert os.path.exists(nenv_path)
+    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    subprocess.check_call([
+        'sh', '-c', '. {} && nodejs --version'.format(activate),
     ])
 
 

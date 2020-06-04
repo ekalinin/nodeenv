@@ -108,7 +108,7 @@ Check versions of main packages::
 
 Deactivate environment::
 
-    (env) $ deactivate_node
+    (env) $ deactivate
 
 Advanced
 ^^^^^^^^

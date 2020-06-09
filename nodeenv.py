@@ -16,6 +16,7 @@ import json
 import sys
 import os
 import re
+import ssl
 import stat
 import logging
 import operator
@@ -56,6 +57,7 @@ is_PY3 = sys.version_info[0] >= 3
 is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith('CYGWIN')
 
+ignore_ssl_certs = False
 
 # ---------------------------------------------------------
 # Utils
@@ -97,6 +99,7 @@ class Config(object):
     profile = False
     make = 'make'
     prebuilt = True
+    ignore_ssl_certs = False
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -341,7 +344,13 @@ def parse_args(check=True):
         action='store_true', default=Config.prebuilt,
         help='Install node.js from prebuilt package (default)')
 
+    parser.add_option(
+        '--ignore_ssl_certs', dest='ignore_ssl_certs',
+        action='store_true', default=Config.ignore_ssl_certs,
+        help='Ignore certificates for package downloads. - UNSAFE -')
+
     options, args = parser.parse_args()
+
     if options.config_file is None:
         options.config_file = ["./tox.ini", "./setup.cfg", "~/.nodeenvrc"]
     elif not options.config_file:
@@ -582,6 +591,10 @@ def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
     req = urllib2.Request(url, None, headers)
+    if ignore_ssl_certs:
+        context = ssl.SSLContext()
+        context.verify_mode = ssl.CERT_NONE
+        return urllib2.urlopen(req, context=context)
     return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
@@ -1018,6 +1031,9 @@ def main():
         exit(1)
 
     global src_base_url
+    global ignore_ssl_certs
+
+    ignore_ssl_certs = opt.ignore_ssl_certs
 
     src_domain = None
     if opt.mirror:

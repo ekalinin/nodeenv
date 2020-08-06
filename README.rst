@@ -213,6 +213,10 @@ environment::
     $ npm install -g coffee-script
     $ which coffee
     /home/monty/virtualenvs/my_env/bin/coffee
+    
+Creating a virtual environment with a custom prompt:
+
+    $ nodeenv --node=12.18.2 --prompt="(myenv)" nodeenv
 
 If environment's directory already exists then you can use ``--force`` option::
 

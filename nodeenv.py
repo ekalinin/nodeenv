@@ -55,7 +55,7 @@ src_base_url = None
 
 is_PY3 = sys.version_info[0] >= 3
 is_WIN = platform.system() == 'Windows'
-is_CYGWIN = platform.system().startswith('CYGWIN')
+is_CYGWIN = platform.system().startswith(('CYGWIN', 'MSYS'))
 
 ignore_ssl_certs = False
 

@@ -8,6 +8,7 @@ deploy-github:
 	git push --tags origin master
 
 deploy-pypi:
+	rm -rf dist
 	python setup.py sdist bdist_wheel
 	twine upload --repository pypi dist/*
 

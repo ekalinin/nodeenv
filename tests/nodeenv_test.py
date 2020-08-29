@@ -15,6 +15,25 @@ import nodeenv
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+if subprocess.run(["which", "nodejs"],capture_output=True).returncode == 0:
+    is_nodejs = True
+else:
+    is_nodejs = False
+
+
+def call_nodejs(ev_path):
+    assert os.path.exists(ev_path)
+    activate = pipes.quote(os.path.join(ev_path, 'bin', 'activate'))
+    if is_nodejs:
+        subprocess.check_call([
+            'sh', '-c', '. {} && nodejs --version'.format(activate),
+        ])
+    else:
+        subprocess.check_call([
+            'sh', '-c', '. {} && node --version'.format(activate),
+        ])
+
+
 @pytest.mark.integration
 def test_smoke(tmpdir):
     nenv_path = tmpdir.join('nenv').strpath
@@ -23,11 +42,7 @@ def test_smoke(tmpdir):
         'coverage', 'run', '-p',
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
-    assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
-    subprocess.check_call([
-        'sh', '-c', '. {} && nodejs --version'.format(activate),
-    ])
+    call_nodejs(nenv_path)
 
 
 @pytest.mark.integration
@@ -38,11 +53,7 @@ def test_smoke_n_system_special_chars(tmpdir):
         'coverage', 'run', '-p',
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
-    assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
-    subprocess.check_call([
-        'sh', '-c', '. {} && nodejs --version'.format(activate),
-    ])
+    call_nodejs(nenv_path)
 
 
 @pytest.yield_fixture

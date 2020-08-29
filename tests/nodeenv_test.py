@@ -5,6 +5,7 @@ import os.path
 import pipes
 import subprocess
 import sys
+import sysconfig
 
 import mock
 import pytest
@@ -117,6 +118,11 @@ def test_mirror_option():
              'https://npm.some-mirror.com/download/release/index.json'),
             ('',
              'https://nodejs.org/download/release/index.json')]
+    sys_type = sysconfig.get_config_var('HOST_GNU_TYPE')
+    musl_type = ['x86_64-pc-linux-musl', 'x86_64-unknown-linux-musl']
+    # Check if running on musl system and delete last mirror if it is
+    if sys_type in musl_type:
+        urls.pop()
     with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
         def rewind(_):
             f.seek(0)

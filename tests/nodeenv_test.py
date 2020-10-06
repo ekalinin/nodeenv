@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os.path
 import pipes
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -15,11 +16,15 @@ import nodeenv
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-
-if subprocess.run(["which", "nodejs"],capture_output=True).returncode == 0:
-    is_nodejs = True
-else:
-    is_nodejs = False
+try:
+    is_nodejs = shutil.which("nodejs") is not None
+except AttributeError:
+    try:
+        subprocess.check_call(["which", "nodejs"], stdout=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        is_nodejs = False
+    else:
+        is_nodejs = True
 
 
 def call_nodejs(ev_path):

@@ -75,7 +75,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* python (2.6+, 3.3+, or pypy)
+* python (2.6+, 3.5+, or pypy)
 * make
 * tail
 

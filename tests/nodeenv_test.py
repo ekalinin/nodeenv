@@ -27,7 +27,7 @@ def test_smoke(tmpdir):
     assert os.path.exists(nenv_path)
     activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
-        'sh', '-c', '. {} && nodejs --version'.format(activate),
+        'sh', '-c', '. {} && node --version'.format(activate),
     ])
 
 
@@ -42,7 +42,7 @@ def test_smoke_n_system_special_chars(tmpdir):
     assert os.path.exists(nenv_path)
     activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
-        'sh', '-c', '. {} && nodejs --version'.format(activate),
+        'sh', '-c', '. {} && node --version'.format(activate),
     ])
 
 

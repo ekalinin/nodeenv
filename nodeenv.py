@@ -1401,8 +1401,17 @@ end
 # unset irrelevant variables
 deactivate_node nondestructive
 
-# NODE_VIRTUAL_ENV is the parent of the directory where this script is
-set -gx NODE_VIRTUAL_ENV __NODE_VIRTUAL_ENV__
+# find the directory of this script
+begin
+    set -l SOURCE (status filename)
+    while test -L "$SOURCE"
+        set SOURCE (readlink "$SOURCE")
+    end
+    set -l DIR (dirname (realpath "$SOURCE"))
+
+    # NODE_VIRTUAL_ENV is the parent of the directory where this script is
+    set -gx NODE_VIRTUAL_ENV (dirname "$DIR")
+end
 
 set -gx _OLD_NODE_VIRTUAL_PATH $PATH
 # The node_modules/.bin path doesn't exists and it will print a warning, and

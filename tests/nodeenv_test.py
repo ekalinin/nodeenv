@@ -83,7 +83,7 @@ def test_print_node_versions(cap_logging_info):
     assert printed.endswith('\n13.1.0\t13.2.0\t13.3.0\t13.4.0\t13.5.0')
     tabs_per_line = [line.count('\t') for line in printed.splitlines()]
     # 8 items per line = 7 tabs
-    # The last line contains the remaning 5 items
+    # The last line contains the remaining 5 items
     assert tabs_per_line == [7] * 60 + [4]
 
 

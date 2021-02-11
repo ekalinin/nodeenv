@@ -226,6 +226,7 @@ def parse_args(check=True):
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. '
         'The default is last stable version (`latest`). '
+        'Use `lts` to use the latest LTS release. '
         'Use `system` to use system-wide node.')
 
     parser.add_option(
@@ -997,6 +998,13 @@ def get_last_stable_node_version():
     return _get_versions_json()[0]['version'].lstrip('v')
 
 
+def get_last_lts_node_version():
+    """
+    Return the last node.js version marked as LTS
+    """
+    return next((v['version'].lstrip('v') for v in _get_versions_json() if v['lts']), None)
+
+
 def get_env_dir(opt, args):
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
@@ -1052,8 +1060,10 @@ def main():
     if src_base_url is None:
         src_base_url = 'https://%s/download/release' % src_domain
 
-    if not opt.node or opt.node.lower() == "latest":
+    if not opt.node or opt.node.lower() == 'latest':
         opt.node = get_last_stable_node_version()
+    elif opt.node.lower() == 'lts':
+        opt.node = get_last_lts_node_version()
 
     if opt.list:
         print_node_versions()

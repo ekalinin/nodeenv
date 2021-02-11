@@ -130,3 +130,13 @@ def test_mirror_option():
                 nodeenv.main()
                 mock_urlopen.assert_called_with(url)
                 mock_logger.assert_called()
+
+
+@pytest.mark.usefixtures('mock_index_json')
+def test_get_latest_node_version():
+    assert nodeenv.get_last_stable_node_version() == '13.5.0'
+
+
+@pytest.mark.usefixtures('mock_index_json')
+def test_get_lts_node_version():
+    assert nodeenv.get_last_lts_node_version() == '12.14.0'

@@ -123,9 +123,9 @@ def test_mirror_option():
             else:
                 test_argv = argv
             with mock.patch.object(sys, 'argv', test_argv), \
-                 mock.patch.object(nodeenv.logger, 'info') as mock_logger, \
-                 mock.patch.object(nodeenv, 'urlopen',
-                                   side_effect=rewind) as mock_urlopen:
+                mock.patch.object(nodeenv.logger, 'info') as mock_logger, \
+                mock.patch.object(nodeenv, 'urlopen',
+                                  side_effect=rewind) as mock_urlopen:
                 nodeenv.src_base_url = None
                 nodeenv.main()
                 mock_urlopen.assert_called_with(url)

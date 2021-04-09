@@ -1006,7 +1006,8 @@ def get_last_lts_node_version():
     """
     Return the last node.js version marked as LTS
     """
-    return next((v['version'].lstrip('v') for v in _get_versions_json() if v['lts']), None)
+    return next((v['version'].lstrip('v')
+                 for v in _get_versions_json() if v['lts']), None)
 
 
 def get_env_dir(opt, args):

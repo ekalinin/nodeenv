@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import os.path
 import pipes
-import shutil
 import subprocess
 import sys
 import sysconfig

@@ -16,29 +16,6 @@ import nodeenv
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-try:
-    is_nodejs = shutil.which("nodejs") is not None
-except AttributeError:
-    try:
-        subprocess.check_call(["which", "nodejs"], stdout=subprocess.PIPE)
-    except subprocess.CalledProcessError:
-        is_nodejs = False
-    else:
-        is_nodejs = True
-
-
-def call_nodejs(ev_path):
-    assert os.path.exists(ev_path)
-    activate = pipes.quote(os.path.join(ev_path, 'bin', 'activate'))
-    if is_nodejs:
-        subprocess.check_call([
-            'sh', '-c', '. {} && nodejs --version'.format(activate),
-        ])
-    else:
-        subprocess.check_call([
-            'sh', '-c', '. {} && node --version'.format(activate),
-        ])
-
 
 @pytest.mark.integration
 def test_smoke(tmpdir):
@@ -48,7 +25,11 @@ def test_smoke(tmpdir):
         'coverage', 'run', '-p',
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
-    call_nodejs(nenv_path)
+    assert os.path.exists(nenv_path)
+    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    subprocess.check_call([
+        'sh', '-c', '. {} && node --version'.format(activate),
+    ])
 
 
 @pytest.mark.integration
@@ -59,7 +40,11 @@ def test_smoke_n_system_special_chars(tmpdir):
         'coverage', 'run', '-p',
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
-    call_nodejs(nenv_path)
+    assert os.path.exists(nenv_path)
+    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    subprocess.check_call([
+        'sh', '-c', '. {} && node --version'.format(activate),
+    ])
 
 
 @pytest.yield_fixture
@@ -99,7 +84,7 @@ def test_print_node_versions(cap_logging_info):
     assert printed.endswith('\n13.1.0\t13.2.0\t13.3.0\t13.4.0\t13.5.0')
     tabs_per_line = [line.count('\t') for line in printed.splitlines()]
     # 8 items per line = 7 tabs
-    # The last line contains the remaning 5 items
+    # The last line contains the remaining 5 items
     assert tabs_per_line == [7] * 60 + [4]
 
 
@@ -146,3 +131,13 @@ def test_mirror_option():
                 nodeenv.main()
                 mock_urlopen.assert_called_with(url)
                 mock_logger.assert_called()
+
+
+@pytest.mark.usefixtures('mock_index_json')
+def test_get_latest_node_version():
+    assert nodeenv.get_last_stable_node_version() == '13.5.0'
+
+
+@pytest.mark.usefixtures('mock_index_json')
+def test_get_lts_node_version():
+    assert nodeenv.get_last_lts_node_version() == '12.14.0'

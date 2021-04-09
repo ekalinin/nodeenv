@@ -47,7 +47,7 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from pkg_resources import parse_version
 
-nodeenv_version = '1.5.0'
+nodeenv_version = '1.6.0'
 
 join = os.path.join
 abspath = os.path.abspath
@@ -226,6 +226,7 @@ def parse_args(check=True):
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. '
         'The default is last stable version (`latest`). '
+        'Use `lts` to use the latest LTS release. '
         'Use `system` to use system-wide node.')
 
     parser.add_option(
@@ -524,6 +525,10 @@ def get_node_bin_url(version):
         'armv7l': 'armv7l',
         'armv8l': 'armv7l',
         'aarch64': 'arm64',
+        'arm64': 'arm64',
+        'arm64/v8': 'arm64',
+        'armv8': 'arm64',
+        'armv8.4': 'arm64',
         'ppc64le': 'ppc64le',   # Power PC
         's390x': 's390x',       # IBM S390x
     }
@@ -997,6 +1002,13 @@ def get_last_stable_node_version():
     return _get_versions_json()[0]['version'].lstrip('v')
 
 
+def get_last_lts_node_version():
+    """
+    Return the last node.js version marked as LTS
+    """
+    return next((v['version'].lstrip('v') for v in _get_versions_json() if v['lts']), None)
+
+
 def get_env_dir(opt, args):
     if opt.python_virtualenv:
         if hasattr(sys, 'real_prefix'):
@@ -1052,8 +1064,10 @@ def main():
     if src_base_url is None:
         src_base_url = 'https://%s/download/release' % src_domain
 
-    if not opt.node or opt.node.lower() == "latest":
+    if not opt.node or opt.node.lower() == 'latest':
         opt.node = get_last_stable_node_version()
+    elif opt.node.lower() == 'lts':
+        opt.node = get_last_lts_node_version()
 
     if opt.list:
         print_node_versions()
@@ -1401,8 +1415,17 @@ end
 # unset irrelevant variables
 deactivate_node nondestructive
 
-# NODE_VIRTUAL_ENV is the parent of the directory where this script is
-set -gx NODE_VIRTUAL_ENV __NODE_VIRTUAL_ENV__
+# find the directory of this script
+begin
+    set -l SOURCE (status filename)
+    while test -L "$SOURCE"
+        set SOURCE (readlink "$SOURCE")
+    end
+    set -l DIR (dirname (realpath "$SOURCE"))
+
+    # NODE_VIRTUAL_ENV is the parent of the directory where this script is
+    set -gx NODE_VIRTUAL_ENV (dirname "$DIR")
+end
 
 set -gx _OLD_NODE_VIRTUAL_PATH $PATH
 # The node_modules/.bin path doesn't exists and it will print a warning, and
@@ -1436,8 +1459,8 @@ if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
 
         # Prompt override provided?
         # If not, just prepend the environment name.
-        if test -n ""
-            printf '%s%s' "" (set_color normal)
+        if test -n "__NODE_VIRTUAL_PROMPT__"
+            printf '%s%s ' "__NODE_VIRTUAL_PROMPT__" (set_color normal)
         else
             printf '%s(%s) ' (set_color normal) (basename "$NODE_VIRTUAL_ENV")
         end

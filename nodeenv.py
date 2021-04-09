@@ -524,6 +524,10 @@ def get_node_bin_url(version):
         'armv7l': 'armv7l',
         'armv8l': 'armv7l',
         'aarch64': 'arm64',
+        'arm64': 'arm64',
+        'arm64/v8': 'arm64',
+        'armv8': 'arm64',
+        'armv8.4': 'arm64',
         'ppc64le': 'ppc64le',   # Power PC
         's390x': 's390x',       # IBM S390x
     }

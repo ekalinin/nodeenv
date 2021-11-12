@@ -106,6 +106,7 @@ class Config(object):
         """
         Load configuration from the given files in reverse order,
         if they exist and have a [nodeenv] section.
+        Additionally, load version from .node-version if file exists.
         """
         for configfile in reversed(configfiles):
             configfile = os.path.expanduser(configfile)
@@ -132,6 +133,10 @@ class Config(object):
                     print('CONFIG {0}: {1} = {2}'.format(
                         os.path.basename(configfile), attr, val))
                 setattr(cls, attr, val)
+
+        if os.path.exists(".node-version"):
+            with open(".node-version", "r") as v_file:
+                setattr(cls, "node", v_file.readlines(1)[0].strip())
 
     @classmethod
     def _dump(cls):

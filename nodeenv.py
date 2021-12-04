@@ -215,11 +215,9 @@ def create_logger():
 logger = create_logger()
 
 
-def parse_args(check=True):
+def make_parser():
     """
-    Parses command line arguments.
-
-    Set `check` to False to skip validation checks.
+    Make a command line argument parser.
     """
     parser = argparse.ArgumentParser(
         usage="%(prog)s [OPTIONS] DEST_DIR")
@@ -360,6 +358,16 @@ def parse_args(check=True):
     parser.add_argument(
         metavar='DEST_DIR', dest='env_dir', nargs='?', help='Destination directory')
 
+    return parser
+
+
+def parse_args(check=True):
+    """
+    Parses command line arguments.
+
+    Set `check` to False to skip validation checks.
+    """
+    parser = make_parser()
     args = parser.parse_args()
 
     if args.config_file is None:

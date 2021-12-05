@@ -1380,8 +1380,8 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
 
         # Erase virtualenv's `fish_prompt` and restore the original.
         functions -e fish_prompt
-        functions -c _old_fish_prompt fish_prompt
-        functions -e _old_fish_prompt
+        functions -c _node_old_fish_prompt fish_prompt
+        functions -e _node_old_fish_prompt
         set -e _OLD_NODE_FISH_PROMPT_OVERRIDE
     end
 
@@ -1456,8 +1456,8 @@ end
 set -gx npm_config_prefix "__NPM_CONFIG_PREFIX__"
 
 if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
-    # Copy the current `fish_prompt` function as `_old_fish_prompt`.
-    functions -c fish_prompt _old_fish_prompt
+    # Copy the current `fish_prompt` function as `_node_old_fish_prompt`.
+    functions -c fish_prompt _node_old_fish_prompt
 
     function fish_prompt
         # Save the current $status, for fish_prompts that display it.

@@ -356,7 +356,8 @@ def make_parser():
         help='Ignore certificates for package downloads. - UNSAFE -')
 
     parser.add_argument(
-        metavar='DEST_DIR', dest='env_dir', nargs='?', help='Destination directory')
+        metavar='DEST_DIR', dest='env_dir', nargs='?',
+        help='Destination directory')
 
     return parser
 

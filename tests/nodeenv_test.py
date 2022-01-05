@@ -46,7 +46,7 @@ def test_smoke_n_system_special_chars(tmpdir):
     ])
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def mock_index_json():
     # retrieved 2019-12-31
     with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
@@ -54,7 +54,7 @@ def mock_index_json():
             yield
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def cap_logging_info():
     with mock.patch.object(nodeenv.logger, 'info') as mck:
         yield mck

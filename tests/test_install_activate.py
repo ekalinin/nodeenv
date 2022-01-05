@@ -52,7 +52,7 @@ def test_write(tmpdir, name, content_var):
         bin_dir.join(n).write(n)
 
     with mock.patch.object(sys, 'argv', ['nodeenv', str(tmpdir)]):
-        opts = nodeenv.parse_args()[0]
+        opts = nodeenv.parse_args()
         nodeenv.install_activate(str(tmpdir), opts)
 
     content = getattr(nodeenv, content_var)
@@ -70,7 +70,7 @@ def test_python_virtualenv(tmpdir, name, content_var):
         bin_dir.join(n).write(n)
 
     with mock.patch.object(sys, 'argv', ['nodeenv', '-p']):
-        opts = nodeenv.parse_args()[0]
+        opts = nodeenv.parse_args()
         nodeenv.install_activate(str(tmpdir), opts)
 
     content = getattr(nodeenv, content_var)

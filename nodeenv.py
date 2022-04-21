@@ -762,7 +762,8 @@ def install_node_wrapped(env_dir, src_dir, args):
         except urllib2.HTTPError:
             if "arm64" in node_url:
                 # if arm64 not found, try x64
-                download_node_src(node_url.replace('arm64', 'x64'), src_dir, args)
+                download_node_src(node_url.replace('arm64', 'x64'),
+                                  src_dir, args)
 
     logger.info('.', extra=dict(continued=True))
 
@@ -937,7 +938,7 @@ def install_activate(env_dir, args):
         #   $ nodeenv -p --prebuilt
         #   $ nodeenv -p --node=system
         # we should get `bin/node` not as binary+string.
-        # `bin/activate` should be appended if we inside
+        # `bin/activate` should be appended if we're inside
         # existing python's virtual environment
         need_append = False
         if args.python_virtualenv:

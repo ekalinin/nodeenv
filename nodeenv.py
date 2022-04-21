@@ -757,7 +757,12 @@ def install_node_wrapped(env_dir, src_dir, args):
 
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
-        download_node_src(node_url, src_dir, args)
+        try:
+            download_node_src(node_url, src_dir, args)
+        except urllib2.HTTPError:
+            if "arm64" in node_url:
+                # if arm64 not found, try x64
+                download_node_src(node_url.replace('arm64', 'x64'), src_dir, args)
 
     logger.info('.', extra=dict(continued=True))
 

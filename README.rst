@@ -242,15 +242,17 @@ the keys in that file are the long command-line option names.
 These are the available options and their defaults::
 
     [nodeenv]
-    debug = False
-    jobs = 2
-    make = make
-    node = latest
-    npm = latest
-    prebuilt = False
-    profile = False
+    node = 'latest'
+    npm = 'latest'
     with_npm = False
+    jobs = '2'
     without_ssl = False
+    debug = False
+    profile = False
+    make = 'make'
+    prebuilt = True
+    ignore_ssl_certs = False
+    mirror = None
 
 Alternatives
 ------------

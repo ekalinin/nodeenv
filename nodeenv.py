@@ -100,6 +100,7 @@ class Config(object):
     make = 'make'
     prebuilt = True
     ignore_ssl_certs = False
+    mirror = None
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -236,7 +237,7 @@ def make_parser():
 
     parser.add_argument(
         '--mirror',
-        action="store", dest='mirror',
+        action="store", dest='mirror', default=Config.mirror,
         help='Set mirror server of nodejs.org to download from.')
 
     if not is_WIN:

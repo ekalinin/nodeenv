@@ -130,7 +130,7 @@ Get available node.js versions::
 Install node.js "0.4.3" without ssl support with 4 parallel commands 
 for compilation and npm.js "0.3.17"::
 
-    $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --jobs=4 env-4.3
+    $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --with-npm --jobs=4 env-4.3
 
 Install node.js from the source::
 

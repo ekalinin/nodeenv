@@ -3,88 +3,88 @@ Nodeenv is written and maintained by Eugene Kalinin.
 Patches and Suggestions
 ```````````````````````
 
--  jhermann 
--  Anthony Sottile 
--  anatoly techtonik 
--  ivan hilkov 
--  Vincent Bernat 
--  Kyle P Davis 
--  Kefu Chai 
--  Elias Kunnas 
--  Adam Johnson 
--  Pierre Le Marre 
--  Eashwar Ranganathan 
--  Doug Turnbull 
--  Anton Parkhomenko 
--  syndbg 
--  Vyacheslav Levit 
--  Travis Miller 
--  Spencer Rathbun 
--  Luis Orduz 
--  Lucas Cimon 
--  Lispython 
--  Leonardo Fedalto 
--  Kyle P Davis 
--  Jon Winn 
--  Duncan Bellamy 
--  Dennis Flanigan 
--  Chris Beaven 
--  Cerem Cem ASLAN 
--  Bruno Oliveira 
--  Andrzej Pragacz 
--  Andrey Mishchenko 
--  Alex Couper 
--  0Xellos 
--  zjeuhpiung liu 
--  urbandove 
--  sam 
--  rely10 
--  rachmadaniHaryono 
--  proItheus 
--  michael 
--  jiho 
--  dkgitdev 
--  dhilipsiva 
--  cmehay 
--  Zenobius Jiricek 
--  Yi-Feng Tzeng 
--  Willem Jan Withagen 
--  Walter dos Santos Filho 
--  Vladimír Gorej 
--  Vincent Bernat 
--  Uman Shahzad 
--  Tom Whitwell 
--  Tim Gates 
--  Thomas Bechtold 
--  Terseus 
--  Stan Seibert 
--  Shubhang Mani 
--  Rik 
--  Philipp Dieter 
--  Mrinal Wadhwa 
--  Michal Kolodziejski 
--  Maxim Mazurok 
--  Max R 
--  Max Melamed 
--  Max Liebkies 
--  Marc-Antoine Parent 
--  Marc Abramowitz 
--  Laust Rud Jacobsen 
--  Ken Struys 
--  Kai Weber 
--  Josh Soref 
--  Joby Harding 
--  Jesse Dhillon 
--  Jeremy Banks 
--  Geoffrey Huntley 
--  Fabricio C Zuardi 
--  Duncan Bellamy 
--  Dennis Flanigan 
--  Dan North 
--  Dan Fuchs 
--  Damien Nozay 
--  Brian Jacobel 
--  Ben Davis 
--  Augusto Andreoli 
--  Andreas Wirooks 
--  Alexey Poryadin 
+-  jhermann
+-  Anthony Sottile
+-  anatoly techtonik
+-  ivan hilkov
+-  Vincent Bernat
+-  Kyle P Davis
+-  Kefu Chai
+-  Elias Kunnas
+-  Adam Johnson
+-  Pierre Le Marre
+-  Eashwar Ranganathan
+-  Doug Turnbull
+-  Anton Parkhomenko
+-  syndbg
+-  Vyacheslav Levit
+-  Travis Miller
+-  Spencer Rathbun
+-  Luis Orduz
+-  Lucas Cimon
+-  Lispython
+-  Leonardo Fedalto
+-  Kyle P Davis
+-  Jon Winn
+-  Duncan Bellamy
+-  Dennis Flanigan
+-  Chris Beaven
+-  Cerem Cem ASLAN
+-  Bruno Oliveira
+-  Andrzej Pragacz
+-  Andrey Mishchenko
+-  Alex Couper
+-  0Xellos
+-  zjeuhpiung liu
+-  urbandove
+-  sam
+-  rely10
+-  rachmadaniHaryono
+-  proItheus
+-  michael
+-  jiho
+-  dkgitdev
+-  dhilipsiva
+-  cmehay
+-  Zenobius Jiricek
+-  Yi-Feng Tzeng
+-  Willem Jan Withagen
+-  Walter dos Santos Filho
+-  Vladimír Gorej
+-  Vincent Bernat
+-  Uman Shahzad
+-  Tom Whitwell
+-  Tim Gates
+-  Thomas Bechtold
+-  Terseus
+-  Stan Seibert
+-  Shubhang Mani
+-  Rik
+-  Philipp Dieter
+-  Mrinal Wadhwa
+-  Michal Kolodziejski
+-  Maxim Mazurok
+-  Max R
+-  Max Melamed
+-  Max Liebkies
+-  Marc-Antoine Parent
+-  Marc Abramowitz
+-  Laust Rud Jacobsen
+-  Ken Struys
+-  Kai Weber
+-  Josh Soref
+-  Joby Harding
+-  Jesse Dhillon
+-  Jeremy Banks
+-  Geoffrey Huntley
+-  Fabricio C Zuardi
+-  Duncan Bellamy
+-  Dennis Flanigan
+-  Dan North
+-  Dan Fuchs
+-  Damien Nozay
+-  Brian Jacobel
+-  Ben Davis
+-  Augusto Andreoli
+-  Andreas Wirooks
+-  Alexey Poryadin

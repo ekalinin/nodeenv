@@ -25,14 +25,18 @@ clean:
 	@rm -rf nodeenv/
 
 env:
+	# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
+	# https://github.com/pypa/virtualenv/issues/1681
 	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
+		virtualenv env 					  && \
 		. env/bin/activate                && \
 		python setup.py install
 
 env-dev:
+	# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
+	# https://github.com/pypa/virtualenv/issues/1681
 	@rm -rf env-dev                           && \
-		virtualenv --no-site-packages env-dev && \
+		virtualenv env-dev 					  && \
 		. env-dev/bin/activate                && \
 		pip install -r requirements-dev.txt
 
@@ -141,7 +145,7 @@ test10: clean
 tests: test1 test2 test3 test4 test5 test7 test8 test9 test10 clean
 
 ut: env-dev
-	@. env-dev/bin/activate && tox -e py27
+	@. env-dev/bin/activate && tox -e py39
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

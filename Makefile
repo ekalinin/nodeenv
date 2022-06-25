@@ -1,4 +1,7 @@
 .PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests env
+TEST_ENV=env
+DEV_TEST_ENV=env-dev
+SETUP=python setup.py install > /dev/null
 
 default:
 	: do nothing when dpkg-buildpackage runs this project Makefile
@@ -21,131 +24,118 @@ clean:
 	@rm -rf nodeenv.egg-info/
 	@rm -rf dist/
 	@rm -rf build/
-	@rm -rf env/
+	@rm -rf ${TEST_ENV}/
 	@rm -rf nodeenv/
 
-env:
-	# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
-	# https://github.com/pypa/virtualenv/issues/1681
-	@rm -rf env                           && \
-		virtualenv env 					  && \
-		. env/bin/activate                && \
+clean-test-env:
+	@rm -rf ${TEST_ENV}
+
+# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
+# https://github.com/pypa/virtualenv/issues/1681
+setup-test-env:
+	@virtualenv ${TEST_ENV} > /dev/null 2>&1
+
+env: clean-test-env setup-test-env
+	@. ${TEST_ENV}/bin/activate                && \
 		python setup.py install
 
+# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
+# https://github.com/pypa/virtualenv/issues/1681
 env-dev:
-	# https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
-	# https://github.com/pypa/virtualenv/issues/1681
-	@rm -rf env-dev                           && \
-		virtualenv env-dev 					  && \
-		. env-dev/bin/activate                && \
+	@rm -rf ${DEV_TEST_ENV}                           && \
+		virtualenv ${DEV_TEST_ENV} 	                  && \
+		. ${DEV_TEST_ENV}/bin/activate                && \
 		pip install -r requirements-dev.txt
 
-test1: clean
+test1: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test1: separate nodejs's env"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
-		rm -rf nodeenv                    && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}           				  && \
 		nodeenv -j 4 nodeenv
 
-test2: clean
+test2: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test2: the same virtualenv's env, with 4 jobs"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}           				  && \
 		nodeenv -j 4 -p
 
-test3: clean
+test3: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test3: the same virtualenv's env, without any params"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}           				  && \
 		nodeenv -p
 
 # https://github.com/ekalinin/nodeenv/issues/43
-test4: clean
+test4: clean clean-test-env
 	@echo " ="
-	@echo " = test4: system nodejs's for python3.5"
+	@echo " = test4: system nodejs's for python3.9"
 	@echo " ="
-	@rm -rf env                                                 && \
-		virtualenv --no-site-packages --python=python3.5 env    && \
-		. env/bin/activate                                      && \
-		python setup.py install                                 && \
+	@virtualenv --python=python3.9 ${TEST_ENV}    			    && \
+		. ${TEST_ENV}/bin/activate                              && \
+		${SETUP}           				  						&& \
 		nodeenv -p --node=system
 
-test5: clean
+test5: clean clean-test-env
 	@echo " ="
 	@echo " = test5: prebuilt nodejs's env for python2"
 	@echo " ="
-	@rm -rf env                                 && \
-		virtualenv --no-site-packages --python=python2.7 env    && \
-		. env/bin/activate                      && \
-		python setup.py install                 && \
+	@virtualenv --python=python2.7 ${TEST_ENV}  && \
+		. ${TEST_ENV}/bin/activate              && \
+		${SETUP}           				  		&& \
 		nodeenv -p --prebuilt
 
-test7: clean
+test7: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test7: freeze for global installation"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}                          && \
 		nodeenv -j 4 -p --prebuilt        && \
-		. env/bin/activate                && \
+		. ${TEST_ENV}/bin/activate        && \
 		npm install -g sitemap 			  && \
 		npm -v                            && \
 		node -v                           && \
-		test "`freeze | wc -l`" = "1";
+		test "`freeze | grep -v corepack | wc -l`" = "       1";
 
-test8: clean
+test8: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test8: unicode paths, #49"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}                          && \
 		rm -rf öäü && mkdir öäü && cd öäü && \
 		nodeenv -j 4 --prebuilt env       && \
 		rm -rf öäü
 
-test9: clean
+test9: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test9: unicode paths, #187"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate                   			   && \
+		${SETUP}           				  					   && \
 		rm -rf "test dir" && mkdir "test dir" && cd "test dir" && \
 		nodeenv -j 4 --prebuilt env       && \
 		rm -rf "test dir"
 
-test10: clean
+test10: clean clean-test-env setup-test-env
 	@echo " ="
-	@echo " = test10: unicode paths, #189"
+	@echo " = test10: symlink does not fail if npm already exists, #189"
 	@echo " ="
-	@rm -rf env                           && \
-		virtualenv --no-site-packages env && \
-		. env/bin/activate                && \
-		python setup.py install           && \
+	@. ${TEST_ENV}/bin/activate           && \
+		${SETUP}           				  && \
 		nodeenv -j 4 -p --prebuilt        && \
 		nodeenv -j 4 -p --prebuilt
 
-tests: test1 test2 test3 test4 test5 test7 test8 test9 test10 clean
+tests: test1 test2 test3 test4 test7 test8 test9 test10 clean
 
 ut: env-dev
-	@. env-dev/bin/activate && tox -e py39
+	@. ${DEV_TEST_ENV}/bin/activate && tox -e py39
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

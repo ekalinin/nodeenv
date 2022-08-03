@@ -1492,7 +1492,7 @@ if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
 
         # Restore the original $status
         echo "exit $old_status" | source
-        _old_fish_prompt
+        _node_old_fish_prompt
     end
 
     set -gx _OLD_NODE_FISH_PROMPT_OVERRIDE "$NODE_VIRTUAL_ENV"

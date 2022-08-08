@@ -547,6 +547,7 @@ def get_node_bin_url(version):
         'armv8.4': 'arm64',
         'ppc64le': 'ppc64le',   # Power PC
         's390x': 's390x',       # IBM S390x
+        'riscv64': 'riscv64',   # RISCV 64
     }
     sysinfo = {
         'system': platform.system().lower(),

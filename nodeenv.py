@@ -529,8 +529,10 @@ def get_root_url(version):
 def is_x86_64_musl():
     return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
 
+
 def is_riscv64():
-    return platform.machine() == "riscv64"
+    return platform.machine() == 'riscv64'
+
 
 def get_node_bin_url(version):
     archmap = {

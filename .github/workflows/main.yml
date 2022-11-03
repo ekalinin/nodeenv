@@ -85,11 +85,14 @@ jobs:
         - uses: actions/checkout@v2
         - name: Windows Install
           run: pip install .
-        - name: Install + Run NodeJS
+        - name: List Versions
+          run: nodeenv --list
+        - name: Install Node
           run: |
-            nodeenv --list
-            nodeenv ./node
-            ./node/bin/node --version
+            nodeenv node
+            ls node
+        - name: Check NodeJS Executable
+          run: node\Scripts\node --version
 
   docker-linux:
     name: Docker Linux (${{ matrix.python-version }} ${{ matrix.docker-platform }} ${{ matrix.python-os-distro }})

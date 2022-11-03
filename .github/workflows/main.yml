@@ -143,5 +143,5 @@ jobs:
         - uses: actions/checkout@v2
         - name: Docker Build
           run: |
-            docker build -f tests/Dockerfile --build-arg OS_DISTRO=windowsservercore .
+            docker build -f tests/Dockerfile.windows .
 

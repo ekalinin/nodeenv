@@ -74,3 +74,56 @@ jobs:
         with:
           name: html-report
           path: htmlcov
+
+  test-windows:
+      name: Windows Test (Python 3:10)
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v2
+        - name: Windows Install
+          run: pip install .
+        - name: Install + Run NodeJS
+          run: |
+            nodeenv --list
+            nodeenv ./node
+            ./node/bin/node --version
+
+  docker-linux:
+    name: Docker Linux (${{ matrix.python-version }} ${{ matrix.docker-platform }} ${{ matrix.python-os-distro }})
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        docker-platform: [linux/amd64, linux/arm64]
+        python-os-distro: [slim-bullseye, slim-buster]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+      - name: Docker Build
+        uses: docker/build-push-action@v3
+        # https://github.com/docker/build-push-action/#inputs
+        with:
+          context: .
+          file: tests/Dockerfile
+          platforms: "${{ matrix.docker-platform }}"
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
+            OS_DISTRO=${{ matrix.python-os-distro }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-windows:
+      name: Docker Windows
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v2
+        - name: Docker Build
+          run: |
+            docker build -f tests/Dockerfile --build-arg OS_DISTRO=windowsservercore .
+

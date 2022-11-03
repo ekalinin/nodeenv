@@ -78,11 +78,23 @@ jobs:
           name: html-report
           path: htmlcov
 
-  test-windows:
-      name: Windows Test (Python 3:10)
+  test-windows-install:
+      name: Windows Install Python ${{ matrix.python-version }}
       runs-on: windows-latest
+      strategy:
+        fail-fast: false
+        matrix:
+          python-version:
+          - 2.7
+          - 3.7
+          - 3.8
+          - 3.9
+          - '3.10'
       steps:
         - uses: actions/checkout@v2
+        - uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
         - name: Windows Install
           run: pip install .
         - name: List Versions

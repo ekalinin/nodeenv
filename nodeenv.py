@@ -614,6 +614,7 @@ def download_node_src(node_url, src_dir, args):
 def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
+    url = parse_credentials(url)
     req = urllib2.Request(url, None, headers)
     if ignore_ssl_certs:
         # py27: protocol required, py3: optional
@@ -622,6 +623,31 @@ def urlopen(url):
         context.verify_mode = ssl.CERT_NONE
         return urllib2.urlopen(req, context=context)
     return urllib2.urlopen(req)
+
+
+def parse_credentials(url):
+    if '://' not in url and '@' not in url:
+        return url
+    # Valid URLs with creds are: `<proto>://<user>:<pass>@<uri>`
+    # If it's not in that form, just pass it on too urllib.
+    if url.index('@') < url.index('://'):
+        return url
+    url_protocol_split = url.split('://')
+    protocol = url_protocol_split[0]
+    # This will only apply to HTTP Basic AUTH
+    if protocol not in ['http', 'https']:
+        return url
+    credentials_split = url_protocol_split[1].split('@')
+    credentials = credentials_split[0].split(':')
+    new_url = '{}://{}'.format(protocol, credentials_split[1])
+    username = credentials[0]
+    password = credentials[1] if len(credentials) > 1 else ''
+    password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    password_manager.add_password(None, new_url, username, password)
+    urllib2.install_opener(urllib2.build_opener(urllib2.HTTPBasicAuthHandler(
+        password_manager
+    )))
+    return new_url
 
 # ---------------------------------------------------------
 # Virtual environment functions
@@ -1078,9 +1104,9 @@ def main():
     src_domain = None
     if args.mirror:
         if '://' in args.mirror:
-            src_base_url = args.mirror
+            src_base_url = args.mirror.strip('\'"')
         else:
-            src_domain = args.mirror
+            src_domain = args.mirror.strip('\'"')
     # use unofficial builds only if musl and no explicitly chosen mirror
     elif is_x86_64_musl():
         src_domain = 'unofficial-builds.nodejs.org'

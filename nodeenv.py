@@ -626,7 +626,7 @@ def urlopen(url):
 
 
 def parse_credentials(url):
-    if '://' not in url and '@' not in url:
+    if '://' not in url or '@' not in url:
         return url
     # Valid URLs with creds are: `<proto>://<user>:<pass>@<uri>`
     # If it's not in that form, just pass it on too urllib.

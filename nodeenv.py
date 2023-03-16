@@ -60,6 +60,26 @@ is_CYGWIN = platform.system().startswith(('CYGWIN', 'MSYS'))
 ignore_ssl_certs = False
 
 # ---------------------------------------------------------
+# Define the arch map
+arch_map = {
+        'x86':    'x86',  # Windows Vista 32
+        'i686':   'x86',
+        'x86_64': 'x64',  # Linux Ubuntu 64
+        'amd64':  'x64',  # FreeBSD 64bits
+        'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
+        'armv6l': 'armv6l',     # arm
+        'armv7l': 'armv7l',
+        'armv8l': 'armv7l',
+        'aarch64': 'arm64',
+        'arm64': 'arm64',
+        'arm64/v8': 'arm64',
+        'armv8': 'arm64',
+        'armv8.4': 'arm64',
+        'ppc64le': 'ppc64le',   # Power PC
+        's390x': 's390x',       # IBM S390x
+    }
+
+# ---------------------------------------------------------
 # Utils
 
 
@@ -101,6 +121,7 @@ class Config(object):
     prebuilt = True
     ignore_ssl_certs = False
     mirror = None
+    arch = platform.machine()
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -276,6 +297,12 @@ def make_parser():
             '--source', dest='prebuilt',
             action='store_false', default=Config.prebuilt,
             help='Install node.js from the source')
+    
+    parser.add_argument(
+        '--arch', dest='arch', 
+        metavar="ARCH", default=platform.machine(),
+        help='Specify an CPU arch for prebuilt release, you can pick one arch from [%s]' % ", ".join(arch_map.keys()) 
+    )
 
     parser.add_argument(
         '-v', '--verbose',
@@ -530,27 +557,10 @@ def is_x86_64_musl():
     return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
 
 
-def get_node_bin_url(version):
-    archmap = {
-        'x86':    'x86',  # Windows Vista 32
-        'i686':   'x86',
-        'x86_64': 'x64',  # Linux Ubuntu 64
-        'amd64':  'x64',  # FreeBSD 64bits
-        'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
-        'armv6l': 'armv6l',     # arm
-        'armv7l': 'armv7l',
-        'armv8l': 'armv7l',
-        'aarch64': 'arm64',
-        'arm64': 'arm64',
-        'arm64/v8': 'arm64',
-        'armv8': 'arm64',
-        'armv8.4': 'arm64',
-        'ppc64le': 'ppc64le',   # Power PC
-        's390x': 's390x',       # IBM S390x
-    }
+def get_node_bin_url(version, arch):
     sysinfo = {
         'system': platform.system().lower(),
-        'arch': archmap[platform.machine()],
+        'arch': arch_map[arch],
     }
     if is_WIN or is_CYGWIN:
         postfix = '-win-%(arch)s.zip' % sysinfo
@@ -752,7 +762,7 @@ def install_node_wrapped(env_dir, src_dir, args):
                 extra=dict(continued=True))
 
     if args.prebuilt:
-        node_url = get_node_bin_url(args.node)
+        node_url = get_node_bin_url(args.node, args.arch)
     else:
         node_url = get_node_src_url(args.node)
 
@@ -1068,6 +1078,10 @@ def main():
 
     if args.node.lower() == 'system' and is_WIN:
         logger.error('Installing system node.js on win32 is not supported!')
+        exit(1)
+    
+    if arch_map.get(args.arch) is None:
+        logger.error('The specified arch is not supported, please choose one from the supported arch list: [%s]', ", ".join(arch_map.keys()))
         exit(1)
 
     global src_base_url

@@ -1397,10 +1397,13 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
         # `fish_prompt` using `functions -e`.
         set -l fish_function_path
 
-        # Erase virtualenv's `fish_prompt` and restore the original.
-        functions -e fish_prompt
-        functions -c _node_old_fish_prompt fish_prompt
-        functions -e _node_old_fish_prompt
+        # Prevents error when using nested fish instances
+        if functions -q _node_old_fish_prompt
+            # Erase virtualenv's `fish_prompt` and restore the original.
+            functions -e fish_prompt
+            functions -c _node_old_fish_prompt fish_prompt
+            functions -e _node_old_fish_prompt
+        end
         set -e _OLD_NODE_FISH_PROMPT_OVERRIDE
     end
 

@@ -530,6 +530,10 @@ def is_x86_64_musl():
     return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
 
 
+def is_riscv64():
+    return platform.machine() == 'riscv64'
+
+
 def get_node_bin_url(version):
     archmap = {
         'x86':    'x86',  # Windows Vista 32
@@ -547,6 +551,7 @@ def get_node_bin_url(version):
         'armv8.4': 'arm64',
         'ppc64le': 'ppc64le',   # Power PC
         's390x': 's390x',       # IBM S390x
+        'riscv64': 'riscv64',   # RISCV 64
     }
     sysinfo = {
         'system': platform.system().lower(),
@@ -1082,7 +1087,7 @@ def main():
         else:
             src_domain = args.mirror
     # use unofficial builds only if musl and no explicitly chosen mirror
-    elif is_x86_64_musl():
+    elif is_x86_64_musl() or is_riscv64():
         src_domain = 'unofficial-builds.nodejs.org'
     else:
         src_domain = 'nodejs.org'

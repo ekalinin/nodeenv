@@ -6,6 +6,7 @@ import pipes
 import subprocess
 import sys
 import sysconfig
+import platform
 
 try:
     from unittest import mock
@@ -114,6 +115,8 @@ def test_mirror_option():
     musl_type = ['x86_64-pc-linux-musl', 'x86_64-unknown-linux-musl']
     # Check if running on musl system and delete last mirror if it is
     if sys_type in musl_type:
+        urls.pop()
+    elif platform.machine() == "riscv64":
         urls.pop()
     with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
         def rewind(_):

@@ -557,7 +557,7 @@ def get_node_bin_url(version):
     elif is_x86_64_musl():
         postfix = '-linux-x64-musl.tar.gz'
     else:
-        postfix = '-%(system)s-%(arch)s.tar.gz' % sysinfo
+        postfix = '-%(system)s-%(arch)s.tar.xz' % sysinfo
     filename = 'node-v%s%s' % (version, postfix)
     return get_root_url(version) + filename
 

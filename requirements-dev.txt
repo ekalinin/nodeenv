@@ -2,6 +2,6 @@
 
 coverage
 flake8
-mock
+mock; python_version < '3.3'
 pytest
 tox

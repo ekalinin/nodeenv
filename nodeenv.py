@@ -577,17 +577,24 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
+def _download_node_file(node_url, n_attempt=3):
+    """Do multiple attempts to avoid incomplete data in case of unstable network"""
+    while n_attempt > 0:
+        try:
+            return io.BytesIO(urlopen(node_url).read())
+        except IncompleteRead as e:
+            print('Incomplete read while reading from {} - {}'.format(node_url, e))
+            n_attempt -= 1
+            if n_attempt == 0:
+                raise e
+
+
 def download_node_src(node_url, src_dir, args):
     """
     Download source code
     """
     logger.info('.', extra=dict(continued=True))
-    try:
-        dl_contents = io.BytesIO(urlopen(node_url).read())
-    except IncompleteRead as e:
-        logger.warning('Incomplete read while reading'
-                       'from {}'.format(node_url))
-        dl_contents = e.partial
+    dl_contents = _download_node_file(node_url)
     logger.info('.', extra=dict(continued=True))
 
     if is_WIN or is_CYGWIN:

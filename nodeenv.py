@@ -584,8 +584,10 @@ def _download_node_file(node_url, n_attempt=3):
         try:
             return io.BytesIO(urlopen(node_url).read())
         except IncompleteRead as e:
-            print('Incomplete read while reading'
-                  'from {} - {}'.format(node_url, e))
+            logger.warning(
+                'Incomplete read while reading'
+                'from {} - {}'.format(node_url, e)
+            )
             n_attempt -= 1
             if n_attempt == 0:
                 raise e

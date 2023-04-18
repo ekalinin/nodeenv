@@ -9,10 +9,9 @@ import sysconfig
 
 import mock
 import pytest
-from http.client import IncompleteRead
 
 import nodeenv
-
+from nodeenv import IncompleteRead
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 

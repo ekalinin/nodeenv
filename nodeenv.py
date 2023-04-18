@@ -578,12 +578,14 @@ def tarfile_open(*args, **kwargs):
 
 
 def _download_node_file(node_url, n_attempt=3):
-    """Do multiple attempts to avoid incomplete data in case of unstable network"""
+    """Do multiple attempts to avoid incomplete data in case
+    of unstable network"""
     while n_attempt > 0:
         try:
             return io.BytesIO(urlopen(node_url).read())
         except IncompleteRead as e:
-            print('Incomplete read while reading from {} - {}'.format(node_url, e))
+            print('Incomplete read while reading'
+                  'from {} - {}'.format(node_url, e))
             n_attempt -= 1
             if n_attempt == 0:
                 raise e

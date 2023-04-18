@@ -147,5 +147,8 @@ def test__download_node_file():
     with mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
         m_urlopen.side_effect = IncompleteRead("dummy")
         with pytest.raises(IncompleteRead):
-            nodeenv._download_node_file("https://dummy/nodejs.tar.gz", n_attempt=5)
+            nodeenv._download_node_file(
+                "https://dummy/nodejs.tar.gz",
+                n_attempt=5
+            )
         assert m_urlopen.call_count == 5

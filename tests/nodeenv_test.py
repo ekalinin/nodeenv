@@ -15,7 +15,7 @@ except ImportError:
 import pytest
 
 import nodeenv
-
+from nodeenv import IncompleteRead
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -146,3 +146,14 @@ def test_get_latest_node_version():
 @pytest.mark.usefixtures('mock_index_json')
 def test_get_lts_node_version():
     assert nodeenv.get_last_lts_node_version() == '12.14.0'
+
+
+def test__download_node_file():
+    with mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
+        m_urlopen.side_effect = IncompleteRead("dummy")
+        with pytest.raises(IncompleteRead):
+            nodeenv._download_node_file(
+                "https://dummy/nodejs.tar.gz",
+                n_attempt=5
+            )
+        assert m_urlopen.call_count == 5

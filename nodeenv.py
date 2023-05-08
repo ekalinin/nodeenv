@@ -781,6 +781,8 @@ def install_node_wrapped(env_dir, src_dir, args):
                 # if arm64 not found, try x64
                 download_node_src(node_url.replace('arm64', 'x64'),
                                   src_dir, args)
+            else:
+                logger.warning('Failed to download from %s' % node_url)
 
     logger.info('.', extra=dict(continued=True))
 

@@ -678,7 +678,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
         dest = env_dir
 
     src_folder_tpl = src_dir + to_utf8('/node-v%s*' % node_version)
-    src_folder, = glob.glob(src_folder_tpl)
+    src_folder, _ = glob.glob(src_folder_tpl)
     copytree(src_folder, dest, True)
 
     if is_CYGWIN:

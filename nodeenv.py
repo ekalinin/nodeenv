@@ -519,9 +519,9 @@ def callit(cmd, show_stdout=True, in_shell=False,
     return proc.returncode, all_output
 
 
-def get_root_url(version):
-    if version.parse(version) > version.parse("0.5.0"):
-        return '%s/v%s/' % (src_base_url, version)
+def get_root_url(version_str):
+    if version.parse(version_str) > version.parse("0.5.0"):
+        return '%s/v%s/' % (src_base_url, version_str)
     else:
         return src_base_url
 

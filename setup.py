@@ -7,9 +7,13 @@ Node.js Virtual Environment builder.
 """
 import codecs
 import os
+import sys
+
+from setuptools import setup
+
+sys.path.insert(0, '.')
 
 from nodeenv import nodeenv_version
-from setuptools import setup
 
 
 def read_file(file_name):

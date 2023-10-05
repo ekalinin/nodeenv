@@ -7,9 +7,13 @@ Node.js Virtual Environment builder.
 """
 import codecs
 import os
+import sys
+
+from setuptools import setup
+
+sys.path.insert(0, '.')
 
 from nodeenv import nodeenv_version
-from setuptools import setup
 
 
 def read_file(file_name):
@@ -32,7 +36,7 @@ setup(
     license='BSD',
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
-    install_requires=['setuptools'],
+    install_requires=['packaging'],
     python_requires=(
         ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
     ),

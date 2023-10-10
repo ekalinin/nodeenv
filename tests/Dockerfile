@@ -1,0 +1,22 @@
+ARG PYTHON_VERSION=3.10
+ARG OS_DISTRO=bullseye
+
+FROM python:${PYTHON_VERSION}-${OS_DISTRO}
+
+ARG PYTHON_VERSION
+ARG OS_DISTRO
+
+ENV PYTHON_VERSION=${PYTHON_VERSION}
+ENV OS_DISTRO=${OS_DISTRO}
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install .
+
+RUN nodeenv --list
+
+RUN nodeenv node
+
+RUN node/bin/node --version

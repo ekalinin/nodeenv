@@ -2,7 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os.path
-import pipes
+try:
+    from shlex import quote as _quote  # Python 3.3+
+except ImportError:
+    from pipes import quote as _quote  # Python 2.7
 import subprocess
 import sys
 import sysconfig
@@ -29,7 +32,7 @@ def test_smoke(tmpdir):
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
     assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
         'sh', '-c', '. {} && node --version'.format(activate),
     ])
@@ -44,7 +47,7 @@ def test_smoke_n_system_special_chars(tmpdir):
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
     assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
         'sh', '-c', '. {} && node --version'.format(activate),
     ])

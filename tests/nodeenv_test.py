@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os.path
-try:
-    from shlex import quote as _quote  # Python 3.3+
-except ImportError:
-    from pipes import quote as _quote  # Python 2.7
+if sys.version_info < (3, 3):
+    from pipes import quote as _quote
+else:
+    from shlex import quote as _quote
 import subprocess
 import sys
 import sysconfig

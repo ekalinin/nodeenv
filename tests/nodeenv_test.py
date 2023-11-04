@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os.path
-import pipes
 import subprocess
 import sys
 import sysconfig
@@ -17,6 +16,11 @@ import pytest
 import nodeenv
 from nodeenv import IncompleteRead
 
+if sys.version_info >= (3, 3):
+    from shlex import quote
+else:
+    from pipes import quote
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -29,7 +33,7 @@ def test_smoke(tmpdir):
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
     assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    activate = quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
         'sh', '-c', '. {} && node --version'.format(activate),
     ])
@@ -44,7 +48,7 @@ def test_smoke_n_system_special_chars(tmpdir):
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
     assert os.path.exists(nenv_path)
-    activate = pipes.quote(os.path.join(nenv_path, 'bin', 'activate'))
+    activate = quote(os.path.join(nenv_path, 'bin', 'activate'))
     subprocess.check_call([
         'sh', '-c', '. {} && node --version'.format(activate),
     ])

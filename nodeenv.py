@@ -18,12 +18,12 @@ import os
 import re
 import ssl
 import stat
+import sys
 import logging
 import operator
 import argparse
 import subprocess
 import tarfile
-import pipes
 import platform
 import zipfile
 import shutil
@@ -46,6 +46,11 @@ except ImportError:  # pragma: no cover (py3 only)
     IncompleteRead = http.client.IncompleteRead
 
 from packaging import version
+
+if sys.version_info >= (3, 3):
+    from shlex import quote
+else:
+    from pipes import quote
 
 nodeenv_version = '1.8.0'
 
@@ -728,7 +733,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
 
     conf_cmd = [
         './configure',
-        '--prefix=%s' % pipes.quote(env_dir)
+        '--prefix=%s' % quote(env_dir)
     ]
     if args.without_ssl:
         conf_cmd.append('--without-ssl')
@@ -810,7 +815,7 @@ def install_npm(env_dir, _src_dir, args):
         (
             'bash', '-c',
             '. {0} && npm install -g npm@{1}'.format(
-                pipes.quote(join(env_dir, 'bin', 'activate')),
+                quote(join(env_dir, 'bin', 'activate')),
                 args.npm,
             )
         ),
@@ -878,10 +883,10 @@ def install_packages(env_dir, args):
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = args.npm if args.npm.count(".") == 2 else args.npm + ".0"
     if args.npm == "latest" or real_npm_ver >= "1.0.0":
-        cmd = '. ' + pipes.quote(activate_path) + \
+        cmd = '. ' + quote(activate_path) + \
               ' && npm install -g %(pack)s'
     else:
-        cmd = '. ' + pipes.quote(activate_path) + \
+        cmd = '. ' + quote(activate_path) + \
               ' && npm install %(pack)s' + \
               ' && npm activate %(pack)s'
 

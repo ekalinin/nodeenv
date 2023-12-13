@@ -707,12 +707,8 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
         # Currently, the node.js build scripts are using python2.*,
         # therefore we need to temporarily point python exec to the
         # python 2.* version in this case.
-        try:
-            _, which_python2_output = callit(
-                ['which', 'python2'], args.verbose, True, node_src_dir, env
-            )
-            python2_path = which_python2_output[0]
-        except (OSError, IndexError):
+        python2_path = shutil.which('python2')
+        if not python2_path:
             raise OSError(
                 'Python >=3.0 virtualenv detected, but no python2 '
                 'command (required for building node.js) was found'

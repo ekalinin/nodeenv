@@ -155,7 +155,7 @@ python'а::
 
     $ workon my_env
     $ npm install -g coffee-script
-    $ which coffee
+    $ command -v coffee
     /home/monty/virtualenvs/my_env/bin/coffee
 
 

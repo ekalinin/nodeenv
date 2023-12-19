@@ -418,7 +418,7 @@ def writefile(dest, content, overwrite=True, append=False):
     Create file and write content in it
     """
     content = to_utf8(content)
-    if is_PY3 and type(content) != bytes:
+    if is_PY3 and not isinstance(content, bytes):
         content = bytes(content, 'utf-8')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))

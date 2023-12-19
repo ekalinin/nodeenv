@@ -13,7 +13,7 @@ from setuptools import setup
 
 sys.path.insert(0, '.')
 
-from nodeenv import nodeenv_version
+from nodeenv import nodeenv_version  # noqa: E402
 
 
 def read_file(file_name):

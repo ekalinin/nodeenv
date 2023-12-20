@@ -1,7 +1,7 @@
 .PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests env
 TEST_ENV=env
 DEV_TEST_ENV=env-dev
-SETUP=python setup.py install > /dev/null
+SETUP=pip install -q . > /dev/null
 
 default:
 	: do nothing when dpkg-buildpackage runs this project Makefile
@@ -12,20 +12,18 @@ deploy-github:
 
 deploy-pypi:
 	rm -rf dist
-	python setup.py sdist bdist_wheel
+	python -m build
 	twine upload --repository pypi dist/*
 
 update-pypi:
-	python setup.py register
+	twine register
 
 deploy: contributors deploy-github deploy-pypi
 
 clean:
-	@rm -rf nodeenv.egg-info/
 	@rm -rf dist/
-	@rm -rf build/
 	@rm -rf ${TEST_ENV}/
-	@rm -rf nodeenv/
+	@rm -rf nodeenv-env/
 
 clean-test-env:
 	@rm -rf ${TEST_ENV}
@@ -37,7 +35,7 @@ setup-test-env:
 
 env: clean-test-env setup-test-env
 	@. ${TEST_ENV}/bin/activate                && \
-		python setup.py install
+		pip install .
 
 # https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
 # https://github.com/pypa/virtualenv/issues/1681
@@ -53,7 +51,7 @@ test1: clean clean-test-env setup-test-env
 	@echo " ="
 	@. ${TEST_ENV}/bin/activate           && \
 		${SETUP}           				  && \
-		nodeenv -j 4 nodeenv
+		nodeenv -j 4 nodeenv-env
 
 test2: clean clean-test-env setup-test-env
 	@echo " ="

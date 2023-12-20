@@ -1,7 +1,0 @@
-include README LICENSE CHANGES AUTHORS
-include *.py *.rst setup.cfg Makefile
-
-graft debian-upstream
-prune debian-upstream/nodeenv
-prune debian-upstream/sdist
-recursive-exclude debian-upstream *.log *.substvars files

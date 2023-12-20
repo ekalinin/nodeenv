@@ -47,7 +47,7 @@ except ImportError:  # pragma: no cover (py3 only)
 
 from packaging import version
 
-nodeenv_version = '1.8.0'
+nodeenv_version = __version__ = '1.8.0'
 
 join = os.path.join
 abspath = os.path.abspath

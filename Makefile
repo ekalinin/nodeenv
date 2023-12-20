@@ -40,33 +40,33 @@ env: clean-test-env setup-test-env
 # https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
 # https://github.com/pypa/virtualenv/issues/1681
 env-dev:
-	@rm -rf ${DEV_TEST_ENV}                           && \
-		virtualenv ${DEV_TEST_ENV} 	                  && \
-		. ${DEV_TEST_ENV}/bin/activate                && \
+	@rm -rf ${DEV_TEST_ENV}                  && \
+		virtualenv ${DEV_TEST_ENV}           && \
+		. ${DEV_TEST_ENV}/bin/activate       && \
 		pip install -r requirements-dev.txt
 
 test1: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test1: separate nodejs's env"
 	@echo " ="
-	@. ${TEST_ENV}/bin/activate           && \
-		${SETUP}           				  && \
+	@. ${TEST_ENV}/bin/activate  && \
+		${SETUP}                 && \
 		nodeenv -j 4 nodeenv-env
 
 test2: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test2: the same virtualenv's env, with 4 jobs"
 	@echo " ="
-	@. ${TEST_ENV}/bin/activate           && \
-		${SETUP}           				  && \
+	@. ${TEST_ENV}/bin/activate  && \
+		${SETUP}                 && \
 		nodeenv -j 4 -p
 
 test3: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test3: the same virtualenv's env, without any params"
 	@echo " ="
-	@. ${TEST_ENV}/bin/activate           && \
-		${SETUP}           				  && \
+	@. ${TEST_ENV}/bin/activate  && \
+		${SETUP}                 && \
 		nodeenv -p
 
 # https://github.com/ekalinin/nodeenv/issues/43
@@ -74,9 +74,9 @@ test4: clean clean-test-env
 	@echo " ="
 	@echo " = test4: system nodejs's for python3.9"
 	@echo " ="
-	@virtualenv --python=python3.9 ${TEST_ENV}    			    && \
-		. ${TEST_ENV}/bin/activate                              && \
-		${SETUP}           				  						&& \
+	@virtualenv --python=python3.9 ${TEST_ENV}  && \
+		. ${TEST_ENV}/bin/activate              && \
+		${SETUP}                                && \
 		nodeenv -p --node=system
 
 test5: clean clean-test-env
@@ -85,7 +85,7 @@ test5: clean clean-test-env
 	@echo " ="
 	@virtualenv --python=python2.7 ${TEST_ENV}  && \
 		. ${TEST_ENV}/bin/activate              && \
-		${SETUP}           				  		&& \
+		${SETUP}                                && \
 		nodeenv -p --prebuilt
 
 test7: clean clean-test-env setup-test-env
@@ -96,7 +96,7 @@ test7: clean clean-test-env setup-test-env
 		${SETUP}                          && \
 		nodeenv -j 4 -p --prebuilt        && \
 		. ${TEST_ENV}/bin/activate        && \
-		npm install -g sitemap 			  && \
+		npm install -g sitemap            && \
 		npm -v                            && \
 		node -v                           && \
 		test "`freeze | grep -v corepack | wc -l`" = "       1";
@@ -115,10 +115,10 @@ test9: clean clean-test-env setup-test-env
 	@echo " ="
 	@echo " = test9: unicode paths, #187"
 	@echo " ="
-	@. ${TEST_ENV}/bin/activate                   			   && \
-		${SETUP}           				  					   && \
-		rm -rf "test dir" && mkdir "test dir" && cd "test dir" && \
-		nodeenv -j 4 --prebuilt env       && \
+	@. ${TEST_ENV}/bin/activate                                 && \
+		${SETUP}                                                && \
+		rm -rf "test dir" && mkdir "test dir" && cd "test dir"  && \
+		nodeenv -j 4 --prebuilt env                             && \
 		rm -rf "test dir"
 
 test10: clean clean-test-env setup-test-env
@@ -126,7 +126,7 @@ test10: clean clean-test-env setup-test-env
 	@echo " = test10: symlink does not fail if npm already exists, #189"
 	@echo " ="
 	@. ${TEST_ENV}/bin/activate           && \
-		${SETUP}           				  && \
+		${SETUP}                          && \
 		nodeenv -j 4 -p --prebuilt        && \
 		nodeenv -j 4 -p --prebuilt
 

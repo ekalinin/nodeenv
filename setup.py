@@ -5,26 +5,27 @@ nodeenv
 
 Node.js Virtual Environment builder.
 """
+import re
 import codecs
 import os
 import sys
 
 from setuptools import setup
 
-sys.path.insert(0, '.')
-
-from nodeenv import nodeenv_version
-
 
 def read_file(file_name):
-    return codecs.open(
+    with codecs.open(
         os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             file_name
         ),
         encoding='utf-8',
-    ).read()
+    ) as f:
+        return f.read()
 
+
+code = read_file('nodeenv.py')
+nodeenv_version = re.search(r"^nodeenv_version = '([^']+)'$", code, re.M).group(1)
 
 ldesc = read_file('README.rst')
 ldesc += "\n\n" + read_file('CHANGES')

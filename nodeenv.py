@@ -45,8 +45,6 @@ except ImportError:  # pragma: no cover (py3 only)
     import http
     IncompleteRead = http.client.IncompleteRead
 
-from packaging import version
-
 nodeenv_version = '1.8.0'
 
 join = os.path.join
@@ -170,6 +168,13 @@ def remove_env_bin_from_path(env, env_bin_dir):
     return env.replace(env_bin_dir + ':', '')
 
 
+def parse_version(version_str):
+    """
+    Parse version string to a tuple of integer parts
+    """
+    return tuple(map(int, version_str.replace('v', '').split('.')))
+
+
 def node_version_from_args(args):
     """
     Parse the node version from the argparse args
@@ -177,9 +182,9 @@ def node_version_from_args(args):
     if args.node == 'system':
         out, err = subprocess.Popen(
             ["node", "--version"], stdout=subprocess.PIPE).communicate()
-        return version.parse(clear_output(out).replace('v', ''))
+        return parse_version(clear_output(out))
 
-    return version.parse(args.node)
+    return parse_version(args.node)
 
 
 def create_logger():
@@ -520,7 +525,7 @@ def callit(cmd, show_stdout=True, in_shell=False,
 
 
 def get_root_url(version_str):
-    if version.parse(version_str) > version.parse("0.5.0"):
+    if parse_version(version_str) > (0, 5):
         return '%s/v%s/' % (src_base_url, version_str)
     else:
         return src_base_url
@@ -1004,7 +1009,7 @@ def create_environment(env_dir, args):
     # before npm install, npm use activate
     # for install
     install_activate(env_dir, args)
-    if node_version_from_args(args) < version.parse("0.6.3") or args.with_npm:
+    if node_version_from_args(args) < (0, 6, 3) or args.with_npm:
         instfunc = install_npm_win if is_WIN or is_CYGWIN else install_npm
         instfunc(env_dir, src_dir, args)
     if args.requirements:

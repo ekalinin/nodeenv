@@ -1261,17 +1261,17 @@ ACTIVATE_SH = r"""
 
 deactivate_node () {
     # reset old environment variables
-    if [ -n "$_OLD_NODE_VIRTUAL_PATH" ] ; then
-        PATH="$_OLD_NODE_VIRTUAL_PATH"
+    if [ -n "${_OLD_NODE_VIRTUAL_PATH:-}" ] ; then
+        PATH="${_OLD_NODE_VIRTUAL_PATH:-}"
         export PATH
         unset _OLD_NODE_VIRTUAL_PATH
 
-        NODE_PATH="$_OLD_NODE_PATH"
+        NODE_PATH="${_OLD_NODE_PATH:-}"
         export NODE_PATH
         unset _OLD_NODE_PATH
 
-        NPM_CONFIG_PREFIX="$_OLD_NPM_CONFIG_PREFIX"
-        npm_config_prefix="$_OLD_npm_config_prefix"
+        NPM_CONFIG_PREFIX="${_OLD_NPM_CONFIG_PREFIX:-}"
+        npm_config_prefix="${_OLD_npm_config_prefix:-}"
         export NPM_CONFIG_PREFIX
         export npm_config_prefix
         unset _OLD_NPM_CONFIG_PREFIX
@@ -1281,18 +1281,18 @@ deactivate_node () {
     # This should detect bash and zsh, which have a hash command that must
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
-    if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
+    if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
         hash -r
     fi
 
-    if [ -n "$_OLD_NODE_VIRTUAL_PS1" ] ; then
-        PS1="$_OLD_NODE_VIRTUAL_PS1"
+    if [ -n "${_OLD_NODE_VIRTUAL_PS1:-}" ] ; then
+        PS1="${_OLD_NODE_VIRTUAL_PS1:-}"
         export PS1
         unset _OLD_NODE_VIRTUAL_PS1
     fi
 
     unset NODE_VIRTUAL_ENV
-    if [ ! "$1" = "nondestructive" ] ; then
+    if [ ! "${1:-}" = "nondestructive" ] ; then
     # Self destruct!
         unset -f deactivate_node
     fi
@@ -1306,7 +1306,7 @@ freeze () {
                   cut -d ' ' -f 1 | grep -v npm`
     else
         local npmls="npm ls -g"
-        if [ "$1" = "-l" ]; then
+        if [ "${1:-}" = "-l" ]; then
             npmls="npm ls"
             shift
         fi
@@ -1326,7 +1326,7 @@ deactivate_node nondestructive
 
 # find the directory of this script
 # http://stackoverflow.com/a/246128
-if [ "${BASH_SOURCE}" ] ; then
+if [ "${BASH_SOURCE:-}" ] ; then
     SOURCE="${BASH_SOURCE[0]}"
 
     while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
@@ -1346,28 +1346,28 @@ _OLD_NODE_VIRTUAL_PATH="$PATH"
 PATH="$NODE_VIRTUAL_ENV/lib/node_modules/.bin:$NODE_VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
-_OLD_NODE_PATH="$NODE_PATH"
+_OLD_NODE_PATH="${NODE_PATH:-}"
 NODE_PATH="$NODE_VIRTUAL_ENV/__MOD_NAME__"
 export NODE_PATH
 
-_OLD_NPM_CONFIG_PREFIX="$NPM_CONFIG_PREFIX"
-_OLD_npm_config_prefix="$npm_config_prefix"
+_OLD_NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-}"
+_OLD_npm_config_prefix="${npm_config_prefix:-}"
 NPM_CONFIG_PREFIX="__NPM_CONFIG_PREFIX__"
 npm_config_prefix="__NPM_CONFIG_PREFIX__"
 export NPM_CONFIG_PREFIX
 export npm_config_prefix
 
-if [ -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
-    _OLD_NODE_VIRTUAL_PS1="$PS1"
+if [ -z "${NODE_VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
+    _OLD_NODE_VIRTUAL_PS1="${PS1:-}"
     if [ "x__NODE_VIRTUAL_PROMPT__" != x ] ; then
-        PS1="__NODE_VIRTUAL_PROMPT__ $PS1"
+        PS1="__NODE_VIRTUAL_PROMPT__ ${PS1:-}"
     else
     if [ "`basename \"$NODE_VIRTUAL_ENV\"`" = "__" ] ; then
         # special case for Aspen magic directories
         # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$NODE_VIRTUAL_ENV\"\``] $PS1"
+        PS1="[`basename \`dirname \"$NODE_VIRTUAL_ENV\"\``] ${PS1:-}"
     else
-        PS1="(`basename \"$NODE_VIRTUAL_ENV\"`) $PS1"
+        PS1="(`basename \"$NODE_VIRTUAL_ENV\"`) ${PS1:-}"
     fi
     fi
     export PS1
@@ -1376,7 +1376,7 @@ fi
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting
 # past commands the $PATH changes we made may not be respected
-if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
+if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
     hash -r
 fi
 """

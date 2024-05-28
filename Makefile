@@ -1,7 +1,7 @@
 .PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests env
 TEST_ENV=env
 DEV_TEST_ENV=env-dev
-SETUP=python setup.py install > /dev/null
+SETUP=pip install -U pip setuptools && python setup.py install > /dev/null
 
 default:
 	: do nothing when dpkg-buildpackage runs this project Makefile

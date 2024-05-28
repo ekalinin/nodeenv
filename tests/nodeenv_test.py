@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import os.path
+import sys
 if sys.version_info < (3, 3):
     from pipes import quote as _quote
 else:
     from shlex import quote as _quote
+import os.path
 import subprocess
 import sys
 import sysconfig

@@ -36,7 +36,7 @@ setup(
     license='BSD',
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
-    install_requires=['packaging'],
+    install_requires=[],
     python_requires=(
         ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
     ),

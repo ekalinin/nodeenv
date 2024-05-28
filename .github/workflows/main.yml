@@ -5,6 +5,7 @@ on:
     branches:
     - master
   pull_request:
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -15,7 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-        - '2.7'
         - '3.7'
         - '3.8'
         - '3.9'

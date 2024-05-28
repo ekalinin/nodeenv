@@ -48,7 +48,7 @@ except ImportError:  # pragma: no cover (py3 only)
     import http
     IncompleteRead = http.client.IncompleteRead
 
-nodeenv_version = '1.8.0'
+nodeenv_version = '1.9.0'
 
 join = os.path.join
 abspath = os.path.abspath

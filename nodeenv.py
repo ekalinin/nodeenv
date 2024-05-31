@@ -930,14 +930,10 @@ def install_activate(env_dir, args):
     prompt = args.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
     if args.node == "system":
-        env = os.environ.copy()
-        env.update({'PATH': remove_env_bin_from_path(env['PATH'], bin_dir)})
+        path_var = remove_env_bin_from_path(os.environ['PATH'], bin_dir)
         for candidate in ("nodejs", "node"):
-            which_node_output, _ = subprocess.Popen(
-                ["which", candidate],
-                stdout=subprocess.PIPE, env=env).communicate()
-            shim_node = clear_output(which_node_output)
-            if shim_node:
+            shim_node = shutil.which(candidate, path=path_var)
+            if shim_node is not None:
                 break
         assert shim_node, "Did not find nodejs or node system executable"
 

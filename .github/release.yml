@@ -1,0 +1,22 @@
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  categories:
+    - title: New Features 🎉
+      labels:
+        - new-feature
+    - title: Fixed bugs 🐛
+      labels:
+        - bug
+    - title: Improvements 🛠
+      labels:
+        - enhancement
+    - title: Dependencies 🤖
+      labels:
+        - deps
+    - title: Documentation 📄
+      labels:
+        - docs
+    - title: Other Changes
+      labels:
+        - "*"

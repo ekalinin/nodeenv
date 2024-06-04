@@ -161,3 +161,9 @@ def test__download_node_file():
                 n_attempt=5
             )
         assert m_urlopen.call_count == 5
+
+
+def test_parse_version():
+    assert nodeenv.parse_version("v21.7") == (21, 7)
+    assert nodeenv.parse_version("v21.7.3") == (21, 7, 3)
+    assert nodeenv.parse_version("v21.7.3+0-b20240228T18452699") == (21, 7, 3)

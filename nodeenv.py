@@ -175,7 +175,11 @@ def parse_version(version_str):
     """
     Parse version string to a tuple of integer parts
     """
-    return tuple(map(int, version_str.replace('v', '').split('.')))
+    v = version_str.replace('v', '').split('.')[:3]
+    # remove all after '+' in the PATCH part of the version
+    if len(v) >= 3:
+        v[2] = v[2].split('+')[0]
+    return tuple(map(int, v))
 
 
 def node_version_from_args(args):

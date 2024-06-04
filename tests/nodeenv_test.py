@@ -167,3 +167,14 @@ def test_parse_version():
     assert nodeenv.parse_version("v21.7") == (21, 7)
     assert nodeenv.parse_version("v21.7.3") == (21, 7, 3)
     assert nodeenv.parse_version("v21.7.3+0-b20240228T18452699") == (21, 7, 3)
+
+
+def test_clear_output():
+    assert nodeenv.clear_output(
+        bytes('some \ntext', 'utf-8')) == 'some text'
+
+
+def test_remove_env_bin_from_path():
+    assert (nodeenv.remove_env_bin_from_path(
+        '//home://home/env/bin://home/bin', '//home/env/bin')
+            == '//home://home/bin')

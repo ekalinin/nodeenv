@@ -137,6 +137,12 @@ tests: test1 test2 test3 test4 test7 test8 test9 test10 clean
 ut: env-dev
 	@. ${DEV_TEST_ENV}/bin/activate && tox -e py39
 
+coverage: env-dev
+	@. ${DEV_TEST_ENV}/bin/activate && \
+		coverage run -p -m pytest && \
+		coverage report -m && \
+		coverage html
+
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS
 	@echo "" >> AUTHORS

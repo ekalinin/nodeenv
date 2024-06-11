@@ -138,7 +138,7 @@ class Config(object):
 
         if os.path.exists(".node-version"):
             with open(".node-version", "r") as v_file:
-                setattr(cls, "node", v_file.readlines(1)[0].strip())
+                setattr(cls, "node", v_file.readline().strip().lstrip("v"))
 
     @classmethod
     def _dump(cls):

@@ -1045,19 +1045,38 @@ def print_node_versions():
         logger.info('\t'.join(chunk))
 
 
+def _get_last_node_version(lts=False):
+    """
+    Return last node.js version matching the filter
+    """
+    print({"x86": is_x86_64_musl(), "risc": is_riscv64(), "lts": lts})
+    def version_filter(v):
+        if lts and not v['lts']:
+            return False
+
+        if is_x86_64_musl() and "linux-x64-musl" not in v['files']:
+            return False
+        elif is_riscv64() and "linux-riscv64" not in v['files']:
+            return False
+
+        return True
+
+    return next((v['version'].lstrip('v')
+                 for v in _get_versions_json() if version_filter(v)), None)
+
+
 def get_last_stable_node_version():
     """
     Return last stable node.js version
     """
-    return _get_versions_json()[0]['version'].lstrip('v')
+    return _get_last_node_version()
 
 
 def get_last_lts_node_version():
     """
     Return the last node.js version marked as LTS
     """
-    return next((v['version'].lstrip('v')
-                 for v in _get_versions_json() if v['lts']), None)
+    return _get_last_node_version(lts=True)
 
 
 def get_env_dir(args):

@@ -102,6 +102,7 @@ class Config(object):
     prebuilt = True
     ignore_ssl_certs = False
     mirror = None
+    use_proxy = ''
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -367,6 +368,11 @@ def make_parser():
         '--ignore_ssl_certs', dest='ignore_ssl_certs',
         action='store_true', default=Config.ignore_ssl_certs,
         help='Ignore certificates for package downloads. - UNSAFE -')
+
+    parser.add_argument(
+        '--proxy', dest='use_proxy',
+        default=Config.use_proxy,
+        help='Allows proxy to download node')
 
     parser.add_argument(
         metavar='DEST_DIR', dest='env_dir', nargs='?',
@@ -642,6 +648,15 @@ def download_node_src(node_url, src_dir, args):
 def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
+
+    if use_proxy:
+        set_proxy = urllib2.ProxyHandler({
+            'http': use_proxy,
+            'https' : use_proxy
+        })
+        set_opener = urllib2.build_opener(set_proxy)
+        urllib2.install_opener(set_opener)
+
     req = urllib2.Request(url, None, headers)
     if ignore_ssl_certs:
         # py27: protocol required, py3: optional
@@ -1098,7 +1113,9 @@ def main():
 
     global src_base_url
     global ignore_ssl_certs
-
+    global use_proxy
+    
+    use_proxy = args.use_proxy
     ignore_ssl_certs = args.ignore_ssl_certs
 
     src_domain = None

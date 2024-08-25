@@ -68,6 +68,20 @@ def cap_logging_info():
         yield mck
 
 
+@pytest.fixture
+def mock_host_platform():
+    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False) as x64_mck:
+        with mock.patch.object(nodeenv, 'is_riscv64', return_value=False) as risc_mck:
+            yield
+
+
+@pytest.fixture
+def mock_riscv64_platform():
+    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False) as x64_mck:
+        with mock.patch.object(nodeenv, 'is_riscv64', return_value=True) as risc_mck:
+            yield
+
+
 def mck_to_out(mck):
     return '\n'.join(call[0][0] for call in mck.call_args_list)
 
@@ -142,14 +156,24 @@ def test_mirror_option():
                 mock_logger.assert_called()
 
 
-@pytest.mark.usefixtures('mock_index_json')
+@pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
 def test_get_latest_node_version():
     assert nodeenv.get_last_stable_node_version() == '13.5.0'
 
 
-@pytest.mark.usefixtures('mock_index_json')
+@pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
 def test_get_lts_node_version():
     assert nodeenv.get_last_lts_node_version() == '12.14.0'
+
+
+@pytest.mark.usefixtures('mock_index_json', 'mock_riscv64_platform')
+def test_get_latest_node_version_riscv64():
+    assert nodeenv.get_last_stable_node_version() == '13.4.0'
+
+
+@pytest.mark.usefixtures('mock_index_json', 'mock_riscv64_platform')
+def test_get_lts_node_version_riscv64():
+    assert nodeenv.get_last_lts_node_version() == '12.13.1'
 
 
 def test__download_node_file():

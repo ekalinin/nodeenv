@@ -1050,6 +1050,7 @@ def _get_last_node_version(lts=False):
     Return last node.js version matching the filter
     """
     print({"x86": is_x86_64_musl(), "risc": is_riscv64(), "lts": lts})
+
     def version_filter(v):
         if lts and not v['lts']:
             return False

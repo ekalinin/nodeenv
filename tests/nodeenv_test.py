@@ -70,15 +70,15 @@ def cap_logging_info():
 
 @pytest.fixture
 def mock_host_platform():
-    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False) as x64_mck:
-        with mock.patch.object(nodeenv, 'is_riscv64', return_value=False) as risc_mck:
+    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False):
+        with mock.patch.object(nodeenv, 'is_riscv64', return_value=False):
             yield
 
 
 @pytest.fixture
 def mock_riscv64_platform():
-    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False) as x64_mck:
-        with mock.patch.object(nodeenv, 'is_riscv64', return_value=True) as risc_mck:
+    with mock.patch.object(nodeenv, 'is_x86_64_musl', return_value=False):
+        with mock.patch.object(nodeenv, 'is_riscv64', return_value=True):
             yield
 
 

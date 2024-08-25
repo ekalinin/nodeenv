@@ -178,3 +178,32 @@ def test_remove_env_bin_from_path():
     assert (nodeenv.remove_env_bin_from_path(
         '//home://home/env/bin://home/bin', '//home/env/bin')
             == '//home://home/bin')
+
+
+@pytest.mark.parametrize(
+    "node_version_file_content, expected_node_version",
+    [
+        ("v22.14.0", "22.14.0"),
+        ("22.14.0", "22.14.0"),
+        ("v22.14.0\n", "22.14.0"),
+        ("v22.14.0\r\n", "22.14.0"),
+    ],
+)
+def test_node_version_file(node_version_file_content, expected_node_version):
+    def custom_exists(path):
+        if path == ".node-version":
+            return True
+        else:
+            return os.path.exists(path)
+
+    def custom_open(file_path, *args, **kwargs):
+        if file_path == ".node-version":
+            return mock.mock_open(read_data=node_version_file_content)()
+        else:
+            return open(file_path, *args, **kwargs)
+
+    with mock.patch("os.path.exists", new=custom_exists), mock.patch(
+        "builtins.open", new=custom_open
+    ):
+        nodeenv.Config._load([])
+        assert nodeenv.Config.node == expected_node_version

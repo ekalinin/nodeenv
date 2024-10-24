@@ -551,13 +551,12 @@ def get_node_bin_url(version):
         'x86':    'x86',  # Windows Vista 32
         'i686':   'x86',
         'x86_64': 'x64',  # Linux Ubuntu 64
-        'amd64':  'x64',  # FreeBSD 64bits
-        'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
+        'amd64':  'x64',  # FreeBSD 64bits, Windows Server 2012 R2 (x64)
         'armv6l': 'armv6l',     # arm
         'armv7l': 'armv7l',
         'armv8l': 'armv7l',
         'aarch64': 'arm64',
-        'arm64': 'arm64',
+        'arm64': 'arm64',  # macos
         'arm64/v8': 'arm64',
         'armv8': 'arm64',
         'armv8.4': 'arm64',
@@ -565,9 +564,15 @@ def get_node_bin_url(version):
         's390x': 's390x',       # IBM S390x
         'riscv64': 'riscv64',   # RISCV 64
     }
+    # Based on architecture it can return ARM64, aarch64,...
+    arch = platform.machine().lower()
+    if arch not in archmap:
+        msg = f"Unknown architecture {arch} found, unable to determine node " \
+            "version to use."
+        raise RuntimeError(msg)
     sysinfo = {
         'system': platform.system().lower(),
-        'arch': archmap[platform.machine()],
+        'arch': archmap[arch],
     }
     if is_WIN or is_CYGWIN:
         postfix = '-win-%(arch)s.zip' % sysinfo

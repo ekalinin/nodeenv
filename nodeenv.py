@@ -1088,6 +1088,8 @@ def get_env_dir(args):
             res = sys.prefix
         elif 'CONDA_PREFIX' in os.environ:
             res = sys.prefix
+        elif 'VIRTUAL_ENV' in os.environ:
+            res = os.environ['VIRTUAL_ENV']
         else:
             logger.error('No python virtualenv is available')
             sys.exit(2)

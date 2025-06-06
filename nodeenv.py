@@ -1344,6 +1344,16 @@ freeze () {
     fi
 }
 
+
+# Detect calling this file as a script
+case $0 in
+    */bin/activate )
+        echo "Do not call $0 directly.  Instead source it with \`source $0\`."
+        exit 1
+        ;;
+esac
+
+
 # unset irrelevant variables
 deactivate_node nondestructive
 

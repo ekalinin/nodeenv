@@ -649,7 +649,15 @@ def urlopen(url):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS)
         context.verify_mode = ssl.CERT_NONE
         return urllib2.urlopen(req, context=context)
-    return urllib2.urlopen(req)
+
+    # Use certifi certificates if available
+    try:
+        import certifi
+        context = ssl.create_default_context(cafile=certifi.where())
+        return urllib2.urlopen(req, context=context)
+    except ImportError:
+        # Fall back to default behavior if certifi is not available
+        return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
 # Virtual environment functions

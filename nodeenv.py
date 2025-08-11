@@ -816,7 +816,7 @@ def install_npm(env_dir, _src_dir, args):
     )
     proc = subprocess.Popen(
         (
-            'bash', '-c',
+            'sh', '-c',
             '. {0} && npm install -g npm@{1}'.format(
                 _quote(join(env_dir, 'bin', 'activate')),
                 args.npm,
@@ -1177,7 +1177,7 @@ set -e NODE_VIRTUAL_ENV_DISABLE_PROMPT
 """,
 }
 
-SHIM = """#!/usr/bin/env bash
+SHIM = """#!/usr/bin/env sh
 export NODE_PATH='__NODE_VIRTUAL_ENV__/lib/node_modules'
 export NPM_CONFIG_PREFIX='__NODE_VIRTUAL_ENV__'
 export npm_config_prefix='__NODE_VIRTUAL_ENV__'
@@ -1279,7 +1279,7 @@ $env:PATH = "$env:NODE_VIRTUAL_ENV\Scripts;$env:PATH"
 
 ACTIVATE_SH = r"""
 
-# This file must be used with "source bin/activate" *from bash*
+# This file must be used with "source bin/activate" *from sh*
 # you cannot run it directly
 
 deactivate_node () {

@@ -493,3 +493,128 @@ class TestGetNodeBinUrl:
                 'node-v18.0.0-win-x64.zip'
             )
             assert url == expected
+
+
+class TestGetEnvDir:
+    """Tests for get_env_dir function"""
+
+    def test_with_python_virtualenv_real_prefix(self):
+        """Test get_env_dir when using python virtualenv with real_prefix"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/path/to/virtualenv'
+
+        with mock.patch.object(sys, 'real_prefix', test_prefix, create=True), \
+             mock.patch.object(sys, 'prefix', test_prefix):
+            result = nodeenv.get_env_dir(args)
+            assert result == test_prefix
+
+    def test_with_python_virtualenv_base_prefix(self):
+        """Test get_env_dir when using python virtualenv with base_prefix"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/path/to/virtualenv'
+        test_base_prefix = '/usr'
+
+        # Remove real_prefix if it exists
+        if hasattr(sys, 'real_prefix'):
+            with mock.patch.object(sys, 'real_prefix', create=False):
+                with mock.patch.object(sys, 'prefix', test_prefix), \
+                     mock.patch.object(sys, 'base_prefix', test_base_prefix):
+                    result = nodeenv.get_env_dir(args)
+                    assert result == test_prefix
+        else:
+            with mock.patch.object(sys, 'prefix', test_prefix), \
+                 mock.patch.object(sys, 'base_prefix', test_base_prefix):
+                result = nodeenv.get_env_dir(args)
+                assert result == test_prefix
+
+    def test_with_python_virtualenv_conda_prefix(self):
+        """Test get_env_dir when using conda environment"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/path/to/conda/env'
+
+        # Remove real_prefix if it exists
+        if hasattr(sys, 'real_prefix'):
+            with mock.patch.object(sys, 'real_prefix', create=False):
+                env_dict = {'CONDA_PREFIX': test_prefix}
+                with mock.patch.object(sys, 'prefix', test_prefix), \
+                     mock.patch.object(sys, 'base_prefix', test_prefix), \
+                     mock.patch.dict(os.environ, env_dict):
+                    result = nodeenv.get_env_dir(args)
+                    assert result == test_prefix
+        else:
+            env_dict = {'CONDA_PREFIX': test_prefix}
+            with mock.patch.object(sys, 'prefix', test_prefix), \
+                 mock.patch.object(sys, 'base_prefix', test_prefix), \
+                 mock.patch.dict(os.environ, env_dict):
+                result = nodeenv.get_env_dir(args)
+                assert result == test_prefix
+
+    def test_with_python_virtualenv_virtual_env(self):
+        """Test get_env_dir when using VIRTUAL_ENV variable"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/path/to/venv'
+        virtual_env = '/path/to/virtual/env'
+
+        # Remove real_prefix if it exists
+        if hasattr(sys, 'real_prefix'):
+            with mock.patch.object(sys, 'real_prefix', create=False):
+                env_dict = {'VIRTUAL_ENV': virtual_env}
+                with mock.patch.object(sys, 'prefix', test_prefix), \
+                     mock.patch.object(sys, 'base_prefix', test_prefix), \
+                     mock.patch.dict(os.environ, env_dict, clear=True):
+                    result = nodeenv.get_env_dir(args)
+                    assert result == virtual_env
+        else:
+            env_dict = {'VIRTUAL_ENV': virtual_env}
+            with mock.patch.object(sys, 'prefix', test_prefix), \
+                 mock.patch.object(sys, 'base_prefix', test_prefix), \
+                 mock.patch.dict(os.environ, env_dict, clear=True):
+                result = nodeenv.get_env_dir(args)
+                assert result == virtual_env
+
+    def test_with_python_virtualenv_no_virtualenv_exits(self):
+        """Test get_env_dir exits when no virtualenv is available"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/usr'
+
+        # Remove real_prefix if it exists
+        if hasattr(sys, 'real_prefix'):
+            with mock.patch.object(sys, 'real_prefix', create=False):
+                with mock.patch.object(sys, 'prefix', test_prefix), \
+                     mock.patch.object(sys, 'base_prefix', test_prefix), \
+                     mock.patch.dict(os.environ, {}, clear=True), \
+                     pytest.raises(SystemExit) as exc_info:
+                    nodeenv.get_env_dir(args)
+                assert exc_info.value.code == 2
+        else:
+            with mock.patch.object(sys, 'prefix', test_prefix), \
+                 mock.patch.object(sys, 'base_prefix', test_prefix), \
+                 mock.patch.dict(os.environ, {}, clear=True), \
+                 pytest.raises(SystemExit) as exc_info:
+                nodeenv.get_env_dir(args)
+            assert exc_info.value.code == 2
+
+    def test_without_python_virtualenv(self):
+        """Test get_env_dir when not using python virtualenv"""
+        args = mock.Mock()
+        args.python_virtualenv = False
+        args.env_dir = '/path/to/node/env'
+
+        result = nodeenv.get_env_dir(args)
+        assert result == '/path/to/node/env'
+
+    def test_returns_utf8_encoded_string(self):
+        """Test that get_env_dir returns UTF-8 encoded string"""
+        args = mock.Mock()
+        args.python_virtualenv = False
+        args.env_dir = '/path/to/env'
+
+        result = nodeenv.get_env_dir(args)
+        # The to_utf8 function is applied,
+        # but in Python 3 it returns the same string
+        assert result == '/path/to/env'

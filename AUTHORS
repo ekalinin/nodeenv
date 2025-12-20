@@ -17,9 +17,9 @@ Patches and Suggestions
 -  Eashwar Ranganathan
 -  Doug Turnbull
 -  Anton Parkhomenko
--  syndbg
 -  Vyacheslav Levit
 -  Travis Miller
+-  syndbg
 -  Spencer Rathbun
 -  Robert Schwebel
 -  Luis Orduz
@@ -39,23 +39,15 @@ Patches and Suggestions
 -  Alex Couper
 -  0Xellos
 -  zjeuhpiung liu
--  zbw
--  urbandove
--  sam
--  rely10
--  rachmadaniHaryono
--  proItheus
--  michael
--  jiho
--  dkgitdev
--  dhilipsiva
--  cmehay
 -  Zenobius Jiricek
+-  zbw
 -  Yi-Feng Tzeng
 -  Willem Jan Withagen
 -  Walter dos Santos Filho
 -  Vladimír Gorej
+-  Vizonex
 -  Vincent Bernat
+-  urbandove
 -  Uman Shahzad
 -  Tomi Belan
 -  Tom Whitwell
@@ -66,12 +58,20 @@ Patches and Suggestions
 -  Stan Seibert
 -  Shubhang Mani
 -  Sam James
+-  sam
+-  Rob Moss
 -  Rik
+-  rely10
+-  rachmadaniHaryono
+-  proItheus
 -  Philipp Dieter
 -  Philipp A
 -  Mrinal Wadhwa
 -  Michal Kolodziejski
+-  Michał Górny
+-  michael
 -  Maxim Mazurok
+-  max0x53
 -  Max R
 -  Max Melamed
 -  Max Liebkies
@@ -83,17 +83,24 @@ Patches and Suggestions
 -  Josh Soref
 -  Johnny Lim
 -  Joby Harding
+-  jiho
 -  Jesse Dhillon
 -  Jeremy Banks
 -  Jelle van der Waa
+-  Hugo van Kemenade
+-  Hugo
+-  Han Yeong-woo
 -  Geoffrey Huntley
 -  Fabricio C Zuardi
 -  Eashwar Ranganathan
 -  Duncan Bellamy
+-  dkgitdev
+-  dhilipsiva
 -  Dennis Flanigan
 -  Dan North
 -  Dan Fuchs
 -  Damien Nozay
+-  cmehay
 -  Brian Jacobel
 -  Ben Davis
 -  Ben Beasley

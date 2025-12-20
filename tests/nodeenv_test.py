@@ -618,3 +618,432 @@ class TestGetEnvDir:
         # The to_utf8 function is applied,
         # but in Python 3 it returns the same string
         assert result == '/path/to/env'
+
+
+class TestInstallNpm:
+    """Tests for install_npm function"""
+
+    def test_install_npm_basic(self):
+        """Test basic npm installation with default settings"""
+        args = mock.Mock()
+        args.npm = '8.19.2'
+        args.no_npm_clean = False
+        args.verbose = False
+
+        env_dir = '/path/to/env'
+        src_dir = '/path/to/src'
+
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (b'npm installed', None)
+
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+             mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Verify subprocess was called correctly
+            mock_popen.assert_called_once()
+            call_args = mock_popen.call_args
+
+            # Check command
+            assert call_args[0][0][0] == 'sh'
+            assert call_args[0][0][1] == '-c'
+            expected_cmd = '. {0} && npm install -g npm@{1}'.format(
+                _quote(os.path.join(env_dir, 'bin', 'activate')),
+                '8.19.2'
+            )
+            assert call_args[0][0][2] == expected_cmd
+
+            # Check environment variables
+            env = call_args[1]['env']
+            assert env['clean'] == 'yes'
+            assert env['npm_install'] == '8.19.2'
+
+            # Check other subprocess parameters
+            assert call_args[1]['stdin'] == subprocess.PIPE
+            assert call_args[1]['stdout'] == subprocess.PIPE
+            assert call_args[1]['stderr'] == subprocess.STDOUT
+
+            # Verify communicate was called
+            mock_proc.communicate.assert_called_once()
+
+            # Verify logging
+            assert mock_logger.call_count >= 2
+            log_calls = [call[0][0] for call in mock_logger.call_args_list]
+            assert any('8.19.2' in str(call) for call in log_calls)
+            assert any('done' in str(call) for call in log_calls)
+
+    def test_install_npm_with_no_npm_clean(self):
+        """Test npm installation with no_npm_clean flag"""
+        args = mock.Mock()
+        args.npm = 'latest'
+        args.no_npm_clean = True
+        args.verbose = False
+
+        env_dir = '/test/env'
+        src_dir = '/test/src'
+
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (b'', None)
+
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Check that clean='no' when no_npm_clean is True
+            call_args = mock_popen.call_args
+            env = call_args[1]['env']
+            assert env['clean'] == 'no'
+            assert env['npm_install'] == 'latest'
+
+    def test_install_npm_verbose_output(self):
+        """Test npm installation with verbose output enabled"""
+        args = mock.Mock()
+        args.npm = '9.0.0'
+        args.no_npm_clean = False
+        args.verbose = True
+
+        env_dir = '/verbose/env'
+        src_dir = '/verbose/src'
+
+        test_output = b'Installing npm 9.0.0...\nDone!'
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (test_output, None)
+
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc), \
+             mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Verify that output was logged when verbose=True
+            log_calls = [call[0][0] for call in mock_logger.call_args_list]
+            assert test_output in log_calls
+
+    def test_install_npm_latest_version(self):
+        """Test npm installation with 'latest' version"""
+        args = mock.Mock()
+        args.npm = 'latest'
+        args.no_npm_clean = False
+        args.verbose = False
+
+        env_dir = '/latest/env'
+        src_dir = '/latest/src'
+
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (b'', None)
+
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Verify the command uses 'latest'
+            call_args = mock_popen.call_args
+            command = call_args[0][0][2]
+            assert 'npm install -g npm@latest' in command
+
+    def test_install_npm_with_special_chars_in_path(self):
+        """Test npm installation with special characters in path"""
+        args = mock.Mock()
+        args.npm = '8.0.0'
+        args.no_npm_clean = False
+        args.verbose = False
+
+        env_dir = '/path/with spaces/and (parens)/env'
+        src_dir = '/path/src'
+
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (b'', None)
+
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Verify the path is properly quoted
+            call_args = mock_popen.call_args
+            command = call_args[0][0][2]
+            # The path should be quoted to handle special characters
+            activate_path = os.path.join(env_dir, 'bin', 'activate')
+            quoted_path = _quote(activate_path)
+            assert quoted_path in command
+
+    def test_install_npm_environment_inheritance(self):
+        """Test that install_npm inherits current environment variables"""
+        args = mock.Mock()
+        args.npm = '7.0.0'
+        args.no_npm_clean = False
+        args.verbose = False
+
+        env_dir = '/env'
+        src_dir = '/src'
+
+        mock_proc = mock.Mock()
+        mock_proc.communicate.return_value = (b'', None)
+
+        test_env = {'TEST_VAR': 'test_value', 'PATH': '/usr/bin'}
+        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.dict(os.environ, test_env, clear=True):
+            nodeenv.install_npm(env_dir, src_dir, args)
+
+            # Check that environment variables are inherited
+            call_args = mock_popen.call_args
+            env = call_args[1]['env']
+            assert env['TEST_VAR'] == 'test_value'
+            assert env['PATH'] == '/usr/bin'
+            assert env['clean'] == 'yes'
+            assert env['npm_install'] == '7.0.0'
+
+    def test_install_npm_specific_version_formats(self):
+        """Test npm installation with different version formats"""
+        test_versions = ['8.19.2', '10.0.0', '6.14.18', 'latest']
+
+        for version in test_versions:
+            args = mock.Mock()
+            args.npm = version
+            args.no_npm_clean = False
+            args.verbose = False
+
+            env_dir = '/env'
+            src_dir = '/src'
+
+            mock_proc = mock.Mock()
+            mock_proc.communicate.return_value = (b'', None)
+
+            with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+                 mock.patch.object(nodeenv.logger, 'info'):
+                nodeenv.install_npm(env_dir, src_dir, args)
+
+                # Verify the version is correctly used in the command
+                call_args = mock_popen.call_args
+                command = call_args[0][0][2]
+                assert f'npm install -g npm@{version}' in command
+
+                # Verify version is in environment
+                env = call_args[1]['env']
+                assert env['npm_install'] == version
+
+
+class TestInstallNpmWin:
+    """Tests for install_npm_win function"""
+
+    def test_install_npm_win_basic(self):
+        """Test basic Windows npm installation"""
+        args = mock.Mock()
+        args.npm = '8.19.2'
+
+        env_dir = 'C:\\path\\to\\env'
+        src_dir = 'C:\\path\\to\\src'
+
+        # Mock the zip file content
+        mock_zip_content = b'PK\x03\x04...'  # Simplified zip header
+        mock_response = mock.Mock()
+        mock_response.read.return_value = mock_zip_content
+
+        mock_zip = mock.Mock()
+        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+        mock_zip.__exit__ = mock.Mock(return_value=False)
+
+        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch('shutil.copytree') as mock_copytree, \
+             mock.patch('shutil.copy') as mock_copy, \
+             mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+            nodeenv.install_npm_win(env_dir, src_dir, args)
+
+            # Verify URL was constructed correctly
+            expected_url = 'https://github.com/npm/cli/archive/v8.19.2.zip'
+            nodeenv.urlopen.assert_called_once_with(expected_url)
+
+            # Verify extraction happened
+            mock_zip.extractall.assert_called_once_with(src_dir)
+
+            # Verify copytree and copy were called
+            assert mock_copytree.called
+            assert mock_copy.call_count == 2
+
+            # Verify logging
+            log_calls = [call[0][0] for call in mock_logger.call_args_list]
+            assert any('8.19.2' in str(call) for call in log_calls)
+
+    def test_install_npm_win_removes_existing_files(self):
+        """Test that existing npm files are removed before installation"""
+        args = mock.Mock()
+        args.npm = '9.0.0'
+
+        env_dir = 'C:\\env'
+        src_dir = 'C:\\src'
+
+        mock_zip_content = b'PK\x03\x04...'
+        mock_response = mock.Mock()
+        mock_response.read.return_value = mock_zip_content
+
+        mock_zip = mock.Mock()
+        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+        mock_zip.__exit__ = mock.Mock(return_value=False)
+
+        # Simulate existing files
+        def exists_side_effect(path):
+            if 'node_modules' in path or 'npm.cmd' in path or 'npm-cli.js' in path:
+                return True
+            return False
+
+        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
+             mock.patch('os.path.exists', side_effect=exists_side_effect), \
+             mock.patch('shutil.rmtree') as mock_rmtree, \
+             mock.patch('os.remove') as mock_remove, \
+             mock.patch('shutil.copytree'), \
+             mock.patch('shutil.copy'), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm_win(env_dir, src_dir, args)
+
+            # Verify cleanup happened
+            mock_rmtree.assert_called_once()
+            assert mock_remove.call_count == 2
+
+    def test_install_npm_win_cygwin(self):
+        """Test Windows npm installation on CYGWIN"""
+        args = mock.Mock()
+        args.npm = '7.24.2'
+
+        env_dir = '/cygdrive/c/env'
+        src_dir = '/cygdrive/c/src'
+
+        mock_zip_content = b'PK\x03\x04...'
+        mock_response = mock.Mock()
+        mock_response.read.return_value = mock_zip_content
+
+        mock_npm_script = b'#!/bin/sh\n# npm script'
+        mock_npm_response = mock.Mock()
+        mock_npm_response.read.return_value = mock_npm_script
+
+        mock_zip = mock.Mock()
+        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+        mock_zip.__exit__ = mock.Mock(return_value=False)
+
+        with mock.patch.object(nodeenv, 'urlopen') as mock_urlopen, \
+             mock.patch.object(nodeenv, 'is_CYGWIN', True), \
+             mock.patch.object(nodeenv, 'writefile') as mock_writefile, \
+             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch('shutil.copytree'), \
+             mock.patch('shutil.copy'), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            mock_urlopen.side_effect = [mock_response, mock_npm_response]
+
+            nodeenv.install_npm_win(env_dir, src_dir, args)
+
+            # Verify that CYGWIN-specific operations happened
+            assert mock_urlopen.call_count == 2
+            assert mock_writefile.called
+
+            # Verify the raw GitHub URL was called
+            calls = [str(call) for call in mock_urlopen.call_args_list]
+            assert any('raw.githubusercontent.com' in str(call) for call in calls)
+
+    def test_install_npm_win_different_versions(self):
+        """Test Windows npm installation with different version formats"""
+        test_versions = ['8.0.0', '9.5.1', '10.0.0']
+
+        for version in test_versions:
+            args = mock.Mock()
+            args.npm = version
+
+            env_dir = 'C:\\env'
+            src_dir = 'C:\\src'
+
+            mock_zip_content = b'PK\x03\x04...'
+            mock_response = mock.Mock()
+            mock_response.read.return_value = mock_zip_content
+
+            mock_zip = mock.Mock()
+            mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+            mock_zip.__exit__ = mock.Mock(return_value=False)
+
+            with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response) as mock_urlopen, \
+                 mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+                 mock.patch('zipfile.ZipFile', return_value=mock_zip), \
+                 mock.patch('os.path.exists', return_value=False), \
+                 mock.patch('shutil.copytree'), \
+                 mock.patch('shutil.copy'), \
+                 mock.patch.object(nodeenv.logger, 'info'):
+                nodeenv.install_npm_win(env_dir, src_dir, args)
+
+                # Verify correct URL for each version
+                expected_url = f'https://github.com/npm/cli/archive/v{version}.zip'
+                mock_urlopen.assert_called_with(expected_url)
+
+    def test_install_npm_win_paths(self):
+        """Test that Windows npm installation uses correct paths"""
+        args = mock.Mock()
+        args.npm = '8.5.0'
+
+        env_dir = 'C:\\Users\\test\\env'
+        src_dir = 'C:\\Users\\test\\src'
+
+        mock_zip_content = b'PK\x03\x04...'
+        mock_response = mock.Mock()
+        mock_response.read.return_value = mock_zip_content
+
+        mock_zip = mock.Mock()
+        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+        mock_zip.__exit__ = mock.Mock(return_value=False)
+
+        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch('shutil.copytree') as mock_copytree, \
+             mock.patch('shutil.copy') as mock_copy, \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm_win(env_dir, src_dir, args)
+
+            # Verify paths
+            copytree_call = mock_copytree.call_args[0]
+            src_path = copytree_call[0]
+            dst_path = copytree_call[1]
+
+            assert 'cli-8.5.0' in src_path
+            assert os.path.join(env_dir, 'Scripts', 'node_modules', 'npm') == dst_path
+
+            # Verify copy calls use correct paths
+            copy_calls = mock_copy.call_args_list
+            assert len(copy_calls) == 2
+            assert any('npm.cmd' in str(call) for call in copy_calls)
+            assert any('npm-cli.js' in str(call) for call in copy_calls)
+
+    def test_install_npm_win_zip_extraction(self):
+        """Test that zip file is properly extracted"""
+        args = mock.Mock()
+        args.npm = '9.1.0'
+
+        env_dir = 'C:\\test'
+        src_dir = 'C:\\test\\src'
+
+        mock_zip_content = b'PK\x03\x04...'
+        mock_response = mock.Mock()
+        mock_response.read.return_value = mock_zip_content
+
+        mock_zip = mock.Mock()
+        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
+        mock_zip.__exit__ = mock.Mock(return_value=False)
+        mock_zip.extractall = mock.Mock()
+
+        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch('zipfile.ZipFile', return_value=mock_zip) as mock_zipfile, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch('shutil.copytree'), \
+             mock.patch('shutil.copy'), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_npm_win(env_dir, src_dir, args)
+
+            # Verify ZipFile was created with the BytesIO content
+            mock_zipfile.assert_called_once()
+            zip_args = mock_zipfile.call_args[0]
+            assert hasattr(zip_args[0], 'read')  # Should be BytesIO object
+
+            # Verify extraction
+            mock_zip.extractall.assert_called_once_with(src_dir)
+

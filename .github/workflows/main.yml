@@ -41,10 +41,7 @@ jobs:
         ENV_SUFFIX=$(echo "${{ matrix.python-version }}" | tr -d '.')
         tox -e py${ENV_SUFFIX}
         pwd
-        ls -l
-      env:
-          # Set the COVERAGE_FILE environment variable for coverage.py
-          COVERAGE_FILE: .coverage.${{ matrix.python-version }}
+        ls -la
 
     - name: Upload coverage data
       if: always()

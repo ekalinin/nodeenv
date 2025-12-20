@@ -636,7 +636,9 @@ class TestInstallNpm:
         mock_proc = mock.Mock()
         mock_proc.communicate.return_value = (b'npm installed', None)
 
-        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+        with mock.patch.object(
+                subprocess, 'Popen', return_value=mock_proc
+        ) as mock_popen, \
              mock.patch.object(nodeenv.logger, 'info') as mock_logger:
             nodeenv.install_npm(env_dir, src_dir, args)
 
@@ -685,7 +687,9 @@ class TestInstallNpm:
         mock_proc = mock.Mock()
         mock_proc.communicate.return_value = (b'', None)
 
-        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+        with mock.patch.object(
+                subprocess, 'Popen', return_value=mock_proc
+        ) as mock_popen, \
              mock.patch.object(nodeenv.logger, 'info'):
             nodeenv.install_npm(env_dir, src_dir, args)
 
@@ -730,7 +734,9 @@ class TestInstallNpm:
         mock_proc = mock.Mock()
         mock_proc.communicate.return_value = (b'', None)
 
-        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+        with mock.patch.object(
+                subprocess, 'Popen', return_value=mock_proc
+        ) as mock_popen, \
              mock.patch.object(nodeenv.logger, 'info'):
             nodeenv.install_npm(env_dir, src_dir, args)
 
@@ -752,7 +758,9 @@ class TestInstallNpm:
         mock_proc = mock.Mock()
         mock_proc.communicate.return_value = (b'', None)
 
-        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+        with mock.patch.object(
+                subprocess, 'Popen', return_value=mock_proc
+        ) as mock_popen, \
              mock.patch.object(nodeenv.logger, 'info'):
             nodeenv.install_npm(env_dir, src_dir, args)
 
@@ -778,7 +786,9 @@ class TestInstallNpm:
         mock_proc.communicate.return_value = (b'', None)
 
         test_env = {'TEST_VAR': 'test_value', 'PATH': '/usr/bin'}
-        with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+        with mock.patch.object(
+                subprocess, 'Popen', return_value=mock_proc
+        ) as mock_popen, \
              mock.patch.object(nodeenv.logger, 'info'), \
              mock.patch.dict(os.environ, test_env, clear=True):
             nodeenv.install_npm(env_dir, src_dir, args)
@@ -807,7 +817,9 @@ class TestInstallNpm:
             mock_proc = mock.Mock()
             mock_proc.communicate.return_value = (b'', None)
 
-            with mock.patch.object(subprocess, 'Popen', return_value=mock_proc) as mock_popen, \
+            with mock.patch.object(
+                    subprocess, 'Popen', return_value=mock_proc
+            ) as mock_popen, \
                  mock.patch.object(nodeenv.logger, 'info'):
                 nodeenv.install_npm(env_dir, src_dir, args)
 
@@ -841,7 +853,9 @@ class TestInstallNpmWin:
         mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
         mock_zip.__exit__ = mock.Mock(return_value=False)
 
-        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+        with mock.patch.object(
+                nodeenv, 'urlopen', return_value=mock_response
+        ), \
              mock.patch.object(nodeenv, 'is_CYGWIN', False), \
              mock.patch('zipfile.ZipFile', return_value=mock_zip), \
              mock.patch('os.path.exists', return_value=False), \
@@ -883,11 +897,14 @@ class TestInstallNpmWin:
 
         # Simulate existing files
         def exists_side_effect(path):
-            if 'node_modules' in path or 'npm.cmd' in path or 'npm-cli.js' in path:
+            if ('node_modules' in path or 'npm.cmd' in path or
+                    'npm-cli.js' in path):
                 return True
             return False
 
-        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+        with mock.patch.object(
+                nodeenv, 'urlopen', return_value=mock_response
+        ), \
              mock.patch.object(nodeenv, 'is_CYGWIN', False), \
              mock.patch('zipfile.ZipFile', return_value=mock_zip), \
              mock.patch('os.path.exists', side_effect=exists_side_effect), \
@@ -940,7 +957,9 @@ class TestInstallNpmWin:
 
             # Verify the raw GitHub URL was called
             calls = [str(call) for call in mock_urlopen.call_args_list]
-            assert any('raw.githubusercontent.com' in str(call) for call in calls)
+            assert any(
+                'raw.githubusercontent.com' in str(call) for call in calls
+            )
 
     def test_install_npm_win_different_versions(self):
         """Test Windows npm installation with different version formats"""
@@ -961,7 +980,9 @@ class TestInstallNpmWin:
             mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
             mock_zip.__exit__ = mock.Mock(return_value=False)
 
-            with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response) as mock_urlopen, \
+            with mock.patch.object(
+                    nodeenv, 'urlopen', return_value=mock_response
+            ) as mock_urlopen, \
                  mock.patch.object(nodeenv, 'is_CYGWIN', False), \
                  mock.patch('zipfile.ZipFile', return_value=mock_zip), \
                  mock.patch('os.path.exists', return_value=False), \
@@ -971,7 +992,9 @@ class TestInstallNpmWin:
                 nodeenv.install_npm_win(env_dir, src_dir, args)
 
                 # Verify correct URL for each version
-                expected_url = f'https://github.com/npm/cli/archive/v{version}.zip'
+                expected_url = (
+                    f'https://github.com/npm/cli/archive/v{version}.zip'
+                )
                 mock_urlopen.assert_called_with(expected_url)
 
     def test_install_npm_win_paths(self):
@@ -990,7 +1013,9 @@ class TestInstallNpmWin:
         mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
         mock_zip.__exit__ = mock.Mock(return_value=False)
 
-        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+        with mock.patch.object(
+                nodeenv, 'urlopen', return_value=mock_response
+        ), \
              mock.patch.object(nodeenv, 'is_CYGWIN', False), \
              mock.patch('zipfile.ZipFile', return_value=mock_zip), \
              mock.patch('os.path.exists', return_value=False), \
@@ -1005,7 +1030,10 @@ class TestInstallNpmWin:
             dst_path = copytree_call[1]
 
             assert 'cli-8.5.0' in src_path
-            assert os.path.join(env_dir, 'Scripts', 'node_modules', 'npm') == dst_path
+            expected_path = os.path.join(
+                env_dir, 'Scripts', 'node_modules', 'npm'
+            )
+            assert expected_path == dst_path
 
             # Verify copy calls use correct paths
             copy_calls = mock_copy.call_args_list
@@ -1030,9 +1058,13 @@ class TestInstallNpmWin:
         mock_zip.__exit__ = mock.Mock(return_value=False)
         mock_zip.extractall = mock.Mock()
 
-        with mock.patch.object(nodeenv, 'urlopen', return_value=mock_response), \
+        with mock.patch.object(
+                nodeenv, 'urlopen', return_value=mock_response
+        ), \
              mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-             mock.patch('zipfile.ZipFile', return_value=mock_zip) as mock_zipfile, \
+             mock.patch(
+                 'zipfile.ZipFile', return_value=mock_zip
+             ) as mock_zipfile, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch('shutil.copytree'), \
              mock.patch('shutil.copy'), \
@@ -1046,4 +1078,3 @@ class TestInstallNpmWin:
 
             # Verify extraction
             mock_zip.extractall.assert_called_once_with(src_dir)
-

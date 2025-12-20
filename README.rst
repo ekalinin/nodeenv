@@ -235,6 +235,104 @@ use `shim` script::
     $ ./env-4.3/bin/shim --version
     v0.4.3
 
+Command Line Options
+--------------------
+
+Basic options
+^^^^^^^^^^^^^
+
+``-n NODE_VER, --node=NODE_VER``
+    The node.js version to use, e.g., ``--node=22.11.0``. The default is the
+    last stable version (``latest``). Use ``lts`` for the latest LTS release.
+    Use ``system`` to use system-wide node.
+
+``-l, --list``
+    Lists available node.js versions.
+
+``-p, --python-virtualenv``
+    Use current python virtualenv.
+
+``-r FILENAME, --requirements=FILENAME``
+    Install all the packages listed in the given requirements file.
+
+``--prompt=PROMPT``
+    Provides an alternative prompt prefix for this environment.
+
+``--force``
+    Force installation in a pre-existing directory.
+
+``--update``
+    Install npm packages from file without reinstalling node.
+
+Installation options
+^^^^^^^^^^^^^^^^^^^^
+
+``--prebuilt``
+    Install node.js from prebuilt package (default).
+
+``--source``
+    Install node.js from the source (Unix only).
+
+``--mirror=URL``
+    Set mirror server of nodejs.org to download from.
+
+``-c, --clean-src``
+    Remove "src" directory after installation.
+
+NPM options
+^^^^^^^^^^^
+
+``--npm=NPM_VER``
+    The npm version to use, e.g., ``--npm=10.0.0``.
+    The default is the last available version (``latest``).
+
+``--with-npm``
+    Install npm into the new virtual environment. Required for node.js < 0.6.3.
+    By default, the npm included with node.js is used.
+
+``--no-npm-clean``
+    Skip the npm 0.x cleanup. Cleanup is enabled by default.
+
+Compilation options (Unix only)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``-j JOBS, --jobs=JOBS``
+    Sets number of parallel commands at node.js compilation. The default is 2 jobs.
+
+``--load-average=LOAD``
+    Sets maximum load average for executing parallel commands at node.js compilation.
+
+``-m MAKE_PATH, --make=MAKE_PATH``
+    Path to make command.
+
+``--without-ssl``
+    Build node.js without SSL support.
+
+``--debug``
+    Build debug variant of the node.js.
+
+``--profile``
+    Enable profiling for node.js.
+
+Other options
+^^^^^^^^^^^^^
+
+``-v, --verbose``
+    Verbose mode.
+
+``-q, --quiet``
+    Quiet mode.
+
+``-C CONFIG_FILE, --config-file=CONFIG_FILE``
+    Load a different config file than ``~/.nodeenvrc``.
+    Pass an empty string for no config (use built-in defaults).
+
+``--ignore_ssl_certs``
+    Ignore SSL certificates for package downloads. **UNSAFE - use at your own risk**.
+
+``--version``
+    Show program version and exit.
+
 Configuration
 -------------
 You can use the INI-style file ``~/.nodeenvrc`` to set default values for many options,

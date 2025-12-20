@@ -552,7 +552,7 @@ def get_node_bin_url(version):
         'i686':   'x86',
         'x86_64': 'x64',  # Linux Ubuntu 64
         'amd64':  'x64',  # FreeBSD 64bits
-        'AMD64':  'x64',  # Windows Server 2012 R2 (x64)
+        'amd64':  'x64',  # Windows Server 2012 R2 (x64)
         'armv6l': 'armv6l',     # arm
         'armv7l': 'armv7l',
         'armv8l': 'armv7l',

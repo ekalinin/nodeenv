@@ -231,3 +231,265 @@ def test_node_version_file(node_version_file_content, expected_node_version):
     ):
         nodeenv.Config._load([])
         assert nodeenv.Config.node == expected_node_version
+
+
+class TestGetNodeBinUrl:
+    """Tests for get_node_bin_url function"""
+
+    @pytest.mark.parametrize(
+        "machine,expected_arch",
+        [
+            ('x86', 'x86'),
+            ('i686', 'x86'),
+            ('x86_64', 'x64'),
+            ('amd64', 'x64'),
+            ('AMD64', 'x64'),
+            ('armv6l', 'armv6l'),
+            ('armv7l', 'armv7l'),
+            ('armv8l', 'armv7l'),
+            ('aarch64', 'arm64'),
+            ('arm64', 'arm64'),
+            ('arm64/v8', 'arm64'),
+            ('armv8', 'arm64'),
+            ('armv8.4', 'arm64'),
+            ('ppc64le', 'ppc64le'),
+            ('s390x', 's390x'),
+            ('riscv64', 'riscv64'),
+        ],
+    )
+    def test_linux_architectures(self, machine, expected_arch):
+        """Test URL generation for various Linux architectures"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value=machine), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-linux-{}.tar.gz'.format(expected_arch)
+            )
+            assert url == expected
+
+    @pytest.mark.parametrize(
+        "machine,expected_arch",
+        [
+            ('x86', 'x86'),
+            ('x86_64', 'x64'),
+            ('AMD64', 'x64'),
+        ],
+    )
+    def test_windows_architectures(self, machine, expected_arch):
+        """Test URL generation for Windows platforms"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(
+                platform, 'system', return_value='Windows'), \
+             mock.patch.object(
+                 platform, 'machine', return_value=machine), \
+             mock.patch.object(nodeenv, 'is_WIN', True), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-win-{}.zip'.format(expected_arch)
+            )
+            assert url == expected
+
+    def test_darwin_x64(self):
+        """Test URL generation for macOS x64"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Darwin'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='x86_64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-darwin-x64.tar.gz'
+            )
+            assert url == expected
+
+    def test_darwin_arm64(self):
+        """Test URL generation for macOS ARM64 (Apple Silicon)"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Darwin'), \
+             mock.patch.object(platform, 'machine', return_value='arm64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-darwin-arm64.tar.gz'
+            )
+            assert url == expected
+
+    def test_x86_64_musl(self):
+        """Test URL generation for x86_64 musl (Alpine Linux)"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='x86_64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=True), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-linux-x64-musl.tar.gz'
+            )
+            assert url == expected
+
+    def test_cygwin(self):
+        """Test URL generation for CYGWIN platforms"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(
+                platform, 'system', return_value='CYGWIN_NT-10.0'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='x86_64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', True), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-win-x64.zip'
+            )
+            assert url == expected
+
+    def test_old_node_version(self):
+        """Test URL generation for old Node.js version (< 0.5)"""
+        root_url = 'https://nodejs.org/download/release/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='x86_64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('0.4.12')
+            expected = (
+                'https://nodejs.org/download/release/'
+                'node-v0.4.12-linux-x64.tar.gz'
+            )
+            assert url == expected
+
+    def test_freebsd(self):
+        """Test URL generation for FreeBSD"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(
+                platform, 'system', return_value='FreeBSD'), \
+             mock.patch.object(platform, 'machine', return_value='amd64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-freebsd-x64.tar.gz'
+            )
+            assert url == expected
+
+    def test_uppercase_machine_x86_64(self):
+        """Test that uppercase X86_64 is handled correctly"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='X86_64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-linux-x64.tar.gz'
+            )
+            assert url == expected
+
+    def test_uppercase_machine_aarch64(self):
+        """Test that uppercase AARCH64 is handled correctly"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='AARCH64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-linux-arm64.tar.gz'
+            )
+            assert url == expected
+
+    def test_mixed_case_machine(self):
+        """Test that mixed case Aarch64 is handled correctly"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(platform, 'system', return_value='Linux'), \
+             mock.patch.object(
+                 platform, 'machine', return_value='Aarch64'), \
+             mock.patch.object(nodeenv, 'is_WIN', False), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-linux-arm64.tar.gz'
+            )
+            assert url == expected
+
+    def test_uppercase_machine_amd64(self):
+        """Test that uppercase AMD64 (Windows style) is handled correctly"""
+        root_url = 'https://nodejs.org/download/release/v18.0.0/'
+        with mock.patch.object(
+                platform, 'system', return_value='Windows'), \
+             mock.patch.object(platform, 'machine', return_value='AMD64'), \
+             mock.patch.object(nodeenv, 'is_WIN', True), \
+             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+             mock.patch.object(
+                 nodeenv, 'is_x86_64_musl', return_value=False), \
+             mock.patch.object(
+                 nodeenv, 'get_root_url', return_value=root_url):
+            url = nodeenv.get_node_bin_url('18.0.0')
+            expected = (
+                'https://nodejs.org/download/release/v18.0.0/'
+                'node-v18.0.0-win-x64.zip'
+            )
+            assert url == expected

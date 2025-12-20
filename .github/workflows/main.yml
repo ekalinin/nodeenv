@@ -40,8 +40,6 @@ jobs:
       run: |
         ENV_SUFFIX=$(echo "${{ matrix.python-version }}" | tr -d '.')
         tox -e py${ENV_SUFFIX}
-        pwd
-        ls -la
 
     - name: Upload coverage data
       if: always()
@@ -81,4 +79,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: html-report
-          path: htmlcov
+          path: coverage-html

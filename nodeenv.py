@@ -59,6 +59,7 @@ is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith(('CYGWIN', 'MSYS'))
 
 ignore_ssl_certs = False
+use_certifi = False
 
 # ---------------------------------------------------------
 # Utils
@@ -369,6 +370,11 @@ def make_parser():
         help='Ignore certificates for package downloads. - UNSAFE -')
 
     parser.add_argument(
+        '--with-certifi', dest='with_certifi',
+        action='store_true', default=False,
+        help='Use certifi certificate bundle if available')
+
+    parser.add_argument(
         metavar='DEST_DIR', dest='env_dir', nargs='?',
         help='Destination directory')
 
@@ -649,6 +655,18 @@ def urlopen(url):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS)
         context.verify_mode = ssl.CERT_NONE
         return urllib2.urlopen(req, context=context)
+
+    # Use certifi certificates if available and requested
+    if use_certifi:
+        try:
+            import certifi
+            context = ssl.create_default_context(cafile=certifi.where())
+            return urllib2.urlopen(req, context=context)
+        except ImportError:
+            # Fall back to default behavior if certifi is not available
+            pass
+
+    # Default behavior without certifi
     return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
@@ -1118,8 +1136,10 @@ def main():
 
     global src_base_url
     global ignore_ssl_certs
+    global use_certifi
 
     ignore_ssl_certs = args.ignore_ssl_certs
+    use_certifi = args.with_certifi
 
     src_domain = None
     if args.mirror:

@@ -34,7 +34,7 @@ import sysconfig
 import glob
 
 try:  # pragma: no cover (py2 only)
-    from ConfigParser import SafeConfigParser as ConfigParser  # pyright: ignore[reportMissingImports]
+    from ConfigParser import SafeConfigParser as ConfigParser  # pyright: ignore[reportMissingImports]  # noqa: E501
     # noinspection PyCompatibility
     import urllib2  # pyright: ignore[reportMissingImports]
     iteritems = operator.methodcaller('iteritems')

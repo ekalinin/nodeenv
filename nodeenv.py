@@ -34,11 +34,11 @@ import sysconfig
 import glob
 
 try:  # pragma: no cover (py2 only)
-    from ConfigParser import SafeConfigParser as ConfigParser
+    from ConfigParser import SafeConfigParser as ConfigParser  # pyright: ignore[reportMissingImports]
     # noinspection PyCompatibility
-    import urllib2
+    import urllib2  # pyright: ignore[reportMissingImports]
     iteritems = operator.methodcaller('iteritems')
-    import httplib
+    import httplib  # pyright: ignore[reportMissingImports]
     IncompleteRead = httplib.IncompleteRead
 except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser

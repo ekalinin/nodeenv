@@ -4,7 +4,7 @@ import os
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    import mock  # pyright: ignore[reportMissingModuleSource]
 import pytest
 
 import nodeenv

@@ -40,6 +40,8 @@ jobs:
       run: |
         ENV_SUFFIX=$(echo "${{ matrix.python-version }}" | tr -d '.')
         tox -e py${ENV_SUFFIX}
+        pwd
+        ls -l
       env:
           # Set the COVERAGE_FILE environment variable for coverage.py
           COVERAGE_FILE: .coverage.${{ matrix.python-version }}
@@ -76,8 +78,6 @@ jobs:
           python -m coverage combine
           python -m coverage html --skip-covered --skip-empty
           python -m coverage report --fail-under=55
-          pwd
-          ls -l
 
       - name: Upload HTML report
         uses: actions/upload-artifact@v6

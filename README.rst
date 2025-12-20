@@ -1,10 +1,10 @@
 Node.js virtual environment
 ===========================
 
-``nodeenv`` (node.js virtual environment) is a tool to create 
+``nodeenv`` (node.js virtual environment) is a tool to create
 isolated node.js environments.
 
-It creates an environment that has its own installation directories, 
+It creates an environment that has its own installation directories,
 that doesn't share libraries with other node.js virtual environments.
 
 Also the new environment can be integrated with the environment which was built
@@ -14,8 +14,9 @@ If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
 
 .. _Who-Uses-Nodeenv: https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv
 
-.. image:: https://travis-ci.org/ekalinin/nodeenv.svg?branch=master
-    :target: https://travis-ci.org/ekalinin/nodeenv
+.. image:: https://github.com/ekalinin/nodeenv/actions/workflows/main.yml/badge.svg?branch=master
+    :target: https://github.com/ekalinin/nodeenv/actions/workflows/main.yml
+    :alt: CI
 
 .. contents:: :local:
 
@@ -54,7 +55,7 @@ pip_/easy_install_ inside any virtual environment built with virtualenv::
     (env) $ nodeenv --version
     0.6.5
 
-If you want to work with the latest version of the nodeenv you can 
+If you want to work with the latest version of the nodeenv you can
 install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
@@ -127,7 +128,7 @@ Get available node.js versions::
     0.3.2   0.3.3   0.3.4   0.3.5   0.3.6   0.3.7   0.3.8
     0.4.1   0.4.2   0.4.3   0.4.4   0.4.5   0.4.6
 
-Install node.js "0.4.3" without ssl support with 4 parallel commands 
+Install node.js "0.4.3" without ssl support with 4 parallel commands
 for compilation and npm.js "0.3.17"::
 
     $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --with-npm --jobs=4 env-4.3
@@ -176,7 +177,7 @@ Create an environment from a requirements file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
 
-Requirements files are plain text files that contain a list of packages 
+Requirements files are plain text files that contain a list of packages
 to be installed. These text files allow you to create repeatable installations.
 Requirements file example::
 
@@ -201,7 +202,7 @@ virtual environment::
 and add a node virtual environment to this existing new_venv::
 
     $ nodeenv -p
-    
+
 If you need to set the path to make used to build node::
 
 	$ nodeenv -m /usr/local/bin/gmake ENV
@@ -213,7 +214,7 @@ environment::
     $ npm install -g coffee-script
     $ command -v coffee
     /home/monty/virtualenvs/my_env/bin/coffee
-    
+
 Creating a virtual environment with a custom prompt:
 
     $ nodeenv --node=12.18.2 --prompt="(myenv)" nodeenv

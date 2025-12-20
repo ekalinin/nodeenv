@@ -13,13 +13,15 @@ deploy-github:
 
 deploy-pypi:
 	rm -rf dist
-	$(PYTHON) setup.py sdist bdist_wheel
-	twine upload --repository pypi dist/*
+	@. ${DEV_TEST_ENV}/bin/activate && \
+		pip install -U setuptools wheel twine && \
+		$(PYTHON) setup.py sdist bdist_wheel && \
+		twine upload --repository pypi dist/*
 
 update-pypi:
 	$(PYTHON) setup.py register
 
-deploy: contributors deploy-github deploy-pypi
+deploy: contributors ut deploy-github deploy-pypi
 
 clean:
 	@rm -rf nodeenv.egg-info/

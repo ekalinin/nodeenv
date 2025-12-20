@@ -567,7 +567,7 @@ def get_node_bin_url(version):
     }
     sysinfo = {
         'system': platform.system().lower(),
-        'arch': archmap[platform.machine()],
+        'arch': archmap[platform.machine().lower()],
     }
     if is_WIN or is_CYGWIN:
         postfix = '-win-%(arch)s.zip' % sysinfo

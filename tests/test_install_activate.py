@@ -131,14 +131,11 @@ def test_node_system_creates_shim(tmpdir):
 
     # Mock system node path
     system_node = '/usr/bin/node'
-    mock_popen = mock.MagicMock()
-    mock_popen.communicate.return_value = (
-        system_node.encode() + b'\n', b'')
 
     with mock.patch.object(
         sys, 'argv', ['nodeenv', '--node=system', str(tmpdir)]
     ):
-        with mock.patch('subprocess.Popen', return_value=mock_popen):
+        with mock.patch('shutil.which', return_value=system_node):
             opts = nodeenv.parse_args()
             nodeenv.install_activate(str(tmpdir), opts)
 

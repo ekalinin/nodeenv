@@ -43,7 +43,7 @@ jobs:
         TOXENV=$(tox --listenvs | grep "^py$ENV_PREFIX" | tr '\n' ',') tox
 
     - name: Upload coverage data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: coverage-data
         path: '.coverage.*'

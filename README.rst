@@ -362,7 +362,7 @@ There are several alternatives that create isolated environments:
   Nave stores all environments in one directory ``~/.nave``. Can create
   per node version environments using `nave use envname versionname`.
   Can not pass additional arguments into configure (for example --without-ssl)
-  Can't run on windows because it relies on bash.
+  Can't run on windows because it relies on a POSIX shell.
 
 * `nvm <https://github.com/creationix/nvm/blob/master/nvm.sh>`_ - Node Version
   Manager. It is necessarily to do `nvm sync` for caching available node.js

@@ -38,7 +38,8 @@ jobs:
 
     - name: Run tox targets for ${{ matrix.python-version }}
       run: |
-        tox -e py${{ matrix.python-version }}
+        ENV_SUFFIX=$(echo "${{ matrix.python-version }}" | tr -d '.')
+        tox -e py${ENV_SUFFIX}
       env:
           # Set the COVERAGE_FILE environment variable for coverage.py
           COVERAGE_FILE: .coverage.${{ matrix.python-version }}

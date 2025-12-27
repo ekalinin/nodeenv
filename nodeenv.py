@@ -795,6 +795,7 @@ def install_node_wrapped(env_dir, src_dir, args):
                                   src_dir, args)
             else:
                 logger.warning('Failed to download from %s' % node_url)
+                raise
 
     logger.info('.', extra=dict(continued=True))
 

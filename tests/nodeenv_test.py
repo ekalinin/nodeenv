@@ -511,6 +511,436 @@ class TestGetNodeBinUrl:
             assert url == expected
 
 
+class TestInstallNode:
+    """Tests for install_node and install_node_wrapped functions"""
+
+    def test_install_node_wrapped_success(self, tmpdir):
+        """Test successful Node.js installation"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src'
+             ) as mock_download, \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ) as mock_copy, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify download was called
+            mock_download.assert_called_once_with(
+                'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz',
+                src_dir,
+                args
+            )
+
+            # Verify copy was called
+            mock_copy.assert_called_once_with(env_dir, src_dir, '18.0.0')
+
+    def test_install_node_wrapped_from_source(self, tmpdir):
+        """Test Node.js installation from source"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = False
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
+
+        with mock.patch.object(
+                nodeenv, 'get_node_src_url',
+                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz'
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src'
+             ) as mock_download, \
+             mock.patch.object(
+                 nodeenv, 'build_node_from_src'
+             ) as mock_build, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify download was called with source URL
+            mock_download.assert_called_once_with(
+                'https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz',
+                src_dir,
+                args
+            )
+
+            # Verify build was called instead of copy
+            mock_build.assert_called_once_with(
+                env_dir, src_dir, node_src_dir, args
+            )
+
+    def test_install_node_wrapped_arm64_fallback_to_x64(self, tmpdir):
+        """Test arm64 download fallback to x64 when arm64 is not available"""
+        args = mock.Mock()
+        args.node = '16.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
+        x64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-x64.tar.gz'
+
+        # Mock HTTPError for arm64 URL
+        def download_side_effect(url, src_dir, args):
+            if 'arm64' in url:
+                raise nodeenv.urllib2.HTTPError(
+                    url, 404, 'Not Found', {}, None
+                )
+            # x64 download succeeds
+            return None
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value=arm64_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ) as mock_download, \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ) as mock_copy, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.object(nodeenv.logger, 'warning'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify download was called twice: first with arm64, then with x64
+            assert mock_download.call_count == 2
+            calls = mock_download.call_args_list
+            assert 'arm64' in calls[0][0][0]
+            assert 'x64' in calls[1][0][0]
+
+            # Verify copy was called after successful x64 download
+            mock_copy.assert_called_once()
+
+    def test_install_node_wrapped_http_error_non_arm64(self, tmpdir):
+        """Test that HTTPError is re-raised for non-arm64 URLs"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        x64_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+
+        # Mock HTTPError for x64 URL (no arm64 fallback should happen)
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(
+                url, 404, 'Not Found', {}, None
+            )
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value=x64_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ) as mock_download, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.object(nodeenv.logger, 'warning') as mock_warning, \
+             pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify warning was logged
+            mock_warning.assert_called_once()
+            warning_call = mock_warning.call_args[0][0]
+            assert 'Failed to download' in warning_call
+            assert x64_url in warning_call
+
+            # Verify download was called only once (no fallback for x64)
+            mock_download.assert_called_once()
+
+    def test_install_node_wrapped_skips_download_if_exists(self, tmpdir):
+        """Test that download is skipped if node source directory exists"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
+        os.makedirs(node_src_dir)
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src'
+             ) as mock_download, \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ) as mock_copy, \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify download was NOT called
+            mock_download.assert_not_called()
+
+            # Verify copy was still called
+            mock_copy.assert_called_once()
+
+    def test_install_node_restores_newline_on_exception(self, tmpdir):
+        """Test that install_node restores newline on exception"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = True
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+
+        with mock.patch.object(
+                nodeenv, 'install_node_wrapped',
+                side_effect=RuntimeError('Test error')
+        ), \
+             mock.patch.object(nodeenv.logger, 'info') as mock_logger, \
+             pytest.raises(RuntimeError):
+            nodeenv.install_node(env_dir, src_dir, args)
+
+            # Verify that empty string was logged to restore newline
+            calls = [call[0][0] for call in mock_logger.call_args_list]
+            assert '' in calls
+
+    def test_install_node_wrapped_prebuilt_vs_source_urls(self, tmpdir):
+        """Test that correct URL getter is used for prebuilt vs source"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        # Test prebuilt
+        args.prebuilt = True
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value='bin_url'
+        ) as mock_bin_url, \
+             mock.patch.object(
+                 nodeenv, 'get_node_src_url'
+             ) as mock_src_url, \
+             mock.patch.object(
+                 nodeenv, 'download_node_src'
+             ), \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+            mock_bin_url.assert_called_once()
+            mock_src_url.assert_not_called()
+
+        # Test source
+        args.prebuilt = False
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url'
+        ) as mock_bin_url, \
+             mock.patch.object(
+                 nodeenv, 'get_node_src_url',
+                 return_value='src_url'
+             ) as mock_src_url, \
+             mock.patch.object(
+                 nodeenv, 'download_node_src'
+             ), \
+             mock.patch.object(
+                 nodeenv, 'build_node_from_src'
+             ), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+            mock_src_url.assert_called_once()
+            mock_bin_url.assert_not_called()
+
+    def test_install_node_wrapped_arm64_fallback_both_fail(self, tmpdir):
+        """Test that both arm64 and x64 download failures raise exception"""
+        args = mock.Mock()
+        args.node = '16.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
+
+        # Both arm64 and x64 downloads fail
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(
+                url, 404, 'Not Found', {}, None
+            )
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value=arm64_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ) as mock_download, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Both arm64 and x64 should have been tried
+            assert mock_download.call_count == 2
+
+    def test_install_node_wrapped_no_copy_after_download_failure(self, tmpdir):
+        """Test that copy_node_from_prebuilt is not called after download failure"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        x64_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+
+        # Download fails
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(
+                url, 404, 'Not Found', {}, None
+            )
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value=x64_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ), \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ) as mock_copy, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.object(nodeenv.logger, 'warning'), \
+             pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify copy was NOT called after download failure
+            mock_copy.assert_not_called()
+
+    def test_install_node_wrapped_no_build_after_download_failure(self, tmpdir):
+        """Test that build_node_from_src is not called after download failure"""
+        args = mock.Mock()
+        args.node = '18.0.0'
+        args.prebuilt = False
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        src_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz'
+
+        # Download fails
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(
+                url, 404, 'Not Found', {}, None
+            )
+
+        with mock.patch.object(
+                nodeenv, 'get_node_src_url',
+                return_value=src_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ), \
+             mock.patch.object(
+                 nodeenv, 'build_node_from_src'
+             ) as mock_build, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.object(nodeenv.logger, 'warning'), \
+             pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify build was NOT called after download failure
+            mock_build.assert_not_called()
+
+    def test_install_node_wrapped_no_copy_after_arm64_fallback_failure(self, tmpdir):
+        """Test that copy is not called when both arm64 and x64 downloads fail"""
+        args = mock.Mock()
+        args.node = '16.0.0'
+        args.prebuilt = True
+        args.verbose = False
+
+        env_dir = tmpdir.join('env').strpath
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+
+        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
+
+        # Both arm64 and x64 downloads fail
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(
+                url, 404, 'Not Found', {}, None
+            )
+
+        with mock.patch.object(
+                nodeenv, 'get_node_bin_url',
+                return_value=arm64_url
+        ), \
+             mock.patch.object(
+                 nodeenv, 'download_node_src',
+                 side_effect=download_side_effect
+             ) as mock_download, \
+             mock.patch.object(
+                 nodeenv, 'copy_node_from_prebuilt'
+             ) as mock_copy, \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.install_node_wrapped(env_dir, src_dir, args)
+
+            # Verify both attempts were made
+            assert mock_download.call_count == 2
+
+            # Verify copy was NOT called after both download failures
+            mock_copy.assert_not_called()
+
+
 class TestGetEnvDir:
     """Tests for get_env_dir function"""
 

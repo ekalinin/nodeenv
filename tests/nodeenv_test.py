@@ -116,10 +116,25 @@ def test_predeactivate_hook(tmpdir):
     # Throw error if environment directory has no bin path
     with pytest.raises((OSError, IOError)):
         nodeenv.set_predeactivate_hook(tmpdir.strpath)
-    tmpdir.mkdir('bin')
-    nodeenv.set_predeactivate_hook(tmpdir.strpath)
-    p = tmpdir.join('bin').join('predeactivate')
-    assert 'deactivate_node' in p.read()
+
+    if nodeenv.is_WIN:
+        tmpdir.mkdir('Scripts')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        # Check BAT file
+        p_bat = tmpdir.join('Scripts').join('predeactivate.bat')
+        assert p_bat.exists()
+        content_bat = p_bat.read()
+        assert 'deactivate.bat' in content_bat
+        # Check PS1 file
+        p_ps1 = tmpdir.join('Scripts').join('predeactivate.ps1')
+        assert p_ps1.exists()
+        assert 'deactivate' in p_ps1.read()
+    else:
+        tmpdir.mkdir('bin')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        p = tmpdir.join('bin').join('predeactivate')
+        assert 'deactivate_node' in p.read()
+
 
 
 def test_mirror_option():

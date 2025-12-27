@@ -986,7 +986,14 @@ def install_activate(env_dir, args):
 
 
 def set_predeactivate_hook(env_dir):
-    if not is_WIN:
+    if is_WIN:
+        # Windows: create predeactivate.bat for CMD and predeactivate.ps1 for PowerShell
+        with open(join(env_dir, 'Scripts', 'predeactivate.bat'), 'a') as hook:
+            hook.write(PREDEACTIVATE_BAT)
+        with open(join(env_dir, 'Scripts', 'predeactivate.ps1'), 'a') as hook:
+            hook.write(PREDEACTIVATE_PS1)
+    else:
+        # Unix: create predeactivate for bash/sh
         with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
             hook.write(PREDEACTIVATE_SH)
 
@@ -1562,6 +1569,21 @@ end
 
 PREDEACTIVATE_SH = """
 if type -p deactivate_node > /dev/null; then deactivate_node;fi
+"""
+
+PREDEACTIVATE_BAT = """\
+@echo off
+REM Deactivate Node.js environment
+if exist "%NODE_VIRTUAL_ENV%\\Scripts\\deactivate.bat" (
+    call "%NODE_VIRTUAL_ENV%\\Scripts\\deactivate.bat"
+)
+"""
+
+PREDEACTIVATE_PS1 = """\
+# Deactivate Node.js environment
+if (Get-Command deactivate -ErrorAction SilentlyContinue) {
+    deactivate
+}
 """
 
 CYGWIN_NODE = """#!/bin/sh

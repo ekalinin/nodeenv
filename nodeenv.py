@@ -637,7 +637,10 @@ def download_node_src(node_url, src_dir, args):
             for member in members(archive)
             if re.match(rexp_string, member_name(member)) is None
         ]
-        archive.extractall(src_dir, extract_list)
+        if sys.version_info >= (3, 12):
+            archive.extractall(src_dir, extract_list, filter="data")
+        else:
+            archive.extractall(src_dir, extract_list)
 
 
 def urlopen(url):

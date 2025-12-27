@@ -136,7 +136,6 @@ def test_predeactivate_hook(tmpdir):
         assert 'deactivate_node' in p.read()
 
 
-
 def test_mirror_option():
     urls = [('https://npm.taobao.org/mirrors/node',
              'https://npm.taobao.org/mirrors/node/index.json'),
@@ -525,11 +524,13 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
-
+        bin_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0-linux-x64.tar.gz'
+        )
         with mock.patch.object(
                 nodeenv, 'get_node_bin_url',
-                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+                return_value=bin_url
         ), \
              mock.patch.object(
                  nodeenv, 'download_node_src'
@@ -543,7 +544,7 @@ class TestInstallNode:
 
             # Verify download was called
             mock_download.assert_called_once_with(
-                'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz',
+                bin_url,
                 src_dir,
                 args
             )
@@ -564,9 +565,13 @@ class TestInstallNode:
 
         node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
 
+        src_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0.tar.gz'
+        )
         with mock.patch.object(
                 nodeenv, 'get_node_src_url',
-                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz'
+                return_value=src_url
         ), \
              mock.patch.object(
                  nodeenv, 'download_node_src'
@@ -580,7 +585,7 @@ class TestInstallNode:
 
             # Verify download was called with source URL
             mock_download.assert_called_once_with(
-                'https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz',
+                src_url,
                 src_dir,
                 args
             )
@@ -591,7 +596,7 @@ class TestInstallNode:
             )
 
     def test_install_node_wrapped_arm64_fallback_to_x64(self, tmpdir):
-        """Test arm64 download fallback to x64 when arm64 is not available"""
+        """Test arm64 fallback to x64 when arm64 is not available"""
         args = mock.Mock()
         args.node = '16.0.0'
         args.prebuilt = True
@@ -601,8 +606,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
-        x64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-x64.tar.gz'
+        arm64_url = (
+            'https://nodejs.org/download/release/v16.0.0/'
+            'node-v16.0.0-darwin-arm64.tar.gz'
+        )
 
         # Mock HTTPError for arm64 URL
         def download_side_effect(url, src_dir, args):
@@ -649,7 +656,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        x64_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+        x64_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0-linux-x64.tar.gz'
+        )
 
         # Mock HTTPError for x64 URL (no arm64 fallback should happen)
         def download_side_effect(url, src_dir, args):
@@ -681,7 +691,7 @@ class TestInstallNode:
             mock_download.assert_called_once()
 
     def test_install_node_wrapped_skips_download_if_exists(self, tmpdir):
-        """Test that download is skipped if node source directory exists"""
+        """Test that download is skipped if node source dir exists"""
         args = mock.Mock()
         args.node = '18.0.0'
         args.prebuilt = True
@@ -694,9 +704,13 @@ class TestInstallNode:
         node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
         os.makedirs(node_src_dir)
 
+        bin_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0-linux-x64.tar.gz'
+        )
         with mock.patch.object(
                 nodeenv, 'get_node_bin_url',
-                return_value='https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+                return_value=bin_url
         ), \
              mock.patch.object(
                  nodeenv, 'download_node_src'
@@ -787,7 +801,7 @@ class TestInstallNode:
             mock_bin_url.assert_not_called()
 
     def test_install_node_wrapped_arm64_fallback_both_fail(self, tmpdir):
-        """Test that both arm64 and x64 download failures raise exception"""
+        """Test that both arm64 and x64 failures raise exception"""
         args = mock.Mock()
         args.node = '16.0.0'
         args.prebuilt = True
@@ -797,7 +811,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
+        arm64_url = (
+            'https://nodejs.org/download/release/v16.0.0/'
+            'node-v16.0.0-darwin-arm64.tar.gz'
+        )
 
         # Both arm64 and x64 downloads fail
         def download_side_effect(url, src_dir, args):
@@ -821,8 +838,10 @@ class TestInstallNode:
             # Both arm64 and x64 should have been tried
             assert mock_download.call_count == 2
 
-    def test_install_node_wrapped_no_copy_after_download_failure(self, tmpdir):
-        """Test that copy_node_from_prebuilt is not called after download failure"""
+    def test_install_node_wrapped_no_copy_after_download_failure(
+        self, tmpdir
+    ):
+        """Test copy_node_from_prebuilt not called after failure"""
         args = mock.Mock()
         args.node = '18.0.0'
         args.prebuilt = True
@@ -832,7 +851,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        x64_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0-linux-x64.tar.gz'
+        x64_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0-linux-x64.tar.gz'
+        )
 
         # Download fails
         def download_side_effect(url, src_dir, args):
@@ -860,8 +882,10 @@ class TestInstallNode:
             # Verify copy was NOT called after download failure
             mock_copy.assert_not_called()
 
-    def test_install_node_wrapped_no_build_after_download_failure(self, tmpdir):
-        """Test that build_node_from_src is not called after download failure"""
+    def test_install_node_wrapped_no_build_after_download_failure(
+        self, tmpdir
+    ):
+        """Test build_node_from_src not called after failure"""
         args = mock.Mock()
         args.node = '18.0.0'
         args.prebuilt = False
@@ -871,7 +895,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        src_url = 'https://nodejs.org/download/release/v18.0.0/node-v18.0.0.tar.gz'
+        src_url = (
+            'https://nodejs.org/download/release/v18.0.0/'
+            'node-v18.0.0.tar.gz'
+        )
 
         # Download fails
         def download_side_effect(url, src_dir, args):
@@ -899,8 +926,10 @@ class TestInstallNode:
             # Verify build was NOT called after download failure
             mock_build.assert_not_called()
 
-    def test_install_node_wrapped_no_copy_after_arm64_fallback_failure(self, tmpdir):
-        """Test that copy is not called when both arm64 and x64 downloads fail"""
+    def test_install_node_wrapped_no_copy_after_arm64_fallback_failure(
+        self, tmpdir
+    ):
+        """Test copy not called when both arm64 and x64 fail"""
         args = mock.Mock()
         args.node = '16.0.0'
         args.prebuilt = True
@@ -910,7 +939,10 @@ class TestInstallNode:
         src_dir = tmpdir.join('src').strpath
         os.makedirs(src_dir)
 
-        arm64_url = 'https://nodejs.org/download/release/v16.0.0/node-v16.0.0-darwin-arm64.tar.gz'
+        arm64_url = (
+            'https://nodejs.org/download/release/v16.0.0/'
+            'node-v16.0.0-darwin-arm64.tar.gz'
+        )
 
         # Both arm64 and x64 downloads fail
         def download_side_effect(url, src_dir, args):

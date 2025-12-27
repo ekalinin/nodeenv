@@ -988,7 +988,8 @@ def install_activate(env_dir, args):
 
 def set_predeactivate_hook(env_dir):
     if is_WIN:
-        # Windows: create predeactivate.bat for CMD and predeactivate.ps1 for PowerShell
+        # Windows: create predeactivate.bat for CMD and
+        #           predeactivate.ps1 for PowerShell
         with open(join(env_dir, 'Scripts', 'predeactivate.bat'), 'a') as hook:
             hook.write(PREDEACTIVATE_BAT)
         with open(join(env_dir, 'Scripts', 'predeactivate.ps1'), 'a') as hook:

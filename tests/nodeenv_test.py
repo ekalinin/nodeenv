@@ -244,6 +244,7 @@ class TestGetNodeBinUrl:
             ('x86_64', 'x64'),
             ('amd64', 'x64'),
             ('AMD64', 'x64'),
+            ('i86pc', 'x64'),
             ('armv6l', 'armv6l'),
             ('armv7l', 'armv7l'),
             ('armv8l', 'armv7l'),

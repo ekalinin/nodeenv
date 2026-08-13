@@ -6,11 +6,13 @@ if sys.version_info < (3, 3):
     from pipes import quote as _quote
 else:
     from shlex import quote as _quote
+import io
 import os.path
 import subprocess
 import sys
 import sysconfig
 import platform
+import zipfile
 
 try:
     from unittest import mock
@@ -199,6 +201,54 @@ def test__download_node_file():
                 n_attempt=5
             )
         assert m_urlopen.call_count == 5
+
+
+def _zip_with_node(node_version):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w') as zf:
+        zf.writestr('node-v%s-win-x64/README.md' % node_version, 'readme')
+        zf.writestr('node-v%s-win-x64/node.exe' % node_version, 'binary')
+    return io.BytesIO(buf.getvalue())
+
+
+def test_download_node_src_zip(tmpdir):
+    """On Windows the archive is a zip, which has no extractall(filter=...)"""
+    class args:
+        node = '22.14.0'
+
+    with mock.patch.object(nodeenv, 'is_WIN', True), \
+            mock.patch.object(nodeenv, '_download_node_file',
+                              return_value=_zip_with_node(args.node)):
+        nodeenv.download_node_src('https://dummy/node.zip',
+                                  tmpdir.strpath, args)
+
+    node_dir = os.path.join(tmpdir.strpath, 'node-v22.14.0-win-x64')
+    assert os.path.exists(os.path.join(node_dir, 'node.exe'))
+    # docs are excluded from the extract list
+    assert not os.path.exists(os.path.join(node_dir, 'README.md'))
+
+
+def test_download_node_src_tar_keeps_data_filter(tmpdir):
+    """The tar path must keep filter='data' (CVE-2007-4559 protection)"""
+    class args:
+        node = '22.14.0'
+
+    archive = mock.MagicMock()
+    archive.__enter__.return_value = archive
+    archive.getmembers.return_value = []
+    with mock.patch.object(nodeenv, 'is_WIN', False), \
+            mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+            mock.patch.object(nodeenv, 'tarfile_open', return_value=archive), \
+            mock.patch.object(nodeenv, '_download_node_file',
+                              return_value=io.BytesIO(b'')):
+        nodeenv.download_node_src('https://dummy/node.tar.gz',
+                                  tmpdir.strpath, args)
+
+    if sys.version_info >= (3, 12):
+        archive.extractall.assert_called_once_with(
+            tmpdir.strpath, [], filter="data")
+    else:
+        archive.extractall.assert_called_once_with(tmpdir.strpath, [])
 
 
 def test_parse_version():

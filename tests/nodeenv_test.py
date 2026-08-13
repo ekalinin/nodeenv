@@ -35,10 +35,17 @@ def test_smoke(tmpdir):
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
     assert os.path.exists(nenv_path)
-    activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
-    subprocess.check_call([
-        'sh', '-c', '. {} && node --version'.format(activate),
-    ])
+    if sys.platform == 'win32':
+        # on Windows nodeenv installs into Scripts/ and provides
+        # activate.bat/Activate.ps1, there is no posix activate script
+        subprocess.check_call([
+            os.path.join(nenv_path, 'Scripts', 'node.exe'), '--version',
+        ])
+    else:
+        activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
+        subprocess.check_call([
+            'sh', '-c', '. {} && node --version'.format(activate),
+        ])
 
 
 @pytest.mark.integration

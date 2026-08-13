@@ -199,6 +199,12 @@ def test_get_lts_node_version_riscv64():
     assert nodeenv.get_last_lts_node_version() == '12.13.1'
 
 
+@pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
+def test_get_last_node_version_writes_nothing_to_stdout(capsys):
+    nodeenv.get_last_stable_node_version()
+    assert capsys.readouterr().out == ''
+
+
 def test__download_node_file():
     with mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
         m_urlopen.side_effect = IncompleteRead("dummy")

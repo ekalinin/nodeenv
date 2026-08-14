@@ -1673,3 +1673,7 @@ class TestCertifi:
             assert nodeenv.make_certifi_context() is None
 
         assert 'certifi is not installed' in m_warning.call_args[0][0]
+
+    def test_with_certifi_is_configurable(self):
+        """with_certifi can be set from the config file, like other options"""
+        assert 'with_certifi' in nodeenv.Config._default

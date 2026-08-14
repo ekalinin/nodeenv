@@ -104,6 +104,7 @@ class Config(object):
     make = 'make'
     prebuilt = True
     ignore_ssl_certs = False
+    with_certifi = False
     mirror = None
 
     @classmethod
@@ -373,7 +374,7 @@ def make_parser():
 
     parser.add_argument(
         '--with-certifi', dest='with_certifi',
-        action='store_true', default=False,
+        action='store_true', default=Config.with_certifi,
         help='Use the certifi certificate bundle for package downloads, '
         'if certifi is installed. Ignored with --ignore_ssl_certs.')
 

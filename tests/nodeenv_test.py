@@ -346,6 +346,40 @@ def test_is_exact_version(spec, expected):
     assert nodeenv._is_exact_version(spec) is expected
 
 
+@pytest.mark.parametrize(
+    ('spec', 'version', 'expected'),
+    (
+        ('^4.3.1', (4, 3, 1), True),
+        ('^4.3.1', (4, 9, 1), True),
+        ('^4.3.1', (4, 3, 0), False),
+        ('^4.3.1', (5, 0, 0), False),
+        ('~4.3.1', (4, 3, 9), True),
+        ('~4.3.1', (4, 4, 0), False),
+        ('4.x', (4, 0, 0), True),
+        ('4.x', (3, 9, 9), False),
+        ('*', (0, 1, 14), True),
+        ('>=20 <22', (21, 5, 0), True),
+        ('>=20 <22', (22, 0, 0), False),
+        ('>=20 <22', (19, 9, 9), False),
+        ('8 || 10', (8, 1, 0), True),
+        ('8 || 10', (10, 1, 0), True),
+        ('8 || 10', (9, 1, 0), False),
+        ('4 - 6', (6, 17, 1), True),
+        ('4 - 6', (7, 0, 0), False),
+        ('4.3.1 - 6.2.0', (6, 2, 0), True),
+        ('4.3.1 - 6.2.0', (6, 2, 1), False),
+        ('>4.3', (4, 4, 0), True),
+        ('>4.3', (4, 3, 9), False),
+        ('22', (22, 0, 0), True),
+        # a two-part version tuple is padded before comparing
+        ('~4.3', (4, 3), True),
+    ),
+)
+def test_match_node_range(spec, version, expected):
+    ranges = nodeenv.parse_node_range(spec)
+    assert nodeenv.match_node_range(version, ranges) is expected
+
+
 def test_clear_output():
     assert nodeenv.clear_output(
         bytes('some \ntext', 'utf-8')) == 'some text'

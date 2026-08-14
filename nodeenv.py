@@ -331,6 +331,17 @@ def parse_node_range(spec):
     return ranges
 
 
+def match_node_range(version, ranges):
+    """
+    Check that a version tuple satisfies any of the parsed alternatives
+    """
+    version = _pad_version(version)
+    return any(
+        all(_OPERATORS[op](version, other) for op, other in constraints)
+        for constraints in ranges
+    )
+
+
 def node_version_from_args(args):
     """
     Parse the node version from the argparse args

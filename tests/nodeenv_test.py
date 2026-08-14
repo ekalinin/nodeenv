@@ -12,6 +12,7 @@ import subprocess
 import sys
 import sysconfig
 import platform
+import ssl
 import zipfile
 
 try:
@@ -1619,3 +1620,56 @@ class TestInstallNpmWin:
 
             # Verify extraction
             mock_zip.extractall.assert_called_once_with(src_dir)
+
+
+class TestCertifi:
+    """Tests for the --with-certifi option"""
+
+    def test_urlopen_without_certifi(self):
+        """No SSL context is passed when certifi is not in use"""
+        with mock.patch.object(nodeenv, 'ignore_ssl_certs', False), \
+             mock.patch.object(nodeenv, 'certifi_context', None), \
+             mock.patch.object(nodeenv.urllib2, 'urlopen') as m_urlopen:
+            nodeenv.urlopen('https://nodejs.org/dist/index.json')
+
+        assert m_urlopen.call_args[1] == {}
+
+    def test_urlopen_with_certifi(self):
+        """The context built by main() is reused for every download"""
+        with mock.patch.object(nodeenv, 'ignore_ssl_certs', False), \
+             mock.patch.object(nodeenv, 'certifi_context',
+                               mock.sentinel.certifi_context), \
+             mock.patch.object(nodeenv.urllib2, 'urlopen') as m_urlopen:
+            nodeenv.urlopen('https://nodejs.org/dist/index.json')
+
+        context = m_urlopen.call_args[1]['context']
+        assert context is mock.sentinel.certifi_context
+
+    def test_urlopen_ignore_ssl_certs_wins(self):
+        """--ignore_ssl_certs takes precedence over --with-certifi"""
+        with mock.patch.object(nodeenv, 'ignore_ssl_certs', True), \
+             mock.patch.object(nodeenv, 'certifi_context',
+                               mock.sentinel.certifi_context), \
+             mock.patch.object(nodeenv.urllib2, 'urlopen') as m_urlopen:
+            nodeenv.urlopen('https://nodejs.org/dist/index.json')
+
+        assert m_urlopen.call_args[1]['context'].verify_mode == ssl.CERT_NONE
+
+    def test_make_certifi_context(self):
+        certifi = mock.Mock()
+        certifi.where.return_value = '/path/to/cacert.pem'
+
+        with mock.patch.dict(sys.modules, {'certifi': certifi}), \
+             mock.patch.object(nodeenv.ssl,
+                               'create_default_context') as m_context:
+            assert nodeenv.make_certifi_context() is m_context.return_value
+
+        m_context.assert_called_once_with(cafile='/path/to/cacert.pem')
+
+    def test_make_certifi_context_without_certifi(self):
+        """A missing certifi is reported instead of silently ignored"""
+        with mock.patch.dict(sys.modules, {'certifi': None}), \
+             mock.patch.object(nodeenv.logger, 'warning') as m_warning:
+            assert nodeenv.make_certifi_context() is None
+
+        assert 'certifi is not installed' in m_warning.call_args[0][0]

@@ -59,7 +59,9 @@ is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith(('CYGWIN', 'MSYS'))
 
 ignore_ssl_certs = False
-use_certifi = False
+# SSL context backed by the certifi bundle, built once by main()
+# when --with-certifi is given and certifi is importable
+certifi_context = None
 
 # ---------------------------------------------------------
 # Utils
@@ -372,7 +374,8 @@ def make_parser():
     parser.add_argument(
         '--with-certifi', dest='with_certifi',
         action='store_true', default=False,
-        help='Use certifi certificate bundle if available')
+        help='Use the certifi certificate bundle for package downloads, '
+        'if certifi is installed. Ignored with --ignore_ssl_certs.')
 
     parser.add_argument(
         metavar='DEST_DIR', dest='env_dir', nargs='?',
@@ -650,6 +653,24 @@ def download_node_src(node_url, src_dir, args):
             archive.extractall(src_dir, extract_list)
 
 
+def make_certifi_context():
+    """
+    Build an SSL context backed by the certifi bundle.
+
+    Returns None if certifi is not installed, so that downloads keep
+    using the system certificate store.
+    """
+    try:
+        import certifi
+    except ImportError:
+        logger.warning(
+            'certifi is not installed, --with-certifi is ignored: '
+            'falling back to the system certificate store')
+        return None
+
+    return ssl.create_default_context(cafile=certifi.where())
+
+
 def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
@@ -661,17 +682,10 @@ def urlopen(url):
         context.verify_mode = ssl.CERT_NONE
         return urllib2.urlopen(req, context=context)
 
-    # Use certifi certificates if available and requested
-    if use_certifi:
-        try:
-            import certifi
-            context = ssl.create_default_context(cafile=certifi.where())
-            return urllib2.urlopen(req, context=context)
-        except ImportError:
-            # Fall back to default behavior if certifi is not available
-            pass
+    # Use certifi certificates if they were requested and are available
+    if certifi_context is not None:
+        return urllib2.urlopen(req, context=certifi_context)
 
-    # Default behavior without certifi
     return urllib2.urlopen(req)
 
 # ---------------------------------------------------------
@@ -1150,10 +1164,11 @@ def main():
 
     global src_base_url
     global ignore_ssl_certs
-    global use_certifi
+    global certifi_context
 
     ignore_ssl_certs = args.ignore_ssl_certs
-    use_certifi = args.with_certifi
+    if args.with_certifi and not ignore_ssl_certs:
+        certifi_context = make_certifi_context()
 
     src_domain = None
     if args.mirror:

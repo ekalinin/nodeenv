@@ -5,6 +5,8 @@ Version [unreleased]
 --------------------
 
 - Added check for how `activate` is called.
+- Added `--with-certifi` to download packages with the certifi certificate
+  bundle `#388 <https://github.com/ekalinin/nodeenv/pull/388>`_
 
 Version 1.3.1
 -------------

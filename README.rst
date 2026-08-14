@@ -330,6 +330,16 @@ Other options
 ``--ignore_ssl_certs``
     Ignore SSL certificates for package downloads. **UNSAFE - use at your own risk**.
 
+``--with-certifi``
+    Use the `certifi <https://pypi.org/project/certifi/>`_ certificate bundle for
+    package downloads instead of the system certificate store. Useful when the
+    system store is missing or outdated. If certifi is not installed, a warning is
+    printed and the system store is used. Ignored when ``--ignore_ssl_certs`` is
+    given. The same result can be achieved without this option by pointing
+    ``SSL_CERT_FILE`` at the bundle::
+
+        $ SSL_CERT_FILE=$(python -c 'import certifi; print(certifi.where())') nodeenv env
+
 ``--version``
     Show program version and exit.
 
@@ -351,6 +361,7 @@ These are the available options and their defaults::
     make = 'make'
     prebuilt = True
     ignore_ssl_certs = False
+    with_certifi = False
     mirror = None
 
 Alternatives

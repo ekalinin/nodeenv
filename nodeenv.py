@@ -1215,6 +1215,18 @@ def print_node_versions():
         logger.info('\t'.join(chunk))
 
 
+def _has_platform_build(version_entry):
+    """
+    Check that the version ships a prebuilt package for the host platform
+    """
+    if is_x86_64_musl() and "linux-x64-musl" not in version_entry['files']:
+        return False
+    elif is_riscv64() and "linux-riscv64" not in version_entry['files']:
+        return False
+
+    return True
+
+
 def _get_last_node_version(lts=False):
     """
     Return last node.js version matching the filter
@@ -1227,12 +1239,7 @@ def _get_last_node_version(lts=False):
         if lts and not v['lts']:
             return False
 
-        if is_x86_64_musl() and "linux-x64-musl" not in v['files']:
-            return False
-        elif is_riscv64() and "linux-riscv64" not in v['files']:
-            return False
-
-        return True
+        return _has_platform_build(v)
 
     return next((v['version'].lstrip('v')
                  for v in _get_versions_json() if version_filter(v)), None)
@@ -1250,6 +1257,32 @@ def get_last_lts_node_version():
     Return the last node.js version marked as LTS
     """
     return _get_last_node_version(lts=True)
+
+
+def resolve_node_version(spec):
+    """
+    Resolve a semver range to the highest matching node.js version
+
+    Strings that are not a valid range are returned unchanged, so custom
+    and nightly version strings keep working.
+    """
+    ranges = parse_node_range(spec)
+    if ranges is None:
+        return spec
+
+    matched = []
+    for version_entry in _get_versions_json():
+        if not _has_platform_build(version_entry):
+            continue
+        version = _pad_version(parse_version(version_entry['version']))
+        if match_node_range(version, ranges):
+            matched.append(version)
+
+    if not matched:
+        logger.error("No available node.js version matches '%s'" % spec)
+        sys.exit(1)
+
+    return '.'.join(str(part) for part in max(matched))
 
 
 def get_env_dir(args):

@@ -403,6 +403,9 @@ def make_parser():
         help='The node.js version to use, e.g., '
         '--node=0.4.3 will use the node-v0.4.3 '
         'to create the new environment. '
+        'Accepts npm-style semver ranges too, e.g. --node=22, '
+        '--node=4.x or --node="^4.3.1", resolved to the highest '
+        'matching release. '
         'The default is last stable version (`latest`). '
         'Use `lts` to use the latest LTS release. '
         'Use `system` to use system-wide node.')
@@ -1346,6 +1349,11 @@ def main():
         args.node = get_last_stable_node_version()
     elif args.node.lower() == 'lts':
         args.node = get_last_lts_node_version()
+    elif args.node.lower() != 'system' and not _is_exact_version(args.node):
+        resolved = resolve_node_version(args.node)
+        if resolved != args.node:
+            logger.info(" * Resolved '%s' to %s" % (args.node, resolved))
+        args.node = resolved
 
     if args.list:
         print_node_versions()

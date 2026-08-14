@@ -449,6 +449,45 @@ def test_has_platform_build_riscv64():
     assert nodeenv._has_platform_build({'files': ['linux-riscv64']}) is True
 
 
+def _run_main_resolving(argv):
+    """
+    Run main() far enough to resolve args.node, then stop
+    """
+    with mock.patch.object(sys, 'argv', ['nodeenv'] + argv):
+        with mock.patch.object(
+                nodeenv, 'create_environment') as create_environment:
+            nodeenv.main()
+    assert create_environment.call_count == 1
+    return create_environment.call_args[0][1].node
+
+
+@pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
+def test_main_resolves_range():
+    assert _run_main_resolving(['--node', '4.x', 'env']) == '4.9.1'
+
+
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_keeps_exact_version_without_network():
+    with mock.patch.object(nodeenv, 'urlopen') as mck:
+        assert _run_main_resolving(['--node', '22.11.0', 'env']) == '22.11.0'
+    assert mck.call_count == 0
+
+
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_keeps_unparseable_version_without_network():
+    version = '23.0.0-nightly20240101abcdef'
+    with mock.patch.object(nodeenv, 'urlopen') as mck:
+        assert _run_main_resolving(['--node', version, 'env']) == version
+    assert mck.call_count == 0
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_main_keeps_system_without_network():
+    with mock.patch.object(nodeenv, 'urlopen') as mck:
+        assert _run_main_resolving(['--node', 'system', 'env']) == 'system'
+    assert mck.call_count == 0
+
+
 def test_clear_output():
     assert nodeenv.clear_output(
         bytes('some \ntext', 'utf-8')) == 'some text'

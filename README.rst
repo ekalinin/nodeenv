@@ -141,6 +141,17 @@ Install node.js from a mirror::
 
     $ nodeenv --node=10.19.0 --mirror=https://npm.taobao.org/mirrors/node
 
+Install the highest node.js release matching a version range::
+
+    $ nodeenv --node=22 env-22
+    $ nodeenv --node=4.x env-4
+    $ nodeenv --node="^4.3.1" env-4.3
+    $ nodeenv --node=">=20 <22" env-20
+
+Ranges use `npm semver syntax`_ and also work in a ``.node-version`` file.
+
+.. _npm semver syntax: https://docs.npmjs.com/cli/v10/using-npm/semver
+
 It's much faster to install from the prebuilt package than Install & compile
 node.js from source::
 
@@ -242,9 +253,12 @@ Basic options
 ^^^^^^^^^^^^^
 
 ``-n NODE_VER, --node=NODE_VER``
-    The node.js version to use, e.g., ``--node=22.11.0``. The default is the
-    last stable version (``latest``). Use ``lts`` for the latest LTS release.
-    Use ``system`` to use system-wide node.
+    The node.js version to use, e.g., ``--node=22.11.0``. Also accepts an
+    npm-style semver range, which is resolved to the highest matching
+    release: ``--node=22``, ``--node=4.x``, ``--node="^4.3.1"``,
+    ``--node="~4.3"``, ``--node=">=20 <22"``, ``--node="8 || 10"``.
+    The default is the last stable version (``latest``). Use ``lts`` for the
+    latest LTS release. Use ``system`` to use system-wide node.
 
 ``-l, --list``
     Lists available node.js versions.

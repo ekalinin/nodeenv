@@ -173,7 +173,9 @@ def remove_env_bin_from_path(env, env_bin_dir):
     """
     Remove bin directory of the current environment from PATH
     """
-    return env.replace(env_bin_dir + ':', '')
+    env_bin_dir = os.path.realpath(env_bin_dir)
+    return ':'.join(
+        p for p in env.split(':') if os.path.realpath(p) != env_bin_dir)
 
 
 def find_system_node(env_bin_dir):

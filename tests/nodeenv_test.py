@@ -612,10 +612,32 @@ def test_clear_output():
         bytes('some \ntext', 'utf-8')) == 'some text'
 
 
-def test_remove_env_bin_from_path():
-    assert (nodeenv.remove_env_bin_from_path(
-        '//home://home/env/bin://home/bin', '//home/env/bin')
-            == '//home://home/bin')
+@pytest.mark.parametrize(
+    ('path', 'env_bin_dir', 'expected'),
+    (
+        ('//home://home/env/bin://home/bin', '//home/env/bin',
+         '//home://home/bin'),
+        ('/usr/bin:/x/env/bin', '/x/env/bin', '/usr/bin'),
+        ('/x/env/bin', '/x/env/bin', ''),
+    ),
+)
+def test_remove_env_bin_from_path(path, env_bin_dir, expected):
+    assert nodeenv.remove_env_bin_from_path(path, env_bin_dir) == expected
+
+
+def test_remove_env_bin_from_path_relative_env_dir():
+    abs_bin_dir = os.path.join(os.getcwd(), 'env', 'bin')
+    assert nodeenv.remove_env_bin_from_path(
+        abs_bin_dir + ':/usr/bin', 'env/bin') == '/usr/bin'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='symlinks need privileges on win32')
+def test_remove_env_bin_from_path_symlinked_env_dir(tmpdir):
+    real_bin_dir = tmpdir.mkdir('real').mkdir('bin')
+    os.symlink(str(tmpdir.join('real')), str(tmpdir.join('link')))
+    assert nodeenv.remove_env_bin_from_path(
+        str(tmpdir.join('link', 'bin')) + ':/usr/bin',
+        str(real_bin_dir)) == '/usr/bin'
 
 
 @pytest.mark.parametrize(

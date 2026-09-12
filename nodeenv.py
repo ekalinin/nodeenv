@@ -178,12 +178,14 @@ def remove_env_bin_from_path(env, env_bin_dir):
         p for p in env.split(':') if os.path.realpath(p) != env_bin_dir)
 
 
-def find_system_node(env_bin_dir):
+def find_system_node(env_bin_dir=None):
     """
     Find system-wide nodejs or node in PATH, ignoring the environment
-    bin directory
+    bin directory when it is given
     """
-    path_var = remove_env_bin_from_path(os.environ['PATH'], env_bin_dir)
+    path_var = os.environ['PATH']
+    if env_bin_dir is not None:
+        path_var = remove_env_bin_from_path(path_var, env_bin_dir)
     for candidate in ("nodejs", "node"):
         found = shutil.which(candidate, path=path_var)
         if found is not None:
@@ -367,8 +369,9 @@ def node_version_from_args(args):
     Parse the node version from the argparse args
     """
     if args.node == 'system':
+        node_bin = find_system_node() or 'node'
         out, err = subprocess.Popen(
-            ["node", "--version"], stdout=subprocess.PIPE).communicate()
+            [node_bin, "--version"], stdout=subprocess.PIPE).communicate()
         return parse_version(clear_output(out))
 
     return parse_version(args.node)

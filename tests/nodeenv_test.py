@@ -522,6 +522,38 @@ def test_find_system_node_skips_env_bin_dir():
     assert m_which.call_args[1]['path'] == '/usr/bin'
 
 
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_find_system_node_without_env_bin_dir_keeps_path():
+    with mock.patch.dict(os.environ, {'PATH': '/env/bin:/usr/bin'}), \
+         mock.patch('shutil.which', return_value='/usr/bin/node') as m_which:
+        assert nodeenv.find_system_node() == '/usr/bin/node'
+
+    assert m_which.call_args[1]['path'] == '/env/bin:/usr/bin'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_node_version_from_args_system_uses_found_executable():
+    args = mock.Mock(node='system')
+    with mock.patch.object(nodeenv, 'find_system_node',
+                           return_value='/usr/bin/nodejs'), \
+         mock.patch.object(nodeenv.subprocess, 'Popen') as m_popen:
+        m_popen.return_value.communicate.return_value = (b'v22.11.0\n', b'')
+        assert nodeenv.node_version_from_args(args) == (22, 11, 0)
+
+    assert m_popen.call_args[0][0] == ['/usr/bin/nodejs', '--version']
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_node_version_from_args_system_falls_back_to_node():
+    args = mock.Mock(node='system')
+    with mock.patch.object(nodeenv, 'find_system_node', return_value=None), \
+         mock.patch.object(nodeenv.subprocess, 'Popen') as m_popen:
+        m_popen.return_value.communicate.return_value = (b'v22.11.0\n', b'')
+        nodeenv.node_version_from_args(args)
+
+    assert m_popen.call_args[0][0] == ['node', '--version']
+
+
 def test_prefer_system_default():
     assert nodeenv.Config._default['prefer_system'] is False
 

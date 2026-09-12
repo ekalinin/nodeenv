@@ -522,6 +522,80 @@ def test_find_system_node_skips_env_bin_dir():
     assert m_which.call_args[1]['path'] == '/usr/bin'
 
 
+def test_prefer_system_default():
+    assert nodeenv.Config._default['prefer_system'] is False
+
+
+def test_prefer_system_is_configurable(tmpdir):
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nprefer_system = true\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.prefer_system is True
+    finally:
+        nodeenv.Config.prefer_system = False
+
+
+def test_parse_args_prefer_system():
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--prefer-system', 'env']):
+        assert nodeenv.parse_args().prefer_system is True
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().prefer_system is False
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_prefer_system_uses_system_node(cap_logging_info):
+    with mock.patch('shutil.which', return_value='/usr/bin/node'), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
+        assert _run_main_resolving(['--prefer-system', 'env']) == 'system'
+    assert m_urlopen.call_count == 0
+    cap_logging_info.assert_any_call(' * Using system node: /usr/bin/node')
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_prefer_system_installs_when_missing(cap_logging_info):
+    with mock.patch('shutil.which', return_value=None), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
+        assert _run_main_resolving(
+            ['--prefer-system', '--node', '22.11.0', 'env']) == '22.11.0'
+    assert m_urlopen.call_count == 0
+    cap_logging_info.assert_any_call(
+        ' * System node not found, installing 22.11.0')
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+@pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
+def test_main_prefer_system_resolves_range_when_missing():
+    with mock.patch('shutil.which', return_value=None):
+        assert _run_main_resolving(
+            ['--prefer-system', '--node', '4.x', 'env']) == '4.9.1'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_main_prefer_system_keeps_explicit_system():
+    with mock.patch('shutil.which', return_value=None), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
+        assert _run_main_resolving(
+            ['--prefer-system', '--node', 'system', 'env']) == 'system'
+    assert m_urlopen.call_count == 0
+
+
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_prefer_system_ignored_on_windows():
+    with mock.patch.object(nodeenv, 'is_WIN', True), \
+         mock.patch('shutil.which', return_value='/usr/bin/node'), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen, \
+         mock.patch.object(nodeenv.logger, 'warning') as m_warning:
+        assert _run_main_resolving(
+            ['--prefer-system', '--node', '22.11.0', 'env']) == '22.11.0'
+    assert m_urlopen.call_count == 0
+    assert '--prefer-system is not supported on win32' in \
+        m_warning.call_args[0][0]
+
+
 def test_clear_output():
     assert nodeenv.clear_output(
         bytes('some \ntext', 'utf-8')) == 'some text'

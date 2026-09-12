@@ -596,6 +596,17 @@ def test_main_prefer_system_ignored_on_windows():
         m_warning.call_args[0][0]
 
 
+def test_main_prefer_system_ignored_with_list():
+    with mock.patch.object(
+            sys, 'argv',
+            ['nodeenv', '--prefer-system', '--node', '22.11.0', '--list']), \
+         mock.patch('shutil.which', return_value='/usr/bin/node') as m_which, \
+         mock.patch.object(nodeenv, 'print_node_versions') as m_list:
+        nodeenv.main()
+    assert m_list.call_count == 1
+    assert m_which.call_count == 0
+
+
 def test_clear_output():
     assert nodeenv.clear_output(
         bytes('some \ntext', 'utf-8')) == 'some text'

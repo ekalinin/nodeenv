@@ -1397,6 +1397,8 @@ def main():
     if src_base_url is None:
         src_base_url = 'https://%s/download/release' % src_domain
 
+    # Decide on the system node before any version resolution, so that
+    # a found system node never triggers a request for index.json
     if args.prefer_system and not args.list and \
             args.node.lower() != 'system':
         if is_WIN:
@@ -1409,7 +1411,7 @@ def main():
                 args.node = 'system'
             else:
                 logger.info(' * System node not found, installing %s'
-                            % args.node)
+                            % (args.node or 'latest'))
 
     if not args.node or args.node.lower() == 'latest':
         args.node = get_last_stable_node_version()

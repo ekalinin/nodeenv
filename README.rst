@@ -173,6 +173,11 @@ Create a new environment with the system-wide node.js::
 
     $ nodeenv --node=system
 
+Use the system-wide node.js if it is available, otherwise install the latest
+LTS release::
+
+    $ nodeenv --prefer-system --node=lts env
+
 Saving the versions of all installed packages to a file::
 
     $ . env-4.3/bin/activate
@@ -259,6 +264,12 @@ Basic options
     ``--node="~4.3"``, ``--node=">=20 <22"``, ``--node="8 || 10"``.
     The default is the last stable version (``latest``). Use ``lts`` for the
     latest LTS release. Use ``system`` to use system-wide node.
+
+``--prefer-system``
+    Use the system-wide node.js if ``nodejs`` or ``node`` is found in
+    ``PATH``, otherwise install the version given by ``--node``. Set
+    ``prefer_system = True`` in ``~/.nodeenvrc`` to make this the default.
+    Ignored on Windows, where system-wide node.js is not supported.
 
 ``-l, --list``
     Lists available node.js versions.
@@ -377,6 +388,7 @@ These are the available options and their defaults::
     ignore_ssl_certs = False
     with_certifi = False
     mirror = None
+    prefer_system = False
 
 Alternatives
 ------------

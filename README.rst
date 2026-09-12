@@ -267,9 +267,11 @@ Basic options
 
 ``--prefer-system``
     Use the system-wide node.js if ``nodejs`` or ``node`` is found in
-    ``PATH``, otherwise install the version given by ``--node``. Set
-    ``prefer_system = True`` in ``~/.nodeenvrc`` to make this the default.
-    Ignored on Windows, where system-wide node.js is not supported.
+    ``PATH``, otherwise install the version given by ``--node``. A found
+    system node is used as is, its version is not checked against
+    ``--node``. Set ``prefer_system = True`` in ``~/.nodeenvrc`` to make
+    this the default. Ignored on Windows, where system-wide node.js is not
+    supported.
 
 ``-l, --list``
     Lists available node.js versions.

@@ -489,6 +489,39 @@ def test_main_keeps_system_without_network():
     assert mck.call_count == 0
 
 
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_find_system_node_prefers_nodejs():
+    def fake_which(cmd, path=None):
+        return {'nodejs': '/usr/bin/nodejs', 'node': '/usr/bin/node'}[cmd]
+
+    with mock.patch('shutil.which', side_effect=fake_which):
+        assert nodeenv.find_system_node('/env/bin') == '/usr/bin/nodejs'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_find_system_node_falls_back_to_node():
+    def fake_which(cmd, path=None):
+        return {'nodejs': None, 'node': '/usr/bin/node'}[cmd]
+
+    with mock.patch('shutil.which', side_effect=fake_which):
+        assert nodeenv.find_system_node('/env/bin') == '/usr/bin/node'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_find_system_node_not_found():
+    with mock.patch('shutil.which', return_value=None):
+        assert nodeenv.find_system_node('/env/bin') is None
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
+def test_find_system_node_skips_env_bin_dir():
+    with mock.patch.dict(os.environ, {'PATH': '/env/bin:/usr/bin'}), \
+         mock.patch('shutil.which', return_value='/usr/bin/node') as m_which:
+        nodeenv.find_system_node('/env/bin')
+
+    assert m_which.call_args[1]['path'] == '/usr/bin'
+
+
 def test_clear_output():
     assert nodeenv.clear_output(
         bytes('some \ntext', 'utf-8')) == 'some text'

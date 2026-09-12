@@ -175,6 +175,19 @@ def remove_env_bin_from_path(env, env_bin_dir):
     return env.replace(env_bin_dir + ':', '')
 
 
+def find_system_node(env_bin_dir):
+    """
+    Find system-wide nodejs or node in PATH, ignoring the environment
+    bin directory
+    """
+    path_var = remove_env_bin_from_path(os.environ['PATH'], env_bin_dir)
+    for candidate in ("nodejs", "node"):
+        found = shutil.which(candidate, path=path_var)
+        if found is not None:
+            return found
+    return None
+
+
 def parse_version(version_str):
     """
     Parse version string to a tuple of integer parts
@@ -1136,11 +1149,7 @@ def install_activate(env_dir, args):
     prompt = args.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
     if args.node == "system":
-        path_var = remove_env_bin_from_path(os.environ['PATH'], bin_dir)
-        for candidate in ("nodejs", "node"):
-            shim_node = shutil.which(candidate, path=path_var)
-            if shim_node is not None:
-                break
+        shim_node = find_system_node(bin_dir)
         assert shim_node, "Did not find nodejs or node system executable"
 
     for name, content in files.items():

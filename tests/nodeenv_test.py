@@ -657,6 +657,7 @@ def test_remove_env_bin_from_path(path, env_bin_dir, expected):
     assert nodeenv.remove_env_bin_from_path(path, env_bin_dir) == expected
 
 
+@pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
 def test_remove_env_bin_from_path_relative_env_dir():
     abs_bin_dir = os.path.join(os.getcwd(), 'env', 'bin')
     assert nodeenv.remove_env_bin_from_path(

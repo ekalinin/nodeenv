@@ -379,3 +379,46 @@ def test_isolate_npm_fish_content(tmpdir):
     for var in ISOLATED_NPM_VARS:
         assert 'set -gx _OLD_%s $%s' % (var, var) in content
         assert 'set -e %s' % var in content
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='--isolate-npm is POSIX only')
+def test_isolate_npm_shim_content(tmpdir):
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--isolate-npm', str(tmpdir)]):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+
+    content = bin_dir.join('shim').read()
+    env_dir = str(tmpdir)
+    assert "export npm_config_cache='%s/.npm'" % env_dir in content
+    assert "export npm_config_userconfig='%s/.npmrc'" % env_dir in content
+    assert "export npm_config_init_module='%s/.npm-init.js'" % env_dir \
+        in content
+    # the exports must come before exec, otherwise node never sees them
+    assert content.index('npm_config_cache') < content.index('exec ')
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='system node is POSIX only')
+def test_isolate_npm_node_system_shim_exports(tmpdir):
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+
+    # A fake system node that prints the three isolated npm variables
+    fake_node = tmpdir.join('fake-node')
+    fake_node.write('#!/bin/sh\n%s\n' % _npm_isolation_report())
+    fake_node.chmod(0o755)
+
+    with mock.patch.object(
+            sys, 'argv',
+            ['nodeenv', '--isolate-npm', '--node=system', str(tmpdir)]):
+        with mock.patch('shutil.which', return_value=str(fake_node)):
+            opts = nodeenv.parse_args()
+            nodeenv.install_activate(str(tmpdir), opts)
+
+    out = subprocess.check_output([str(bin_dir.join('node'))])
+    env_dir = str(tmpdir)
+    assert out.decode('utf-8').strip() == '|'.join((
+        env_dir + '/.npm', env_dir + '/.npmrc', env_dir + '/.npm-init.js'))

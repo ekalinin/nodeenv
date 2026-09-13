@@ -1506,7 +1506,14 @@ if set -q npm_config_init_module
 end
 set -gx npm_config_init_module "$NODE_VIRTUAL_ENV/.npm-init.js"
 """,
+    'shim': """
+export npm_config_cache='__NODE_VIRTUAL_ENV__/.npm'
+export npm_config_userconfig='__NODE_VIRTUAL_ENV__/.npmrc'
+export npm_config_init_module='__NODE_VIRTUAL_ENV__/.npm-init.js'
+""",
 }
+# --node=system writes SHIM as bin/node too
+NPM_ISOLATE['node'] = NPM_ISOLATE['shim']
 
 NPM_UNISOLATE = {
     'activate': """
@@ -1546,6 +1553,7 @@ SHIM = """#!/usr/bin/env sh
 export NODE_PATH='__NODE_VIRTUAL_ENV__/lib/node_modules'
 export NPM_CONFIG_PREFIX='__NODE_VIRTUAL_ENV__'
 export npm_config_prefix='__NODE_VIRTUAL_ENV__'
+__NPM_ISOLATE__
 exec '__SHIM_NODE__' "$@"
 """
 

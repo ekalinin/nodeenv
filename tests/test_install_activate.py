@@ -358,3 +358,24 @@ def test_isolate_npm_sh_sets_and_restores(tmpdir):
     assert active == '|'.join((
         env_dir + '/.npm', env_dir + '/.npmrc', env_dir + '/.npm-init.js'))
     assert restored == '/old/cache|/old/npmrc|/old/init.js'
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='--isolate-npm is POSIX only')
+def test_isolate_npm_fish_content(tmpdir):
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--isolate-npm', str(tmpdir)]):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+
+    content = bin_dir.join('activate.fish').read()
+    assert 'set -gx npm_config_cache "$NODE_VIRTUAL_ENV/.npm"' in content
+    assert 'set -gx npm_config_userconfig "$NODE_VIRTUAL_ENV/.npmrc"' \
+        in content
+    assert ('set -gx npm_config_init_module '
+            '"$NODE_VIRTUAL_ENV/.npm-init.js"') in content
+    for var in ISOLATED_NPM_VARS:
+        assert 'set -gx _OLD_%s $%s' % (var, var) in content
+        assert 'set -e %s' % var in content

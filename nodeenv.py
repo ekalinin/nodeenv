@@ -1490,6 +1490,22 @@ npm_config_userconfig="$NODE_VIRTUAL_ENV/.npmrc"
 npm_config_init_module="$NODE_VIRTUAL_ENV/.npm-init.js"
 export npm_config_cache npm_config_userconfig npm_config_init_module
 """,
+    'activate.fish': """
+if set -q npm_config_cache
+    set -gx _OLD_npm_config_cache $npm_config_cache
+end
+set -gx npm_config_cache "$NODE_VIRTUAL_ENV/.npm"
+
+if set -q npm_config_userconfig
+    set -gx _OLD_npm_config_userconfig $npm_config_userconfig
+end
+set -gx npm_config_userconfig "$NODE_VIRTUAL_ENV/.npmrc"
+
+if set -q npm_config_init_module
+    set -gx _OLD_npm_config_init_module $npm_config_init_module
+end
+set -gx npm_config_init_module "$NODE_VIRTUAL_ENV/.npm-init.js"
+""",
 }
 
 NPM_UNISOLATE = {
@@ -1501,6 +1517,28 @@ NPM_UNISOLATE = {
         unset _OLD_npm_config_cache
         unset _OLD_npm_config_userconfig
         unset _OLD_npm_config_init_module
+""",
+    'activate.fish': """
+    if test -n "$_OLD_npm_config_cache"
+        set -gx npm_config_cache $_OLD_npm_config_cache
+        set -e _OLD_npm_config_cache
+    else
+        set -e npm_config_cache
+    end
+
+    if test -n "$_OLD_npm_config_userconfig"
+        set -gx npm_config_userconfig $_OLD_npm_config_userconfig
+        set -e _OLD_npm_config_userconfig
+    else
+        set -e npm_config_userconfig
+    end
+
+    if test -n "$_OLD_npm_config_init_module"
+        set -gx npm_config_init_module $_OLD_npm_config_init_module
+        set -e _OLD_npm_config_init_module
+    else
+        set -e npm_config_init_module
+    end
 """,
 }
 
@@ -1776,6 +1814,7 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
     else
         set -e npm_config_prefix
     end
+__NPM_UNISOLATE__
 
     if test -n "$_OLD_NODE_FISH_PROMPT_OVERRIDE"
         # Set an empty local `$fish_function_path` to allow the removal of
@@ -1861,6 +1900,7 @@ if set -q npm_config_prefix
     set -gx _OLD_npm_config_prefix $npm_config_prefix
 end
 set -gx npm_config_prefix "__NPM_CONFIG_PREFIX__"
+__NPM_ISOLATE__
 
 if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
     # Copy the current `fish_prompt` function as `_node_old_fish_prompt`.

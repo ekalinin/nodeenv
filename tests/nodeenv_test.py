@@ -675,6 +675,21 @@ def test_main_isolate_npm_silent_on_posix():
         for call in m_warning.call_args_list)
 
 
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_isolate_npm_no_warning_with_list():
+    with mock.patch.object(
+            sys, 'argv',
+            ['nodeenv', '--isolate-npm', '--node', '22.11.0', '--list']), \
+         mock.patch.object(nodeenv, 'is_WIN', True), \
+         mock.patch.object(nodeenv, 'print_node_versions') as m_list, \
+         mock.patch.object(nodeenv.logger, 'warning') as m_warning:
+        nodeenv.main()
+    assert m_list.call_count == 1
+    assert not any(
+        '--isolate-npm' in call[0][0]
+        for call in m_warning.call_args_list)
+
+
 def test_main_prefer_system_ignored_with_list():
     with mock.patch.object(
             sys, 'argv',

@@ -1429,7 +1429,7 @@ def main():
                 logger.info(' * System node not found, installing %s'
                             % (args.node or 'latest'))
 
-    if args.isolate_npm and is_WIN:
+    if args.isolate_npm and is_WIN and not args.list:
         logger.warning(' * --isolate-npm is not supported on win32, '
                        'ignored')
 
@@ -1530,25 +1530,29 @@ NPM_UNISOLATE = {
         unset _OLD_npm_config_init_module
 """,
     'activate.fish': """
-    if test -n "$_OLD_npm_config_cache"
-        set -gx npm_config_cache $_OLD_npm_config_cache
-        set -e _OLD_npm_config_cache
-    else
-        set -e npm_config_cache
-    end
+    # Skip the "deactivate_node nondestructive" pass at the top of
+    # activate.fish: the variables are only saved after it has run
+    if set -q NODE_VIRTUAL_ENV
+        if test -n "$_OLD_npm_config_cache"
+            set -gx npm_config_cache $_OLD_npm_config_cache
+            set -e _OLD_npm_config_cache
+        else
+            set -e npm_config_cache
+        end
 
-    if test -n "$_OLD_npm_config_userconfig"
-        set -gx npm_config_userconfig $_OLD_npm_config_userconfig
-        set -e _OLD_npm_config_userconfig
-    else
-        set -e npm_config_userconfig
-    end
+        if test -n "$_OLD_npm_config_userconfig"
+            set -gx npm_config_userconfig $_OLD_npm_config_userconfig
+            set -e _OLD_npm_config_userconfig
+        else
+            set -e npm_config_userconfig
+        end
 
-    if test -n "$_OLD_npm_config_init_module"
-        set -gx npm_config_init_module $_OLD_npm_config_init_module
-        set -e _OLD_npm_config_init_module
-    else
-        set -e npm_config_init_module
+        if test -n "$_OLD_npm_config_init_module"
+            set -gx npm_config_init_module $_OLD_npm_config_init_module
+            set -e _OLD_npm_config_init_module
+        else
+            set -e npm_config_init_module
+        end
     end
 """,
 }

@@ -237,7 +237,8 @@ def test_python_virtualenv_with_custom_prompt(tmpdir):
             assert 'NODE_VIRTUAL_ENV_DISABLE_PROMPT' in content
 
 
-def test_all_placeholders_replaced(tmpdir):
+@pytest.mark.parametrize('extra_args', ([], ['--isolate-npm']))
+def test_all_placeholders_replaced(tmpdir, extra_args):
     """Test that all placeholders are properly replaced in generated files"""
     if nodeenv.is_WIN:
         bin_dir = tmpdir.join('Scripts')
@@ -247,7 +248,8 @@ def test_all_placeholders_replaced(tmpdir):
     for n in FILES:
         bin_dir.join(n).write(n)
 
-    with mock.patch.object(sys, 'argv', ['nodeenv', str(tmpdir)]):
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv'] + extra_args + [str(tmpdir)]):
         opts = nodeenv.parse_args()
         nodeenv.install_activate(str(tmpdir), opts)
 
@@ -344,8 +346,10 @@ def test_isolate_npm_sh_sets_and_restores(tmpdir):
     report = _npm_isolation_report()
     script = '. {0} && {1} && deactivate_node && {1}'.format(
         nodeenv._quote(str(bin_dir.join('activate'))), report)
+    # drop any _OLD_* left by an active nodeenv in the test runner's shell
     env = dict(
-        os.environ,
+        (k, v) for k, v in os.environ.items() if not k.startswith('_OLD_'))
+    env.update(
         npm_config_cache='/old/cache',
         npm_config_userconfig='/old/npmrc',
         npm_config_init_module='/old/init.js',
@@ -376,9 +380,16 @@ def test_isolate_npm_fish_content(tmpdir):
         in content
     assert ('set -gx npm_config_init_module '
             '"$NODE_VIRTUAL_ENV/.npm-init.js"') in content
+    guard = 'if set -q NODE_VIRTUAL_ENV'
+    assert guard in content
     for var in ISOLATED_NPM_VARS:
         assert 'set -gx _OLD_%s $%s' % (var, var) in content
+        restore = 'set -gx %s $_OLD_%s' % (var, var)
+        assert restore in content
+        assert 'set -e _OLD_%s' % var in content
         assert 'set -e %s' % var in content
+        # the restore must sit inside the guard, after it
+        assert content.index(guard) < content.index(restore)
 
 
 @pytest.mark.skipif(nodeenv.is_WIN, reason='--isolate-npm is POSIX only')

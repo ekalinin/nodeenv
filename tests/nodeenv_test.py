@@ -650,6 +650,31 @@ def test_main_prefer_system_ignored_on_windows():
         m_warning.call_args[0][0]
 
 
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_isolate_npm_ignored_on_windows():
+    with mock.patch.object(nodeenv, 'is_WIN', True), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen, \
+         mock.patch.object(nodeenv.logger, 'warning') as m_warning:
+        assert _run_main_resolving(
+            ['--isolate-npm', '--node', '22.11.0', 'env']) == '22.11.0'
+    assert m_urlopen.call_count == 0
+    assert '--isolate-npm is not supported on win32' in \
+        m_warning.call_args[0][0]
+
+
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_isolate_npm_silent_on_posix():
+    with mock.patch.object(nodeenv, 'is_WIN', False), \
+         mock.patch.object(nodeenv, 'urlopen') as m_urlopen, \
+         mock.patch.object(nodeenv.logger, 'warning') as m_warning:
+        assert _run_main_resolving(
+            ['--isolate-npm', '--node', '22.11.0', 'env']) == '22.11.0'
+    assert m_urlopen.call_count == 0
+    assert not any(
+        '--isolate-npm' in call[0][0]
+        for call in m_warning.call_args_list)
+
+
 def test_main_prefer_system_ignored_with_list():
     with mock.patch.object(
             sys, 'argv',

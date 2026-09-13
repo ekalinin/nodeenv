@@ -1429,6 +1429,10 @@ def main():
                 logger.info(' * System node not found, installing %s'
                             % (args.node or 'latest'))
 
+    if args.isolate_npm and is_WIN:
+        logger.warning(' * --isolate-npm is not supported on win32, '
+                       'ignored')
+
     if not args.node or args.node.lower() == 'latest':
         args.node = get_last_stable_node_version()
     elif args.node.lower() == 'lts':

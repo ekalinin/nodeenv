@@ -320,6 +320,15 @@ NPM options
 ``--no-npm-clean``
     Skip the npm 0.x cleanup. Cleanup is enabled by default.
 
+``--isolate-npm``
+    Keep npm's ``cache`` (``.npm``), ``userconfig`` (``.npmrc``) and
+    ``init-module`` (``.npm-init.js``) inside the environment instead of
+    ``$HOME``. Useful when ``$HOME`` is missing or read-only, or when the
+    environment must not touch the user's npm files. Settings from
+    ``~/.npmrc`` such as a private registry or auth tokens are then not seen
+    inside the environment. Set ``isolate_npm = True`` in ``~/.nodeenvrc`` to
+    make this the default. Ignored on Windows.
+
 Compilation options (Unix only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -391,6 +400,7 @@ These are the available options and their defaults::
     with_certifi = False
     mirror = None
     prefer_system = False
+    isolate_npm = False
 
 Alternatives
 ------------

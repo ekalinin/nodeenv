@@ -1173,6 +1173,10 @@ def install_activate(env_dir, args):
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
+        isolate = NPM_ISOLATE.get(name, '') if args.isolate_npm else ''
+        unisolate = NPM_UNISOLATE.get(name, '') if args.isolate_npm else ''
+        content = content.replace('__NPM_ISOLATE__', isolate)
+        content = content.replace('__NPM_UNISOLATE__', unisolate)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
         content = content.replace('__NODE_VIRTUAL_ENV__',
                                   os.path.abspath(env_dir))
@@ -1472,6 +1476,34 @@ set -e NODE_VIRTUAL_ENV_DISABLE_PROMPT
 """,
 }
 
+# --isolate-npm: keep npm cache, userconfig and init-module inside the
+# environment. Inserted at __NPM_ISOLATE__ (activation) and
+# __NPM_UNISOLATE__ (deactivation), or replaced with an empty string.
+# https://github.com/ekalinin/nodeenv/issues/154
+NPM_ISOLATE = {
+    'activate': """
+_OLD_npm_config_cache="${npm_config_cache:-}"
+_OLD_npm_config_userconfig="${npm_config_userconfig:-}"
+_OLD_npm_config_init_module="${npm_config_init_module:-}"
+npm_config_cache="$NODE_VIRTUAL_ENV/.npm"
+npm_config_userconfig="$NODE_VIRTUAL_ENV/.npmrc"
+npm_config_init_module="$NODE_VIRTUAL_ENV/.npm-init.js"
+export npm_config_cache npm_config_userconfig npm_config_init_module
+""",
+}
+
+NPM_UNISOLATE = {
+    'activate': """
+        npm_config_cache="${_OLD_npm_config_cache:-}"
+        npm_config_userconfig="${_OLD_npm_config_userconfig:-}"
+        npm_config_init_module="${_OLD_npm_config_init_module:-}"
+        export npm_config_cache npm_config_userconfig npm_config_init_module
+        unset _OLD_npm_config_cache
+        unset _OLD_npm_config_userconfig
+        unset _OLD_npm_config_init_module
+""",
+}
+
 SHIM = """#!/usr/bin/env sh
 export NODE_PATH='__NODE_VIRTUAL_ENV__/lib/node_modules'
 export NPM_CONFIG_PREFIX='__NODE_VIRTUAL_ENV__'
@@ -1594,6 +1626,7 @@ deactivate_node () {
         export npm_config_prefix
         unset _OLD_NPM_CONFIG_PREFIX
         unset _OLD_npm_config_prefix
+__NPM_UNISOLATE__
     fi
 
     # This should detect bash and zsh, which have a hash command that must
@@ -1684,6 +1717,7 @@ NPM_CONFIG_PREFIX="__NPM_CONFIG_PREFIX__"
 npm_config_prefix="__NPM_CONFIG_PREFIX__"
 export NPM_CONFIG_PREFIX
 export npm_config_prefix
+__NPM_ISOLATE__
 
 if [ -z "${NODE_VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     _OLD_NODE_VIRTUAL_PS1="${PS1:-}"

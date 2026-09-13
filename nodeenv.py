@@ -106,6 +106,7 @@ class Config(object):
     ignore_ssl_certs = False
     with_certifi = False
     mirror = None
+    prefer_system = False
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -172,7 +173,24 @@ def remove_env_bin_from_path(env, env_bin_dir):
     """
     Remove bin directory of the current environment from PATH
     """
-    return env.replace(env_bin_dir + ':', '')
+    env_bin_dir = os.path.realpath(env_bin_dir)
+    return ':'.join(
+        p for p in env.split(':') if os.path.realpath(p) != env_bin_dir)
+
+
+def find_system_node(env_bin_dir=None):
+    """
+    Find system-wide nodejs or node in PATH, ignoring the environment
+    bin directory when it is given
+    """
+    path_var = os.environ['PATH']
+    if env_bin_dir is not None:
+        path_var = remove_env_bin_from_path(path_var, env_bin_dir)
+    for candidate in ("nodejs", "node"):
+        found = shutil.which(candidate, path=path_var)
+        if found is not None:
+            return found
+    return None
 
 
 def parse_version(version_str):
@@ -351,8 +369,9 @@ def node_version_from_args(args):
     Parse the node version from the argparse args
     """
     if args.node == 'system':
+        node_bin = find_system_node() or 'node'
         out, err = subprocess.Popen(
-            ["node", "--version"], stdout=subprocess.PIPE).communicate()
+            [node_bin, "--version"], stdout=subprocess.PIPE).communicate()
         return parse_version(clear_output(out))
 
     return parse_version(args.node)
@@ -413,6 +432,12 @@ def make_parser():
         'The default is last stable version (`latest`). '
         'Use `lts` to use the latest LTS release. '
         'Use `system` to use system-wide node.')
+
+    parser.add_argument(
+        '--prefer-system', dest='prefer_system',
+        action='store_true', default=Config.prefer_system,
+        help='Use system-wide node if it is found in PATH, otherwise '
+        'install the version given by --node.')
 
     parser.add_argument(
         '--mirror',
@@ -1136,11 +1161,7 @@ def install_activate(env_dir, args):
     prompt = args.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
     if args.node == "system":
-        path_var = remove_env_bin_from_path(os.environ['PATH'], bin_dir)
-        for candidate in ("nodejs", "node"):
-            shim_node = shutil.which(candidate, path=path_var)
-            if shim_node is not None:
-                break
+        shim_node = find_system_node(bin_dir)
         assert shim_node, "Did not find nodejs or node system executable"
 
     for name, content in files.items():
@@ -1380,6 +1401,22 @@ def main():
         src_domain = 'nodejs.org'
     if src_base_url is None:
         src_base_url = 'https://%s/download/release' % src_domain
+
+    # Decide on the system node before any version resolution, so that
+    # a found system node never triggers a request for index.json
+    if args.prefer_system and not args.list and \
+            args.node.lower() != 'system':
+        if is_WIN:
+            logger.warning(' * --prefer-system is not supported on win32, '
+                           'installing node')
+        else:
+            system_node = find_system_node(join(get_env_dir(args), 'bin'))
+            if system_node:
+                logger.info(' * Using system node: %s' % system_node)
+                args.node = 'system'
+            else:
+                logger.info(' * System node not found, installing %s'
+                            % (args.node or 'latest'))
 
     if not args.node or args.node.lower() == 'latest':
         args.node = get_last_stable_node_version()

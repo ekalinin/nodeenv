@@ -576,6 +576,28 @@ def test_parse_args_prefer_system():
         assert nodeenv.parse_args().prefer_system is False
 
 
+def test_isolate_npm_default():
+    assert nodeenv.Config._default['isolate_npm'] is False
+
+
+def test_isolate_npm_is_configurable(tmpdir):
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nisolate_npm = true\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.isolate_npm is True
+    finally:
+        nodeenv.Config.isolate_npm = False
+
+
+def test_parse_args_isolate_npm():
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--isolate-npm', 'env']):
+        assert nodeenv.parse_args().isolate_npm is True
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().isolate_npm is False
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
 @pytest.mark.usefixtures('mock_host_platform')
 def test_main_prefer_system_uses_system_node(cap_logging_info):

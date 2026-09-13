@@ -107,6 +107,7 @@ class Config(object):
     with_certifi = False
     mirror = None
     prefer_system = False
+    isolate_npm = False
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -534,6 +535,12 @@ def make_parser():
         '--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
         help='Skip the npm 0.x cleanup.  Cleanup is enabled by default.')
+
+    parser.add_argument(
+        '--isolate-npm', dest='isolate_npm',
+        action='store_true', default=Config.isolate_npm,
+        help='Keep npm cache, userconfig and init-module inside the '
+        'environment instead of $HOME. Not supported on Windows.')
 
     parser.add_argument(
         '--python-virtualenv', '-p', dest='python_virtualenv',

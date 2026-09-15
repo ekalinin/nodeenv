@@ -107,6 +107,7 @@ class Config(object):
     with_certifi = False
     mirror = None
     prefer_system = False
+    isolate_npm = False
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -534,6 +535,12 @@ def make_parser():
         '--no-npm-clean', dest='no_npm_clean',
         action='store_true', default=False,
         help='Skip the npm 0.x cleanup.  Cleanup is enabled by default.')
+
+    parser.add_argument(
+        '--isolate-npm', dest='isolate_npm',
+        action='store_true', default=Config.isolate_npm,
+        help='Keep npm cache, userconfig and init-module inside the '
+        'environment instead of $HOME. Not supported on Windows.')
 
     parser.add_argument(
         '--python-virtualenv', '-p', dest='python_virtualenv',
@@ -1166,6 +1173,10 @@ def install_activate(env_dir, args):
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
+        isolate = NPM_ISOLATE.get(name, '') if args.isolate_npm else ''
+        unisolate = NPM_UNISOLATE.get(name, '') if args.isolate_npm else ''
+        content = content.replace('__NPM_ISOLATE__', isolate)
+        content = content.replace('__NPM_UNISOLATE__', unisolate)
         content = content.replace('__NODE_VIRTUAL_PROMPT__', prompt)
         content = content.replace('__NODE_VIRTUAL_ENV__',
                                   os.path.abspath(env_dir))
@@ -1418,6 +1429,10 @@ def main():
                 logger.info(' * System node not found, installing %s'
                             % (args.node or 'latest'))
 
+    if args.isolate_npm and is_WIN and not args.list:
+        logger.warning(' * --isolate-npm is not supported on win32, '
+                       'ignored')
+
     if not args.node or args.node.lower() == 'latest':
         args.node = get_last_stable_node_version()
     elif args.node.lower() == 'lts':
@@ -1465,10 +1480,88 @@ set -e NODE_VIRTUAL_ENV_DISABLE_PROMPT
 """,
 }
 
+# --isolate-npm: keep npm cache, userconfig and init-module inside the
+# environment. Inserted at __NPM_ISOLATE__ (activation) and
+# __NPM_UNISOLATE__ (deactivation), or replaced with an empty string.
+# https://github.com/ekalinin/nodeenv/issues/154
+NPM_ISOLATE = {
+    'activate': """
+_OLD_npm_config_cache="${npm_config_cache:-}"
+_OLD_npm_config_userconfig="${npm_config_userconfig:-}"
+_OLD_npm_config_init_module="${npm_config_init_module:-}"
+npm_config_cache="$NODE_VIRTUAL_ENV/.npm"
+npm_config_userconfig="$NODE_VIRTUAL_ENV/.npmrc"
+npm_config_init_module="$NODE_VIRTUAL_ENV/.npm-init.js"
+export npm_config_cache npm_config_userconfig npm_config_init_module
+""",
+    'activate.fish': """
+if set -q npm_config_cache
+    set -gx _OLD_npm_config_cache $npm_config_cache
+end
+set -gx npm_config_cache "$NODE_VIRTUAL_ENV/.npm"
+
+if set -q npm_config_userconfig
+    set -gx _OLD_npm_config_userconfig $npm_config_userconfig
+end
+set -gx npm_config_userconfig "$NODE_VIRTUAL_ENV/.npmrc"
+
+if set -q npm_config_init_module
+    set -gx _OLD_npm_config_init_module $npm_config_init_module
+end
+set -gx npm_config_init_module "$NODE_VIRTUAL_ENV/.npm-init.js"
+""",
+    'shim': """
+export npm_config_cache='__NODE_VIRTUAL_ENV__/.npm'
+export npm_config_userconfig='__NODE_VIRTUAL_ENV__/.npmrc'
+export npm_config_init_module='__NODE_VIRTUAL_ENV__/.npm-init.js'
+""",
+}
+# --node=system writes SHIM as bin/node too
+NPM_ISOLATE['node'] = NPM_ISOLATE['shim']
+
+NPM_UNISOLATE = {
+    'activate': """
+        npm_config_cache="${_OLD_npm_config_cache:-}"
+        npm_config_userconfig="${_OLD_npm_config_userconfig:-}"
+        npm_config_init_module="${_OLD_npm_config_init_module:-}"
+        export npm_config_cache npm_config_userconfig npm_config_init_module
+        unset _OLD_npm_config_cache
+        unset _OLD_npm_config_userconfig
+        unset _OLD_npm_config_init_module
+""",
+    'activate.fish': """
+    # Skip the "deactivate_node nondestructive" pass at the top of
+    # activate.fish: the variables are only saved after it has run
+    if set -q NODE_VIRTUAL_ENV
+        if test -n "$_OLD_npm_config_cache"
+            set -gx npm_config_cache $_OLD_npm_config_cache
+            set -e _OLD_npm_config_cache
+        else
+            set -e npm_config_cache
+        end
+
+        if test -n "$_OLD_npm_config_userconfig"
+            set -gx npm_config_userconfig $_OLD_npm_config_userconfig
+            set -e _OLD_npm_config_userconfig
+        else
+            set -e npm_config_userconfig
+        end
+
+        if test -n "$_OLD_npm_config_init_module"
+            set -gx npm_config_init_module $_OLD_npm_config_init_module
+            set -e _OLD_npm_config_init_module
+        else
+            set -e npm_config_init_module
+        end
+    end
+""",
+}
+
 SHIM = """#!/usr/bin/env sh
 export NODE_PATH='__NODE_VIRTUAL_ENV__/lib/node_modules'
 export NPM_CONFIG_PREFIX='__NODE_VIRTUAL_ENV__'
 export npm_config_prefix='__NODE_VIRTUAL_ENV__'
+__NPM_ISOLATE__
 exec '__SHIM_NODE__' "$@"
 """
 
@@ -1587,6 +1680,7 @@ deactivate_node () {
         export npm_config_prefix
         unset _OLD_NPM_CONFIG_PREFIX
         unset _OLD_npm_config_prefix
+__NPM_UNISOLATE__
     fi
 
     # This should detect bash and zsh, which have a hash command that must
@@ -1677,6 +1771,7 @@ NPM_CONFIG_PREFIX="__NPM_CONFIG_PREFIX__"
 npm_config_prefix="__NPM_CONFIG_PREFIX__"
 export NPM_CONFIG_PREFIX
 export npm_config_prefix
+__NPM_ISOLATE__
 
 if [ -z "${NODE_VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     _OLD_NODE_VIRTUAL_PS1="${PS1:-}"
@@ -1735,6 +1830,7 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
     else
         set -e npm_config_prefix
     end
+__NPM_UNISOLATE__
 
     if test -n "$_OLD_NODE_FISH_PROMPT_OVERRIDE"
         # Set an empty local `$fish_function_path` to allow the removal of
@@ -1820,6 +1916,7 @@ if set -q npm_config_prefix
     set -gx _OLD_npm_config_prefix $npm_config_prefix
 end
 set -gx npm_config_prefix "__NPM_CONFIG_PREFIX__"
+__NPM_ISOLATE__
 
 if test -z "$NODE_VIRTUAL_ENV_DISABLE_PROMPT"
     # Copy the current `fish_prompt` function as `_node_old_fish_prompt`.

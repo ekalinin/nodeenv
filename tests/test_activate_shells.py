@@ -241,3 +241,20 @@ def test_isolate_npm_roundtrip(shell, env):
         else:
             assert active[name] == BASE_ENV[name]
         assert restored[name] == BASE_ENV[name]
+
+
+@activating_shell
+def test_prompt_override(shell, env):
+    active = run(shell, env)
+    restored = run(shell, env, ['deactivate_node'])
+    prompt = '(%s)' % os.path.basename(env.path)
+
+    if shell.name == 'fish':
+        # fish swaps the fish_prompt function instead of setting PS1 and
+        # records the override in _OLD_NODE_FISH_PROMPT_OVERRIDE
+        assert _real(active['_OLD_NODE_FISH_PROMPT_OVERRIDE']) == \
+            _real(env.path)
+        assert restored['_OLD_NODE_FISH_PROMPT_OVERRIDE'] == UNSET
+    else:
+        assert active['PS1'] == '%s %s' % (prompt, BASE_ENV['PS1'])
+        assert restored['PS1'] == BASE_ENV['PS1']

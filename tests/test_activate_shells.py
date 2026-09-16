@@ -219,3 +219,12 @@ def test_deactivate_restores_env(shell, env):
     assert dump['NODE_PATH'] == BASE_ENV['NODE_PATH']
     assert dump['NPM_CONFIG_PREFIX'] == BASE_ENV['NPM_CONFIG_PREFIX']
     assert dump['npm_config_prefix'] == BASE_ENV['npm_config_prefix']
+
+
+@activating_shell
+def test_activate_deactivate_twice(shell, env):
+    baseline = run(shell, env, source=False)
+    again = shell.source_line(env.script(shell))
+    dump = run(shell, env, ['deactivate_node', again, 'deactivate_node'])
+
+    assert dump['PATH'] == baseline['PATH']

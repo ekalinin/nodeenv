@@ -228,3 +228,16 @@ def test_activate_deactivate_twice(shell, env):
     dump = run(shell, env, ['deactivate_node', again, 'deactivate_node'])
 
     assert dump['PATH'] == baseline['PATH']
+
+
+@activating_shell
+def test_isolate_npm_roundtrip(shell, env):
+    active = run(shell, env)
+    restored = run(shell, env, ['deactivate_node'])
+
+    for name, leaf in ISOLATED_NPM:
+        if env.isolate_npm:
+            assert _real(active[name]) == _real(os.path.join(env.path, leaf))
+        else:
+            assert active[name] == BASE_ENV[name]
+        assert restored[name] == BASE_ENV[name]

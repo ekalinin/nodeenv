@@ -192,3 +192,30 @@ def run(shell, env, steps=(), source=True):
 @every_shell
 def test_syntax(shell, env):
     subprocess.check_call([_binary(shell), '-n', env.script(shell)])
+
+
+@activating_shell
+def test_activate_sets_env(shell, env):
+    dump = run(shell, env)
+
+    assert _real(dump['NODE_VIRTUAL_ENV']) == _real(env.path)
+    head = dump['PATH'].split(os.pathsep)[:2]
+    assert [_real(p) for p in head] == [
+        _real(os.path.join(env.path, 'lib', 'node_modules', '.bin')),
+        _real(os.path.join(env.path, 'bin')),
+    ]
+    # fish prepends to NODE_PATH, the POSIX script replaces it
+    assert _real(dump['NODE_PATH'].split(os.pathsep)[0]) == \
+        _real(os.path.join(env.path, 'lib', 'node_modules'))
+    assert _real(dump['NPM_CONFIG_PREFIX']) == _real(env.path)
+    assert _real(dump['npm_config_prefix']) == _real(env.path)
+
+
+@activating_shell
+def test_deactivate_restores_env(shell, env):
+    dump = run(shell, env, ['deactivate_node'])
+
+    assert dump['NODE_VIRTUAL_ENV'] == UNSET
+    assert dump['NODE_PATH'] == BASE_ENV['NODE_PATH']
+    assert dump['NPM_CONFIG_PREFIX'] == BASE_ENV['NPM_CONFIG_PREFIX']
+    assert dump['npm_config_prefix'] == BASE_ENV['npm_config_prefix']

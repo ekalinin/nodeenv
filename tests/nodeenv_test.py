@@ -37,7 +37,15 @@ def _resolve_and_run(activate, command):
     script = '. {0} && command -v {1} && {1} --version'.format(
         _quote(activate), command)
     out = subprocess.check_output(['sh', '-c', script])
-    resolved, version = out.decode('utf-8').splitlines()[:2]
+    lines = out.decode('utf-8').splitlines()
+    assert len(lines) == 2, \
+        '%s: expected a path and a version, got %r' % (command, lines)
+    resolved, version = lines
+    # `command -v` prints a bare name for a builtin or a shell function,
+    # which os.path.realpath() would resolve against the cwd instead of
+    # rejecting.  Refuse anything that is not already a path.
+    assert os.path.isabs(resolved), \
+        '%s resolved to %r, not an absolute path' % (command, resolved)
     return resolved, version
 
 
@@ -78,7 +86,7 @@ def test_smoke(tmpdir):
             assert _inside(resolved, nenv_path), \
                 '%s resolved to %s, outside %s' % (
                     command, resolved, nenv_path)
-            assert version
+            assert version, '%s --version printed nothing' % command
 
 
 @pytest.mark.integration
@@ -98,7 +106,7 @@ def test_smoke_n_system_special_chars(tmpdir):
     resolved, version = _resolve_and_run(activate, 'node')
     assert _inside(resolved, nenv_path), \
         'node resolved to %s, outside %s' % (resolved, nenv_path)
-    assert version
+    assert version, 'node --version printed nothing'
 
 
 @pytest.fixture

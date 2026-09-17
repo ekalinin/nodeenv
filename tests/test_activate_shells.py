@@ -75,6 +75,11 @@ FISH_NODE_PATH_CLOBBER = (
     'and are equally unrestored; the test only reports NODE_PATH because '
     'it is asserted first')
 
+FISH_CARET_REDIRECT = (
+    'the PATH line in activate.fish ends with `^/dev/null`, but fish 3.0 '
+    'turned on stderr-nocaret and `^` is no longer a stderr redirect, so '
+    'the token lands in PATH as a literal entry')
+
 
 class Shell(object):
     def __init__(self, name, script='activate', source='.', prelude=()):
@@ -120,12 +125,18 @@ def _params(xfail):
     return params
 
 
+# one decorator per set of known-broken shells: each runs the test in every
+# shell, and names the shells whose nodeenv bug makes it fail there.  A test
+# picks the decorator that lists the bugs it is able to trip over.
 every_shell = pytest.mark.parametrize('shell', _params({}))
 activating_shell = pytest.mark.parametrize(
     'shell', _params({'zsh': ZSH_SOURCE_GUARD}))
 restoring_shell = pytest.mark.parametrize(
     'shell', _params({'zsh': ZSH_SOURCE_GUARD,
                       'fish': FISH_NODE_PATH_CLOBBER}))
+path_shell = pytest.mark.parametrize(
+    'shell', _params({'zsh': ZSH_SOURCE_GUARD,
+                      'fish': FISH_CARET_REDIRECT}))
 
 
 def _binary(shell):
@@ -238,7 +249,7 @@ def test_syntax(shell, env):
     subprocess.check_call([_binary(shell), '-n', env.script(shell)])
 
 
-@activating_shell
+@path_shell
 def test_activate_sets_env(shell, env):
     dump = run(shell, env)
     baseline = run(shell, env, source=False)
@@ -251,8 +262,9 @@ def test_activate_sets_env(shell, env):
         _real(os.path.join(env.path, 'bin')),
     ] + [_real(p) for p in baseline['PATH'].split(os.pathsep)]
     # only the first component: activate.fish prepends when NODE_PATH is
-    # set, and while FISH_NODE_PATH_CLOBBER stands it never sees one, so
-    # fish takes the replacing branch here just like the POSIX script
+    # set and, while FISH_NODE_PATH_CLOBBER stands, it never sees one, so
+    # fish replaces just like the POSIX script.  FISH_CARET_REDIRECT keeps
+    # this test xfail under fish anyway, so the tolerance is for later
     assert _real(dump['NODE_PATH'].split(os.pathsep)[0]) == \
         _real(os.path.join(env.path, 'lib', 'node_modules'))
     assert _real(dump['NPM_CONFIG_PREFIX']) == _real(env.path)

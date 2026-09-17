@@ -37,8 +37,13 @@ jobs:
         run: |
           flake8 --extend-ignore=E127 nodeenv.py tests setup.py
 
+  # The only job that builds real node environments: the tests marked
+  # `integration` are deselected everywhere else.  Deliberately ubuntu
+  # only - the install path is also platform specific, so macOS and
+  # Windows coverage of it was given up here to keep the matrix fast.
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4

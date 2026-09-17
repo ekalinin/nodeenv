@@ -90,10 +90,15 @@ def test_smoke_n_system_special_chars(tmpdir):
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
     assert os.path.exists(nenv_path)
-    activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
-    subprocess.check_call([
-        'sh', '-c', '. {} && node --version'.format(activate),
-    ])
+    # node only: with `-n system` nodeenv writes a node shim and nothing
+    # else, so npm and npx legitimately resolve outside the environment.
+    # Whether `-n system` should provide them too is an open question
+    # about nodeenv, so this test pins neither answer.
+    activate = os.path.join(nenv_path, 'bin', 'activate')
+    resolved, version = _resolve_and_run(activate, 'node')
+    assert _inside(resolved, nenv_path), \
+        'node resolved to %s, outside %s' % (resolved, nenv_path)
+    assert version
 
 
 @pytest.fixture

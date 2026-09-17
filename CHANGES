@@ -11,6 +11,7 @@ Version [unreleased]
   install one otherwise `#153 <https://github.com/ekalinin/nodeenv/issues/153>`_
 - Added `--isolate-npm` to keep npm cache, userconfig and init-module inside
   the environment `#154 <https://github.com/ekalinin/nodeenv/issues/154>`_
+- Added tests that run the activation scripts in sh, dash, bash, zsh and fish.
 
 Version 1.3.1
 -------------

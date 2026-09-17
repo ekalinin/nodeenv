@@ -61,6 +61,12 @@ ZSH_SOURCE_GUARD = (
     'zsh sets $0 to the sourced file, so the "do not call directly" guard '
     'added to ACTIVATE_SH in 68abdc3 fires on `source bin/activate`')
 
+FISH_NODE_PATH_CLOBBER = (
+    'activate.fish runs `deactivate_node nondestructive` before it saves '
+    '_OLD_NODE_PATH, and that pass erases a pre-existing NODE_PATH, so the '
+    'real deactivation has nothing left to restore. b042056 added the '
+    '`if set -q NODE_VIRTUAL_ENV` guard for the npm variables only')
+
 
 class Shell(object):
     def __init__(self, name, script='activate', source='.', prelude=()):
@@ -86,18 +92,23 @@ SHELLS = (
 )
 
 
-def _params(xfail_zsh):
+def _params(xfail):
     params = []
     for shell in SHELLS:
         marks = ()
-        if xfail_zsh and shell.name == 'zsh':
-            marks = pytest.mark.xfail(strict=True, reason=ZSH_SOURCE_GUARD)
+        reason = xfail.get(shell.name)
+        if reason:
+            marks = pytest.mark.xfail(strict=True, reason=reason)
         params.append(pytest.param(shell, marks=marks, id=shell.name))
     return params
 
 
-every_shell = pytest.mark.parametrize('shell', _params(False))
-activating_shell = pytest.mark.parametrize('shell', _params(True))
+every_shell = pytest.mark.parametrize('shell', _params({}))
+activating_shell = pytest.mark.parametrize(
+    'shell', _params({'zsh': ZSH_SOURCE_GUARD}))
+restoring_shell = pytest.mark.parametrize(
+    'shell', _params({'zsh': ZSH_SOURCE_GUARD,
+                      'fish': FISH_NODE_PATH_CLOBBER}))
 
 
 def _binary(shell):
@@ -211,7 +222,7 @@ def test_activate_sets_env(shell, env):
     assert _real(dump['npm_config_prefix']) == _real(env.path)
 
 
-@activating_shell
+@restoring_shell
 def test_deactivate_restores_env(shell, env):
     dump = run(shell, env, ['deactivate_node'])
 

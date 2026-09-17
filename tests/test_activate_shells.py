@@ -70,7 +70,10 @@ FISH_NODE_PATH_CLOBBER = (
     'activate.fish runs `deactivate_node nondestructive` before it saves '
     '_OLD_NODE_PATH, and that pass erases a pre-existing NODE_PATH, so the '
     'real deactivation has nothing left to restore. b042056 added the '
-    '`if set -q NODE_VIRTUAL_ENV` guard for the npm variables only')
+    '`if set -q NODE_VIRTUAL_ENV` guard for the npm variables only. '
+    'NPM_CONFIG_PREFIX and npm_config_prefix are erased by the same pass '
+    'and are equally unrestored; the test only reports NODE_PATH because '
+    'it is asserted first')
 
 
 class Shell(object):
@@ -247,7 +250,9 @@ def test_activate_sets_env(shell, env):
         _real(os.path.join(env.path, 'lib', 'node_modules', '.bin')),
         _real(os.path.join(env.path, 'bin')),
     ] + [_real(p) for p in baseline['PATH'].split(os.pathsep)]
-    # fish prepends to NODE_PATH, the POSIX script replaces it
+    # only the first component: activate.fish prepends when NODE_PATH is
+    # set, and while FISH_NODE_PATH_CLOBBER stands it never sees one, so
+    # fish takes the replacing branch here just like the POSIX script
     assert _real(dump['NODE_PATH'].split(os.pathsep)[0]) == \
         _real(os.path.join(env.path, 'lib', 'node_modules'))
     assert _real(dump['NPM_CONFIG_PREFIX']) == _real(env.path)

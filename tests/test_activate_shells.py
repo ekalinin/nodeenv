@@ -49,13 +49,18 @@ ISOLATED_NPM = (
     ('npm_config_init_module', '.npm-init.js'),
 )
 
+# printed before the variables so run() can tell the dump apart from
+# anything the activation script writes to stdout
+DUMP_SENTINEL = '--8<-- nodeenv env dump --8<--'
+
 DUMPER = """\
 import os
 import sys
 
+print('__SENTINEL__')
 for name in sys.argv[1:]:
     print('%s=%s' % (name, os.environ.get(name, '<unset>')))
-"""
+""".replace('__SENTINEL__', DUMP_SENTINEL)
 
 ZSH_SOURCE_GUARD = (
     'zsh sets $0 to the sourced file, so the "do not call directly" guard '
@@ -190,6 +195,20 @@ def _child_env(env):
     return result
 
 
+def _launch(shell, env, lines):
+    """
+    Run `lines` in the shell and return its stdout.
+
+    The shell runs in env.home, not in the checkout pytest was started
+    from: a git work tree would leak into fish's stock prompt and into
+    every relative path the scripts resolve.
+    """
+    out = subprocess.check_output(
+        [_binary(shell), '-c', '\n'.join(lines)],
+        env=_child_env(env), cwd=env.home)
+    return out.decode('utf-8')
+
+
 def run(shell, env, steps=(), source=True):
     """Run the shell and return the probed environment as a dict."""
     lines = list(shell.prelude)
@@ -200,10 +219,10 @@ def run(shell, env, steps=(), source=True):
         nodeenv._quote(sys.executable),
         nodeenv._quote(env.dumper),
         ' '.join(PROBED)))
-    out = subprocess.check_output(
-        [_binary(shell), '-c', '\n'.join(lines)], env=_child_env(env))
-    return dict(
-        line.split('=', 1) for line in out.decode('utf-8').splitlines())
+    out = _launch(shell, env, lines)
+    _, sentinel, dump = out.partition(DUMP_SENTINEL + '\n')
+    assert sentinel, 'no dump in the output of %s: %r' % (shell.name, out)
+    return dict(line.split('=', 1) for line in dump.splitlines())
 
 
 @every_shell
@@ -270,9 +289,7 @@ def _fish_prompt_output(shell, env, steps=()):
     lines = [shell.source_line(env.script(shell))]
     lines.extend(steps)
     lines.append('fish_prompt')
-    out = subprocess.check_output(
-        [_binary(shell), '-c', '\n'.join(lines)], env=_child_env(env))
-    return out.decode('utf-8')
+    return _launch(shell, env, lines)
 
 
 @activating_shell

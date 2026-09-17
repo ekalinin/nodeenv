@@ -106,8 +106,9 @@ SHELLS = (
 
 # a missing shell has to be reported before the tests run: pytest turns any
 # failure inside an xfail-marked test into an expected one, which would hide
-# it for the shells that carry a known-failure marker
-if REQUIRE_SHELLS:
+# it for the shells that carry a known-failure marker.  pytestmark is only
+# applied after the import, so Windows has to be excluded here as well
+if REQUIRE_SHELLS and not nodeenv.is_WIN:
     _missing = [s.name for s in SHELLS
                 if s.name not in OPTIONAL_SHELLS and not shutil.which(s.name)]
     if _missing:
@@ -219,8 +220,10 @@ def _launch(shell, env, lines):
     Run `lines` in the shell and return its stdout.
 
     The shell runs in env.home, not in the checkout pytest was started
-    from: a git work tree would leak into fish's stock prompt and into
-    every relative path the scripts resolve.
+    from, so the result does not depend on where the tests were invoked
+    and fish's stock prompt cannot append the vcs ref of the work tree.
+    _real() still resolves against pytest's own cwd, so a relative value
+    coming back from a shell is reported against the checkout.
     """
     out = subprocess.check_output(
         [_binary(shell), '-c', '\n'.join(lines)],

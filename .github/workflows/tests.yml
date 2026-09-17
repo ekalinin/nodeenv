@@ -37,6 +37,26 @@ jobs:
         run: |
           flake8 --extend-ignore=E127 nodeenv.py tests setup.py
 
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run integration tests
+        run: |
+          pytest -m integration tests/ -v
+
   coverage:
     runs-on: ubuntu-latest
     steps:

@@ -183,8 +183,13 @@ def _child_env(env):
     A clean environment: no leftovers from a nodeenv active in the shell
     running the tests, and no user rc files (fish reads config.fish even
     for `fish -c`).
+
+    NODE_VIRTUAL_ENV_DISABLE_PROMPT would turn off the very prompt
+    test_prompt_override checks, and bash sources BASH_ENV for `bash -c`,
+    so both are dropped too.
     """
-    ignored = ('NODE_VIRTUAL_ENV', 'NODE_PATH', 'NPM_CONFIG_PREFIX')
+    ignored = ('NODE_VIRTUAL_ENV', 'NODE_PATH', 'NPM_CONFIG_PREFIX',
+               'NODE_VIRTUAL_ENV_DISABLE_PROMPT', 'BASH_ENV')
     result = dict(
         (k, v) for k, v in os.environ.items()
         if not k.startswith('_OLD_')

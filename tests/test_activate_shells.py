@@ -233,13 +233,15 @@ def test_syntax(shell, env):
 @activating_shell
 def test_activate_sets_env(shell, env):
     dump = run(shell, env)
+    baseline = run(shell, env, source=False)
 
     assert _real(dump['NODE_VIRTUAL_ENV']) == _real(env.path)
-    head = dump['PATH'].split(os.pathsep)[:2]
-    assert [_real(p) for p in head] == [
+    # the whole PATH, not just its head: an activation script must prepend
+    # the two entries and leave the rest of the search path untouched
+    assert [_real(p) for p in dump['PATH'].split(os.pathsep)] == [
         _real(os.path.join(env.path, 'lib', 'node_modules', '.bin')),
         _real(os.path.join(env.path, 'bin')),
-    ]
+    ] + [_real(p) for p in baseline['PATH'].split(os.pathsep)]
     # fish prepends to NODE_PATH, the POSIX script replaces it
     assert _real(dump['NODE_PATH'].split(os.pathsep)[0]) == \
         _real(os.path.join(env.path, 'lib', 'node_modules'))

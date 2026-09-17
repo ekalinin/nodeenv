@@ -243,6 +243,21 @@ def test_isolate_npm_roundtrip(shell, env):
         assert restored[name] == BASE_ENV[name]
 
 
+def _fish_prompt_output(shell, env, steps=()):
+    """
+    stdout of fish's prompt function after sourcing and running `steps`.
+
+    The override marker is set unconditionally after the fish_prompt body,
+    so the marker alone cannot tell a working prompt from a broken one.
+    """
+    lines = [shell.source_line(env.script(shell))]
+    lines.extend(steps)
+    lines.append('fish_prompt')
+    out = subprocess.check_output(
+        [_binary(shell), '-c', '\n'.join(lines)], env=_child_env(env))
+    return out.decode('utf-8')
+
+
 @activating_shell
 def test_prompt_override(shell, env):
     active = run(shell, env)
@@ -255,6 +270,9 @@ def test_prompt_override(shell, env):
         assert _real(active['_OLD_NODE_FISH_PROMPT_OVERRIDE']) == \
             _real(env.path)
         assert restored['_OLD_NODE_FISH_PROMPT_OVERRIDE'] == UNSET
+        assert prompt in _fish_prompt_output(shell, env)
+        assert prompt not in _fish_prompt_output(
+            shell, env, ['deactivate_node'])
     else:
         assert active['PS1'] == '%s %s' % (prompt, BASE_ENV['PS1'])
         assert restored['PS1'] == BASE_ENV['PS1']

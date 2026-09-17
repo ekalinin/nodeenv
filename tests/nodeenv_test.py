@@ -26,6 +26,32 @@ from nodeenv import IncompleteRead
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+ENV_COMMANDS = ('node', 'npm', 'npx')
+
+
+def _resolve_and_run(activate, command):
+    """
+    Source `activate`, then report where `command` resolves and what
+    `command --version` prints.
+    """
+    script = '. {0} && command -v {1} && {1} --version'.format(
+        _quote(activate), command)
+    out = subprocess.check_output(['sh', '-c', script])
+    resolved, version = out.decode('utf-8').splitlines()[:2]
+    return resolved, version
+
+
+def _inside(path, env_dir):
+    """
+    Is `path` inside `env_dir`?
+
+    Both sides are resolved first: bin/activate derives NODE_VIRTUAL_ENV
+    with `cd -P`, so a tmpdir under /tmp comes back as /private/tmp on
+    macOS and a plain comparison would fail.
+    """
+    return os.path.realpath(path).startswith(
+        os.path.realpath(env_dir) + os.sep)
+
 
 @pytest.mark.integration
 def test_smoke(tmpdir):
@@ -43,10 +69,16 @@ def test_smoke(tmpdir):
             os.path.join(nenv_path, 'Scripts', 'node.exe'), '--version',
         ])
     else:
-        activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
-        subprocess.check_call([
-            'sh', '-c', '. {} && node --version'.format(activate),
-        ])
+        # `node --version` alone would pass even if activation did
+        # nothing, because a system node would answer it.  Check where
+        # each command resolves, not just that it runs.
+        activate = os.path.join(nenv_path, 'bin', 'activate')
+        for command in ENV_COMMANDS:
+            resolved, version = _resolve_and_run(activate, command)
+            assert _inside(resolved, nenv_path), \
+                '%s resolved to %s, outside %s' % (
+                    command, resolved, nenv_path)
+            assert version
 
 
 @pytest.mark.integration

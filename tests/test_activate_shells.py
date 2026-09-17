@@ -91,6 +91,15 @@ SHELLS = (
     Shell('fish', script='activate.fish', source='source'),
 )
 
+# a missing shell has to be reported before the tests run: pytest turns any
+# failure inside an xfail-marked test into an expected one, which would hide
+# it for the shells that carry a known-failure marker
+if REQUIRE_SHELLS:
+    _missing = [s.name for s in SHELLS
+                if s.name not in OPTIONAL_SHELLS and not shutil.which(s.name)]
+    if _missing:
+        raise RuntimeError('missing shells: %s' % ', '.join(_missing))
+
 
 def _params(xfail):
     params = []
@@ -112,13 +121,10 @@ restoring_shell = pytest.mark.parametrize(
 
 
 def _binary(shell):
-    """Path to the shell, or skip/fail when it is not installed."""
+    """Path to the shell, or skip when it is not installed."""
     path = shutil.which(shell.name)
     if path:
         return path
-    if REQUIRE_SHELLS and shell.name not in OPTIONAL_SHELLS:
-        pytest.fail(
-            '%s is missing and NODEENV_REQUIRE_SHELLS=1' % shell.name)
     return pytest.skip('%s is not installed' % shell.name)
 
 

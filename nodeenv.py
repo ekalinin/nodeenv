@@ -566,8 +566,9 @@ def make_parser():
 
     parser.add_argument(
         '--python-virtualenv', '-p', dest='python_virtualenv',
-        action='store_true', default=False,
-        help='Use current python virtualenv')
+        nargs='?', const=True, default=False, metavar='VENV_DIR',
+        help='Use the given python virtualenv, or the current one '
+        'if no directory is given')
 
     parser.add_argument(
         '--clean-src', '-c', dest='clean_src',
@@ -1381,14 +1382,21 @@ def resolve_node_version(spec):
 
 def get_env_dir(args):
     if args.python_virtualenv:
-        if hasattr(sys, 'real_prefix'):
+        if args.python_virtualenv is not True:
+            res = args.python_virtualenv
+            if not os.path.isdir(res):
+                logger.error("Python virtualenv '%s' doesn't exist", res)
+                sys.exit(2)
+        # nodeenv itself can be installed into its own virtualenv
+        # (pipx, pipsi, uv tool), so the activated one wins over sys.prefix
+        elif os.environ.get('VIRTUAL_ENV'):
+            res = os.environ['VIRTUAL_ENV']
+        elif hasattr(sys, 'real_prefix'):
             res = sys.prefix
         elif hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
             res = sys.prefix
         elif 'CONDA_PREFIX' in os.environ:
             res = sys.prefix
-        elif 'VIRTUAL_ENV' in os.environ:
-            res = os.environ['VIRTUAL_ENV']
         else:
             logger.error('No python virtualenv is available')
             sys.exit(2)

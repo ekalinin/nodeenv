@@ -698,6 +698,18 @@ def test_parse_args_prefer_system():
         assert nodeenv.parse_args().prefer_system is False
 
 
+def test_parse_args_python_virtualenv():
+    with mock.patch.object(sys, 'argv', ['nodeenv', '-p']):
+        assert nodeenv.parse_args().python_virtualenv is True
+    with mock.patch.object(sys, 'argv', ['nodeenv', '-p', 'venv']):
+        assert nodeenv.parse_args().python_virtualenv == 'venv'
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--python-virtualenv=venv']):
+        assert nodeenv.parse_args().python_virtualenv == 'venv'
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().python_virtualenv is False
+
+
 def test_isolate_npm_default():
     assert nodeenv.Config._default['isolate_npm'] is False
 
@@ -1622,7 +1634,8 @@ class TestGetEnvDir:
         test_prefix = '/path/to/virtualenv'
 
         with mock.patch.object(sys, 'real_prefix', test_prefix, create=True), \
-             mock.patch.object(sys, 'prefix', test_prefix):
+             mock.patch.object(sys, 'prefix', test_prefix), \
+             mock.patch.dict(os.environ, {}, clear=True):
             result = nodeenv.get_env_dir(args)
             assert result == test_prefix
 
@@ -1637,12 +1650,14 @@ class TestGetEnvDir:
         if hasattr(sys, 'real_prefix'):
             with mock.patch.object(sys, 'real_prefix', create=False):
                 with mock.patch.object(sys, 'prefix', test_prefix), \
-                     mock.patch.object(sys, 'base_prefix', test_base_prefix):
+                     mock.patch.object(sys, 'base_prefix', test_base_prefix), \
+                     mock.patch.dict(os.environ, {}, clear=True):
                     result = nodeenv.get_env_dir(args)
                     assert result == test_prefix
         else:
             with mock.patch.object(sys, 'prefix', test_prefix), \
-                 mock.patch.object(sys, 'base_prefix', test_base_prefix):
+                 mock.patch.object(sys, 'base_prefix', test_base_prefix), \
+                 mock.patch.dict(os.environ, {}, clear=True):
                 result = nodeenv.get_env_dir(args)
                 assert result == test_prefix
 
@@ -1658,14 +1673,14 @@ class TestGetEnvDir:
                 env_dict = {'CONDA_PREFIX': test_prefix}
                 with mock.patch.object(sys, 'prefix', test_prefix), \
                      mock.patch.object(sys, 'base_prefix', test_prefix), \
-                     mock.patch.dict(os.environ, env_dict):
+                     mock.patch.dict(os.environ, env_dict, clear=True):
                     result = nodeenv.get_env_dir(args)
                     assert result == test_prefix
         else:
             env_dict = {'CONDA_PREFIX': test_prefix}
             with mock.patch.object(sys, 'prefix', test_prefix), \
                  mock.patch.object(sys, 'base_prefix', test_prefix), \
-                 mock.patch.dict(os.environ, env_dict):
+                 mock.patch.dict(os.environ, env_dict, clear=True):
                 result = nodeenv.get_env_dir(args)
                 assert result == test_prefix
 
@@ -1715,6 +1730,40 @@ class TestGetEnvDir:
                  pytest.raises(SystemExit) as exc_info:
                 nodeenv.get_env_dir(args)
             assert exc_info.value.code == 2
+
+    def test_with_python_virtualenv_dir(self, tmpdir):
+        """Test get_env_dir when a virtualenv directory is given"""
+        args = mock.Mock()
+        args.python_virtualenv = str(tmpdir)
+
+        env_dict = {'VIRTUAL_ENV': '/path/to/other/venv'}
+        with mock.patch.dict(os.environ, env_dict, clear=True):
+            result = nodeenv.get_env_dir(args)
+            assert result == str(tmpdir)
+
+    def test_with_python_virtualenv_missing_dir_exits(self, tmpdir):
+        """Test get_env_dir exits when the given virtualenv doesn't exist"""
+        args = mock.Mock()
+        args.python_virtualenv = str(tmpdir.join('missing'))
+
+        with pytest.raises(SystemExit) as exc_info:
+            nodeenv.get_env_dir(args)
+        assert exc_info.value.code == 2
+
+    def test_with_python_virtualenv_prefers_virtual_env(self):
+        """Test get_env_dir prefers VIRTUAL_ENV over nodeenv's own venv"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        # nodeenv itself is installed into its own virtualenv
+        test_prefix = '/path/to/nodeenv/venv'
+        virtual_env = '/path/to/activated/venv'
+
+        env_dict = {'VIRTUAL_ENV': virtual_env}
+        with mock.patch.object(sys, 'real_prefix', test_prefix, create=True), \
+             mock.patch.object(sys, 'prefix', test_prefix), \
+             mock.patch.dict(os.environ, env_dict, clear=True):
+            result = nodeenv.get_env_dir(args)
+            assert result == virtual_env
 
     def test_without_python_virtualenv(self):
         """Test get_env_dir when not using python virtualenv"""

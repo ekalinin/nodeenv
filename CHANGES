@@ -16,6 +16,9 @@ Version [unreleased]
   virtualenv `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
 - Repeated `-p` runs no longer duplicate the `predeactivate` hook
   `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
+- `-p` accepts an optional virtualenv directory and prefers the activated
+  `VIRTUAL_ENV` over the virtualenv nodeenv itself is installed in
+  `#156 <https://github.com/ekalinin/nodeenv/issues/156>`_
 
 Version 1.3.1
 -------------

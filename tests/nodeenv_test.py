@@ -1761,9 +1761,43 @@ class TestGetEnvDir:
         env_dict = {'VIRTUAL_ENV': virtual_env}
         with mock.patch.object(sys, 'real_prefix', test_prefix, create=True), \
              mock.patch.object(sys, 'prefix', test_prefix), \
-             mock.patch.dict(os.environ, env_dict, clear=True):
+             mock.patch.dict(os.environ, env_dict, clear=True), \
+             mock.patch.object(nodeenv.logger, 'warning') as mck:
             result = nodeenv.get_env_dir(args)
             assert result == virtual_env
+            # the ignored virtualenv is not silently dropped
+            assert mck.call_count == 1
+            assert mck.call_args[0][1:] == (virtual_env, test_prefix)
+
+    def test_with_python_virtualenv_same_venv_is_quiet(self):
+        """Test get_env_dir doesn't warn when both point to the same venv"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        test_prefix = '/path/to/venv'
+
+        env_dict = {'VIRTUAL_ENV': test_prefix}
+        with mock.patch.object(sys, 'real_prefix', test_prefix, create=True), \
+             mock.patch.object(sys, 'prefix', test_prefix), \
+             mock.patch.dict(os.environ, env_dict, clear=True), \
+             mock.patch.object(nodeenv.logger, 'warning') as mck:
+            result = nodeenv.get_env_dir(args)
+            assert result == test_prefix
+            mck.assert_not_called()
+
+    def test_with_python_virtualenv_system_python_is_quiet(self):
+        """Test get_env_dir doesn't warn when nodeenv runs system-wide"""
+        args = mock.Mock()
+        args.python_virtualenv = True
+        virtual_env = '/path/to/activated/venv'
+
+        env_dict = {'VIRTUAL_ENV': virtual_env}
+        with mock.patch.object(sys, 'prefix', '/usr'), \
+             mock.patch.object(sys, 'base_prefix', '/usr'), \
+             mock.patch.dict(os.environ, env_dict, clear=True), \
+             mock.patch.object(nodeenv.logger, 'warning') as mck:
+            result = nodeenv.get_env_dir(args)
+            assert result == virtual_env
+            mck.assert_not_called()
 
     def test_without_python_virtualenv(self):
         """Test get_env_dir when not using python virtualenv"""

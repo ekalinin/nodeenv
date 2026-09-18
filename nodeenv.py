@@ -1382,6 +1382,11 @@ def resolve_node_version(spec):
 
 def get_env_dir(args):
     if args.python_virtualenv:
+        # whether nodeenv itself is running inside a python virtualenv
+        in_virtualenv = (
+            hasattr(sys, 'real_prefix') or
+            (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) or
+            'CONDA_PREFIX' in os.environ)
         if args.python_virtualenv is not True:
             res = args.python_virtualenv
             if not os.path.isdir(res):
@@ -1391,11 +1396,12 @@ def get_env_dir(args):
         # (pipx, pipsi, uv tool), so the activated one wins over sys.prefix
         elif os.environ.get('VIRTUAL_ENV'):
             res = os.environ['VIRTUAL_ENV']
-        elif hasattr(sys, 'real_prefix'):
-            res = sys.prefix
-        elif hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
-            res = sys.prefix
-        elif 'CONDA_PREFIX' in os.environ:
+            if in_virtualenv and res != sys.prefix:
+                logger.warning(
+                    ' * Using activated virtualenv %s, not %s where nodeenv '
+                    'is installed, pass a directory to -p to override',
+                    res, sys.prefix)
+        elif in_virtualenv:
             res = sys.prefix
         else:
             logger.error('No python virtualenv is available')

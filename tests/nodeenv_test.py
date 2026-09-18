@@ -26,6 +26,40 @@ from nodeenv import IncompleteRead
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+ENV_COMMANDS = ('node', 'npm', 'npx')
+
+
+def _resolve_and_run(activate, command):
+    """
+    Source `activate`, then report where `command` resolves and what
+    `command --version` prints.
+    """
+    script = '. {0} && command -v {1} && {1} --version'.format(
+        _quote(activate), command)
+    out = subprocess.check_output(['sh', '-c', script])
+    lines = out.decode('utf-8').splitlines()
+    assert len(lines) == 2, \
+        '%s: expected a path and a version, got %r' % (command, lines)
+    resolved, version = lines
+    # `command -v` prints a bare name for a builtin or a shell function,
+    # which os.path.realpath() would resolve against the cwd instead of
+    # rejecting.  Refuse anything that is not already a path.
+    assert os.path.isabs(resolved), \
+        '%s resolved to %r, not an absolute path' % (command, resolved)
+    return resolved, version
+
+
+def _inside(path, env_dir):
+    """
+    Is `path` inside `env_dir`?
+
+    Both sides are resolved first: bin/activate derives NODE_VIRTUAL_ENV
+    with `cd -P`, so a tmpdir under /tmp comes back as /private/tmp on
+    macOS and a plain comparison would fail.
+    """
+    return os.path.realpath(path).startswith(
+        os.path.realpath(env_dir) + os.sep)
+
 
 @pytest.mark.integration
 def test_smoke(tmpdir):
@@ -43,10 +77,16 @@ def test_smoke(tmpdir):
             os.path.join(nenv_path, 'Scripts', 'node.exe'), '--version',
         ])
     else:
-        activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
-        subprocess.check_call([
-            'sh', '-c', '. {} && node --version'.format(activate),
-        ])
+        # `node --version` alone would pass even if activation did
+        # nothing, because a system node would answer it.  Check where
+        # each command resolves, not just that it runs.
+        activate = os.path.join(nenv_path, 'bin', 'activate')
+        for command in ENV_COMMANDS:
+            resolved, version = _resolve_and_run(activate, command)
+            assert _inside(resolved, nenv_path), \
+                '%s resolved to %s, outside %s' % (
+                    command, resolved, nenv_path)
+            assert version, '%s --version printed nothing' % command
 
 
 @pytest.mark.integration
@@ -58,10 +98,15 @@ def test_smoke_n_system_special_chars(tmpdir):
         '-m', 'nodeenv', '-n', 'system', nenv_path,
     ))
     assert os.path.exists(nenv_path)
-    activate = _quote(os.path.join(nenv_path, 'bin', 'activate'))
-    subprocess.check_call([
-        'sh', '-c', '. {} && node --version'.format(activate),
-    ])
+    # node only: with `-n system` nodeenv writes a node shim and nothing
+    # else, so npm and npx legitimately resolve outside the environment.
+    # Whether `-n system` should provide them too is an open question
+    # about nodeenv, so this test pins neither answer.
+    activate = os.path.join(nenv_path, 'bin', 'activate')
+    resolved, version = _resolve_and_run(activate, 'node')
+    assert _inside(resolved, nenv_path), \
+        'node resolved to %s, outside %s' % (resolved, nenv_path)
+    assert version, 'node --version printed nothing'
 
 
 @pytest.fixture

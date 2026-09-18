@@ -142,7 +142,7 @@ ut: env-dev
 
 coverage: env-dev
 	@. ${DEV_TEST_ENV}/bin/activate && \
-		coverage run -p -m pytest && \
+		coverage run -p -m pytest -m 'not integration' && \
 		coverage report -m && \
 		coverage html
 

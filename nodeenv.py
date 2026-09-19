@@ -378,6 +378,28 @@ def node_version_from_args(args):
     return parse_version(args.node)
 
 
+def get_installed_node_version(env_dir):
+    """
+    Return version of node installed in env_dir, None if there is none
+    """
+    bin_dir = join(env_dir, 'Scripts' if is_WIN else 'bin')
+    node_bin = join(bin_dir, 'node.exe' if is_WIN else 'node')
+    if not os.path.exists(node_bin):
+        return None
+
+    with open(node_bin, 'rb') as f:
+        # a shim runs the system node, it is not an installed one
+        if f.read(2) == b'#!':
+            return None
+
+    try:
+        out, _ = subprocess.Popen(
+            [node_bin, "--version"], stdout=subprocess.PIPE).communicate()
+        return parse_version(clear_output(out))
+    except (OSError, ValueError):
+        return None
+
+
 def create_logger():
     """
     Create logger for diagnostic

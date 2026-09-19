@@ -153,6 +153,29 @@ def test_predeactivate_hook(tmpdir):
         assert 'deactivate_node' in p.read()
 
 
+def _node_bin(tmpdir):
+    if nodeenv.is_WIN:
+        return tmpdir.mkdir('Scripts').join('node.exe')
+    return tmpdir.mkdir('bin').join('node')
+
+
+def test_get_installed_node_version_missing(tmpdir):
+    assert nodeenv.get_installed_node_version(str(tmpdir)) is None
+
+
+def test_get_installed_node_version_shim(tmpdir):
+    _node_bin(tmpdir).write(nodeenv.SHIM)
+    assert nodeenv.get_installed_node_version(str(tmpdir)) is None
+
+
+def test_get_installed_node_version_binary(tmpdir):
+    _node_bin(tmpdir).write_binary(b'\x7fELF fake node binary')
+    proc = mock.Mock()
+    proc.communicate.return_value = (b'v26.9.0\n', b'')
+    with mock.patch.object(nodeenv.subprocess, 'Popen', return_value=proc):
+        assert nodeenv.get_installed_node_version(str(tmpdir)) == (26, 9, 0)
+
+
 def test_mirror_option():
     urls = [('https://npm.taobao.org/mirrors/node',
              'https://npm.taobao.org/mirrors/node/index.json'),

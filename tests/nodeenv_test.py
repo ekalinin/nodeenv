@@ -198,6 +198,83 @@ def test_predeactivate_hook(tmpdir):
         assert 'deactivate_node' in p.read()
 
 
+def test_predeactivate_hook_is_idempotent(tmpdir):
+    if nodeenv.is_WIN:
+        tmpdir.mkdir('Scripts')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        p_bat = tmpdir.join('Scripts').join('predeactivate.bat')
+        assert p_bat.read() == nodeenv.PREDEACTIVATE_BAT
+        p_ps1 = tmpdir.join('Scripts').join('predeactivate.ps1')
+        assert p_ps1.read() == nodeenv.PREDEACTIVATE_PS1
+    else:
+        tmpdir.mkdir('bin')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        p = tmpdir.join('bin').join('predeactivate')
+        assert p.read() == nodeenv.PREDEACTIVATE_SH
+
+
+def _node_bin(tmpdir):
+    if nodeenv.is_WIN:
+        return tmpdir.mkdir('Scripts').join('node.exe')
+    return tmpdir.mkdir('bin').join('node')
+
+
+def test_get_installed_node_version_missing(tmpdir):
+    assert nodeenv.get_installed_node_version(str(tmpdir)) is None
+
+
+def test_get_installed_node_version_shim(tmpdir):
+    _node_bin(tmpdir).write(nodeenv.SHIM)
+    assert nodeenv.get_installed_node_version(str(tmpdir)) is None
+
+
+def test_get_installed_node_version_binary(tmpdir):
+    _node_bin(tmpdir).write_binary(b'\x7fELF fake node binary')
+    proc = mock.Mock()
+    proc.communicate.return_value = (b'v26.9.0\n', b'')
+    with mock.patch.object(nodeenv.subprocess, 'Popen', return_value=proc):
+        assert nodeenv.get_installed_node_version(str(tmpdir)) == (26, 9, 0)
+
+
+def _make_opts(extra):
+    with mock.patch.object(sys, 'argv', ['nodeenv'] + extra):
+        return nodeenv.parse_args()
+
+
+def _count_install_node(tmpdir, opts, installed):
+    with mock.patch.object(nodeenv, 'install_node') as install_node, \
+            mock.patch.object(nodeenv, 'install_activate'), \
+            mock.patch.object(nodeenv, 'install_npm'), \
+            mock.patch.object(nodeenv, 'install_npm_win'), \
+            mock.patch.object(nodeenv, 'set_predeactivate_hook'), \
+            mock.patch.object(nodeenv, 'get_installed_node_version',
+                              return_value=installed):
+        nodeenv.create_environment(str(tmpdir), opts)
+    return install_node.call_count
+
+
+def test_create_environment_skips_installed_node(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, (26, 9, 0)) == 0
+
+
+def test_create_environment_installs_other_version(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, (24, 0, 0)) == 1
+
+
+def test_create_environment_installs_when_absent(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, None) == 1
+
+
+def test_create_environment_force_reinstalls_node(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p', '--force'])
+    assert _count_install_node(tmpdir, opts, (26, 9, 0)) == 1
+
+
 def test_mirror_option():
     urls = [('https://npm.taobao.org/mirrors/node',
              'https://npm.taobao.org/mirrors/node/index.json'),

@@ -378,6 +378,28 @@ def node_version_from_args(args):
     return parse_version(args.node)
 
 
+def get_installed_node_version(env_dir):
+    """
+    Return version of node installed in env_dir, None if there is none
+    """
+    bin_dir = join(env_dir, 'Scripts' if is_WIN else 'bin')
+    node_bin = join(bin_dir, 'node.exe' if is_WIN else 'node')
+    if not os.path.exists(node_bin):
+        return None
+
+    with open(node_bin, 'rb') as f:
+        # a shim runs the system node, it is not an installed one
+        if f.read(2) == b'#!':
+            return None
+
+    try:
+        out, _ = subprocess.Popen(
+            [node_bin, "--version"], stdout=subprocess.PIPE).communicate()
+        return parse_version(clear_output(out))
+    except (OSError, ValueError):
+        return None
+
+
 def create_logger():
     """
     Create logger for diagnostic
@@ -1219,14 +1241,14 @@ def set_predeactivate_hook(env_dir):
     if is_WIN:
         # Windows: create predeactivate.bat for CMD and
         #           predeactivate.ps1 for PowerShell
-        with open(join(env_dir, 'Scripts', 'predeactivate.bat'), 'a') as hook:
-            hook.write(PREDEACTIVATE_BAT)
-        with open(join(env_dir, 'Scripts', 'predeactivate.ps1'), 'a') as hook:
-            hook.write(PREDEACTIVATE_PS1)
+        writefile(join(env_dir, 'Scripts', 'predeactivate.bat'),
+                  PREDEACTIVATE_BAT, append=True)
+        writefile(join(env_dir, 'Scripts', 'predeactivate.ps1'),
+                  PREDEACTIVATE_PS1, append=True)
     else:
         # Unix: create predeactivate for bash/sh
-        with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
-            hook.write(PREDEACTIVATE_SH)
+        writefile(join(env_dir, 'bin', 'predeactivate'),
+                  PREDEACTIVATE_SH, append=True)
 
 
 def create_environment(env_dir, args):
@@ -1240,12 +1262,16 @@ def create_environment(env_dir, args):
     src_dir = to_utf8(abspath(join(env_dir, 'src')))
     mkdir(src_dir)
 
-    if args.node != "system":
-        install_node(env_dir, src_dir, args)
-    else:
+    if args.node == "system":
         mkdir(join(env_dir, 'bin'))
         mkdir(join(env_dir, 'lib'))
         mkdir(join(env_dir, 'lib', 'node_modules'))
+    elif not args.force and \
+            get_installed_node_version(env_dir) == parse_version(args.node):
+        logger.info(' * Node.js %s is already installed, skipping '
+                    '(use --force to reinstall)', args.node)
+    else:
+        install_node(env_dir, src_dir, args)
     # activate script install must be
     # before npm install, npm use activate
     # for install

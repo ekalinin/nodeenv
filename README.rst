@@ -277,7 +277,8 @@ Basic options
     Lists available node.js versions.
 
 ``-p, --python-virtualenv``
-    Use current python virtualenv.
+    Use current python virtualenv. Running it again with the same node
+    version does not reinstall node; pass ``--force`` to reinstall.
 
 ``-r FILENAME, --requirements=FILENAME``
     Install all the packages listed in the given requirements file.
@@ -286,7 +287,8 @@ Basic options
     Provides an alternative prompt prefix for this environment.
 
 ``--force``
-    Force installation in a pre-existing directory.
+    Force installation in a pre-existing directory, and reinstall node even
+    when the requested version is already installed.
 
 ``--update``
     Install npm packages from file without reinstalling node.

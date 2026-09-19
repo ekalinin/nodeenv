@@ -276,9 +276,13 @@ Basic options
 ``-l, --list``
     Lists available node.js versions.
 
-``-p, --python-virtualenv``
-    Use current python virtualenv. Running it again with the same node
-    version does not reinstall node; pass ``--force`` to reinstall.
+``-p [VENV_DIR], --python-virtualenv [VENV_DIR]``
+    Use the given python virtualenv, or the current one if no directory
+    is given. Passing a directory is required when nodeenv lives in its
+    own virtualenv (``pipx``, ``pipsi``, ``uv tool``) and the activated
+    virtualenv doesn't export ``VIRTUAL_ENV``. Running it again with the
+    same node version does not reinstall node; pass ``--force`` to
+    reinstall.
 
 ``-r FILENAME, --requirements=FILENAME``
     Install all the packages listed in the given requirements file.

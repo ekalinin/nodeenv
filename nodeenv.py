@@ -1262,12 +1262,16 @@ def create_environment(env_dir, args):
     src_dir = to_utf8(abspath(join(env_dir, 'src')))
     mkdir(src_dir)
 
-    if args.node != "system":
-        install_node(env_dir, src_dir, args)
-    else:
+    if args.node == "system":
         mkdir(join(env_dir, 'bin'))
         mkdir(join(env_dir, 'lib'))
         mkdir(join(env_dir, 'lib', 'node_modules'))
+    elif not args.force and \
+            get_installed_node_version(env_dir) == parse_version(args.node):
+        logger.info(' * Node.js %s is already installed, skipping '
+                    '(use --force to reinstall)', args.node)
+    else:
+        install_node(env_dir, src_dir, args)
     # activate script install must be
     # before npm install, npm use activate
     # for install

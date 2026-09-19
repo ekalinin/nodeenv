@@ -176,6 +176,43 @@ def test_get_installed_node_version_binary(tmpdir):
         assert nodeenv.get_installed_node_version(str(tmpdir)) == (26, 9, 0)
 
 
+def _make_opts(extra):
+    with mock.patch.object(sys, 'argv', ['nodeenv'] + extra):
+        return nodeenv.parse_args()
+
+
+def _count_install_node(tmpdir, opts, installed):
+    with mock.patch.object(nodeenv, 'install_node') as install_node, \
+            mock.patch.object(nodeenv, 'install_activate'), \
+            mock.patch.object(nodeenv, 'install_npm'), \
+            mock.patch.object(nodeenv, 'install_npm_win'), \
+            mock.patch.object(nodeenv, 'set_predeactivate_hook'), \
+            mock.patch.object(nodeenv, 'get_installed_node_version',
+                              return_value=installed):
+        nodeenv.create_environment(str(tmpdir), opts)
+    return install_node.call_count
+
+
+def test_create_environment_skips_installed_node(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, (26, 9, 0)) == 0
+
+
+def test_create_environment_installs_other_version(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, (24, 0, 0)) == 1
+
+
+def test_create_environment_installs_when_absent(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p'])
+    assert _count_install_node(tmpdir, opts, None) == 1
+
+
+def test_create_environment_force_reinstalls_node(tmpdir):
+    opts = _make_opts(['--node', '26.9.0', '-p', '--force'])
+    assert _count_install_node(tmpdir, opts, (26, 9, 0)) == 1
+
+
 def test_mirror_option():
     urls = [('https://npm.taobao.org/mirrors/node',
              'https://npm.taobao.org/mirrors/node/index.json'),

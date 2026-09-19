@@ -1241,14 +1241,14 @@ def set_predeactivate_hook(env_dir):
     if is_WIN:
         # Windows: create predeactivate.bat for CMD and
         #           predeactivate.ps1 for PowerShell
-        with open(join(env_dir, 'Scripts', 'predeactivate.bat'), 'a') as hook:
-            hook.write(PREDEACTIVATE_BAT)
-        with open(join(env_dir, 'Scripts', 'predeactivate.ps1'), 'a') as hook:
-            hook.write(PREDEACTIVATE_PS1)
+        writefile(join(env_dir, 'Scripts', 'predeactivate.bat'),
+                  PREDEACTIVATE_BAT, append=True)
+        writefile(join(env_dir, 'Scripts', 'predeactivate.ps1'),
+                  PREDEACTIVATE_PS1, append=True)
     else:
         # Unix: create predeactivate for bash/sh
-        with open(join(env_dir, 'bin', 'predeactivate'), 'a') as hook:
-            hook.write(PREDEACTIVATE_SH)
+        writefile(join(env_dir, 'bin', 'predeactivate'),
+                  PREDEACTIVATE_SH, append=True)
 
 
 def create_environment(env_dir, args):

@@ -14,6 +14,8 @@ Version [unreleased]
 - Added tests that run the activation scripts in sh, dash, bash, zsh and fish.
 - `-p` no longer reinstalls node when the requested version is already in the
   virtualenv `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
+- Repeated `-p` runs no longer duplicate the `predeactivate` hook
+  `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
 
 Version 1.3.1
 -------------

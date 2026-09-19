@@ -153,6 +153,23 @@ def test_predeactivate_hook(tmpdir):
         assert 'deactivate_node' in p.read()
 
 
+def test_predeactivate_hook_is_idempotent(tmpdir):
+    if nodeenv.is_WIN:
+        tmpdir.mkdir('Scripts')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        p_bat = tmpdir.join('Scripts').join('predeactivate.bat')
+        assert p_bat.read() == nodeenv.PREDEACTIVATE_BAT
+        p_ps1 = tmpdir.join('Scripts').join('predeactivate.ps1')
+        assert p_ps1.read() == nodeenv.PREDEACTIVATE_PS1
+    else:
+        tmpdir.mkdir('bin')
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        nodeenv.set_predeactivate_hook(tmpdir.strpath)
+        p = tmpdir.join('bin').join('predeactivate')
+        assert p.read() == nodeenv.PREDEACTIVATE_SH
+
+
 def _node_bin(tmpdir):
     if nodeenv.is_WIN:
         return tmpdir.mkdir('Scripts').join('node.exe')

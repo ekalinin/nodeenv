@@ -19,6 +19,11 @@ Version [unreleased]
 - `-p` accepts an optional virtualenv directory and prefers the activated
   `VIRTUAL_ENV` over the virtualenv nodeenv itself is installed in
   `#156 <https://github.com/ekalinin/nodeenv/issues/156>`_
+- `-r/--requirements` may now be given more than once, and the new
+  `--local-requirements` installs the packages of a file locally, into
+  "node_modules" of the current directory, which is what `freeze -l` writes.
+  Under npm < 1.0.0, which has no `-g`, a local file is still installed the
+  old way `#206 <https://github.com/ekalinin/nodeenv/issues/206>`_
 - The "src" directory is now removed after installation by default, which
   halves the size of an environment. Added `--no-clean-src` to keep it: with
   `--source` that is what lets a repeated `--force` build reuse the

@@ -193,6 +193,21 @@ Create an environment from a requirements file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
 
+``--requirements`` may be given more than once, and the packages of every file
+are installed globally::
+
+    $ nodeenv --requirements=../prod-requirements.txt \
+              --requirements=../dev-requirements.txt env-copy
+
+To install packages locally, into ``node_modules`` of the current directory,
+use ``--local-requirements``. It accepts the output of ``freeze -l`` and may
+also be given more than once::
+
+    $ nodeenv --requirements=../global-requirements.txt \
+              --local-requirements=../local-requirements.txt env-copy
+
+Global packages are installed first, then the local ones.
+
 Requirements files are plain text files that contain a list of packages
 to be installed. These text files allow you to create repeatable installations.
 Requirements file example::
@@ -285,7 +300,13 @@ Basic options
     reinstall.
 
 ``-r FILENAME, --requirements=FILENAME``
-    Install all the packages listed in the given requirements file.
+    Install all the packages listed in the given requirements file globally.
+    May be given more than once.
+
+``--local-requirements=FILENAME``
+    Install all the packages listed in the given requirements file locally,
+    into ``node_modules`` of the current directory. May be given more than
+    once.
 
 ``--prompt=PROMPT``
     Provides an alternative prompt prefix for this environment.

@@ -141,6 +141,12 @@ Install node.js from a mirror::
 
     $ nodeenv --node=10.19.0 --mirror=https://npm.taobao.org/mirrors/node
 
+A local directory works as a mirror too, if it repeats the layout of
+nodejs.org: packages in ``v<version>/`` and, to resolve ``latest``, ``lts``
+or a version range, an ``index.json`` next to them::
+
+    $ nodeenv --node=22.14.0 --mirror=file:///srv/node-mirror env-22
+
 Install the highest node.js release matching a version range::
 
     $ nodeenv --node=22 env-22
@@ -307,7 +313,8 @@ Installation options
     Install node.js from the source (Unix only).
 
 ``--mirror=URL``
-    Set mirror server of nodejs.org to download from.
+    Set mirror server of nodejs.org to download from. A ``file://`` URL
+    points nodeenv at a local directory instead of a server.
 
 ``-c, --clean-src``
     Remove "src" directory after installation. This is the default.

@@ -8,6 +8,7 @@ else:
     from shlex import quote as _quote
 import io
 import os.path
+import pathlib
 import subprocess
 import sys
 import sysconfig
@@ -307,6 +308,20 @@ def test_mirror_option():
                 nodeenv.main()
                 mock_urlopen.assert_called_with(url)
                 mock_logger.assert_called()
+
+
+def test_mirror_option_local_directory(tmpdir):
+    """A local directory is a valid mirror, see #193"""
+    tmpdir.join('index.json').write(
+        '[{"version": "v99.0.0", "date": "2026-01-01", "lts": false,'
+        ' "files": ["linux-x64", "linux-x64-musl", "linux-riscv64"]}]')
+    mirror = pathlib.Path(str(tmpdir)).as_uri()
+    argv = [__file__, '--list', '--mirror=' + mirror]
+    with mock.patch.object(sys, 'argv', argv), \
+            mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+        nodeenv.src_base_url = None
+        nodeenv.main()
+        mock_logger.assert_called_with('99.0.0')
 
 
 @pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')

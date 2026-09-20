@@ -310,7 +310,11 @@ Installation options
     Set mirror server of nodejs.org to download from.
 
 ``-c, --clean-src``
-    Remove "src" directory after installation.
+    Remove "src" directory after installation. This is the default.
+
+``--no-clean-src``
+    Keep "src" directory after installation. With ``--source`` it holds the
+    downloaded source tree, so a repeated ``--force`` build reuses it.
 
 NPM options
 ^^^^^^^^^^^
@@ -407,6 +411,7 @@ These are the available options and their defaults::
     mirror = None
     prefer_system = False
     isolate_npm = False
+    clean_src = True
 
 Alternatives
 ------------

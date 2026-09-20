@@ -19,6 +19,11 @@ Version [unreleased]
 - `-p` accepts an optional virtualenv directory and prefers the activated
   `VIRTUAL_ENV` over the virtualenv nodeenv itself is installed in
   `#156 <https://github.com/ekalinin/nodeenv/issues/156>`_
+- The "src" directory is now removed after installation by default, which
+  halves the size of an environment. Added `--no-clean-src` to keep it: with
+  `--source` that is what lets a repeated `--force` build reuse the
+  downloaded source tree
+  `#205 <https://github.com/ekalinin/nodeenv/issues/205>`_
 
 Version 1.3.1
 -------------

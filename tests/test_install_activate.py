@@ -412,6 +412,114 @@ def test_isolate_npm_shim_content(tmpdir):
     assert content.index('npm_config_cache') < content.index('exec ')
 
 
+# Windows also gets the posix `activate`, for git-bash and friends.
+# https://github.com/ekalinin/nodeenv/issues/226
+#
+# These run on every platform: is_WIN is faked so the Scripts/ layout can
+# be checked without a Windows host.
+
+
+@pytest.fixture
+def fake_win():
+    """
+    Pretend the host is Windows.  install_activate() links nodejs.exe with
+    mklink there, which exists on Windows only, so callit() is stubbed too.
+    """
+    with mock.patch.object(nodeenv, 'is_WIN', True):
+        with mock.patch.object(nodeenv, 'callit'):
+            yield
+
+
+def _install_win(tmpdir, *extra_args):
+    bin_dir = tmpdir.join('Scripts')
+    if not bin_dir.check():
+        bin_dir.mkdir()
+
+    argv = ['nodeenv'] + list(extra_args) + [str(tmpdir)]
+    with mock.patch.object(sys, 'argv', argv):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+    return bin_dir
+
+
+def test_win_writes_posix_activate(tmpdir, fake_win):
+    bin_dir = _install_win(tmpdir)
+
+    assert sorted(p.basename for p in bin_dir.listdir()) == [
+        'Activate.ps1', 'activate', 'activate.bat', 'deactivate.bat']
+
+
+def test_win_activate_puts_scripts_on_path(tmpdir, fake_win):
+    content = _install_win(tmpdir).join('activate').read()
+
+    assert ('PATH="$NODE_VIRTUAL_ENV/Scripts/node_modules/.bin:'
+            '$NODE_VIRTUAL_ENV/Scripts:$PATH"') in content
+
+
+def test_win_activate_points_node_at_scripts(tmpdir, fake_win):
+    # npm keeps the global modules next to node.exe on Windows, there is
+    # no lib/node_modules there
+    content = _install_win(tmpdir).join('activate').read()
+
+    assert 'NODE_PATH="$NODE_VIRTUAL_ENV/Scripts/node_modules"' in content
+    assert 'NPM_CONFIG_PREFIX="$NODE_VIRTUAL_ENV/Scripts"' in content
+    assert 'npm_config_prefix="$NODE_VIRTUAL_ENV/Scripts"' in content
+
+
+def test_win_activate_has_no_placeholders_left(tmpdir, fake_win):
+    content = _install_win(tmpdir).join('activate').read()
+
+    for placeholder in ('__NODE_VIRTUAL_PROMPT__', '__NODE_VIRTUAL_ENV__',
+                        '__SHIM_NODE__', '__BIN_NAME__', '__MOD_NAME__',
+                        '__NPM_ISOLATE__', '__NPM_UNISOLATE__',
+                        '__NPM_CONFIG_PREFIX__'):
+        assert placeholder not in content
+
+
+def test_win_activate_converts_paths_for_node_exe(tmpdir, fake_win):
+    # node.exe is a native binary: it cannot read the /c/... paths a
+    # Windows shell hands out, so the script converts them back
+    content = _install_win(tmpdir).join('activate').read()
+
+    assert 'CYGWIN*|MSYS*|MINGW*)' in content
+    assert 'NODE_PATH="$(cygpath -w "$NODE_PATH")"' in content
+    assert 'NPM_CONFIG_PREFIX="$(cygpath -w "$NPM_CONFIG_PREFIX")"' in content
+    # the conversion must come after the variables are built
+    assert content.index('NODE_PATH="$NODE_VIRTUAL_ENV') < \
+        content.index('cygpath -w')
+
+
+def test_win_activate_is_valid_sh(tmpdir, fake_win):
+    activate = _install_win(tmpdir).join('activate')
+
+    subprocess.check_call(['sh', '-n', str(activate)])
+
+
+def test_win_activate_refuses_to_be_run_directly(tmpdir, fake_win):
+    activate = str(_install_win(tmpdir).join('activate'))
+
+    proc = subprocess.Popen(
+        ['sh', activate], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    out, _ = proc.communicate()
+
+    assert proc.returncode == 1
+    assert b'Do not call' in out
+
+
+def test_win_python_virtualenv_appends_to_activate(tmpdir, fake_win):
+    # nodeenv -p inside a python venv: venv wrote Scripts/activate for
+    # git-bash already, nodeenv has to extend it, not replace it
+    bin_dir = tmpdir.join('Scripts')
+    bin_dir.mkdir()
+    bin_dir.join('activate').write('# python venv activate\n')
+
+    _install_win(tmpdir, '-p')
+
+    content = bin_dir.join('activate').read()
+    assert content.startswith('# python venv activate\n')
+    assert 'NODE_VIRTUAL_ENV_DISABLE_PROMPT=1' in content
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='system node is POSIX only')
 def test_isolate_npm_node_system_shim_exports(tmpdir):
     bin_dir = tmpdir.join('bin')

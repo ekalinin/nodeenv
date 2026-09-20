@@ -72,8 +72,8 @@ def test_smoke(tmpdir):
     ])
     assert os.path.exists(nenv_path)
     if sys.platform == 'win32':
-        # on Windows nodeenv installs into Scripts/ and provides
-        # activate.bat/Activate.ps1, there is no posix activate script
+        # on Windows nodeenv installs into Scripts/, the posix activate
+        # written there is covered by test_smoke_git_bash
         subprocess.check_call([
             os.path.join(nenv_path, 'Scripts', 'node.exe'), '--version',
         ])
@@ -88,6 +88,40 @@ def test_smoke(tmpdir):
                 '%s resolved to %s, outside %s' % (
                     command, resolved, nenv_path)
             assert version, '%s --version printed nothing' % command
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    sys.platform != 'win32', reason='git-bash only exists on Windows')
+def test_smoke_git_bash(tmpdir):
+    """
+    The posix activate written on Windows has to work from git-bash.
+    https://github.com/ekalinin/nodeenv/issues/226
+    """
+    nenv_path = tmpdir.join('nenv').strpath
+    subprocess.check_call([
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '--prebuilt', nenv_path,
+    ])
+
+    # node.exe and npm report native paths, so both answers can be
+    # compared with the environment directory as python knows it
+    script = (
+        'set -e\n'
+        'env_dir="$(cygpath "$1")"\n'
+        '. "$env_dir/Scripts/activate"\n'
+        'node -p "process.execPath"\n'
+        'npm root -g\n'
+    )
+    out = subprocess.check_output(['bash', '-c', script, 'bash', nenv_path])
+    node_exe, npm_root = out.decode('utf-8').splitlines()
+
+    assert _inside(node_exe, nenv_path), \
+        'node resolved to %s, outside %s' % (node_exe, nenv_path)
+    # npm would answer with a path outside the environment if activate
+    # had left it a posix prefix it cannot read
+    assert _inside(npm_root, nenv_path), \
+        'npm root -g is %s, outside %s' % (npm_root, nenv_path)
 
 
 @pytest.mark.integration

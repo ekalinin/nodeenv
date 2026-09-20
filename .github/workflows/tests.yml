@@ -89,6 +89,33 @@ jobs:
         run: |
           pytest -m integration tests/ -v
 
+  # The posix activate written on Windows is only useful in a shell that
+  # can source it, and `shell: bash` on a windows runner is git-bash -
+  # exactly the environment of issue #226.
+  git-bash:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run git-bash activation test
+        run: |
+          pytest -m integration -k git_bash tests/ -v
+
   coverage:
     runs-on: ubuntu-latest
     steps:

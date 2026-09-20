@@ -99,6 +99,12 @@ Activate new environment::
 
     $ . env/bin/activate
 
+On Windows the environment is created in ``env\Scripts`` instead, with a
+script per shell: ``activate.bat`` for cmd, ``Activate.ps1`` for
+PowerShell and ``activate`` for posix shells such as git-bash::
+
+    $ . env/Scripts/activate
+
 Check versions of main packages::
 
     (env) $ node -v

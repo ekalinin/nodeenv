@@ -794,6 +794,59 @@ def test_create_environment_keeps_src_when_asked(tmpdir):
     assert tmpdir.join('src').check(dir=True)
 
 
+def test_parse_args_requirements_can_be_repeated():
+    argv = ['nodeenv', '-r', 'a.txt', '-r', 'b.txt', 'env']
+    with mock.patch.object(sys, 'argv', argv):
+        args = nodeenv.parse_args()
+    assert args.requirements == ['a.txt', 'b.txt']
+    assert args.local_requirements == []
+
+
+def test_parse_args_local_requirements():
+    argv = ['nodeenv', '--local-requirements', 'loc.txt', 'env']
+    with mock.patch.object(sys, 'argv', argv):
+        args = nodeenv.parse_args()
+    assert args.requirements == []
+    assert args.local_requirements == ['loc.txt']
+
+
+def _install_packages_commands(tmpdir, files):
+    """
+    Run install_packages() with callit() mocked and return the shell
+    commands it would have run
+    """
+    argv = ['nodeenv']
+    for flag, name, content in files:
+        tmpdir.join(name).write(content)
+        argv += [flag, str(tmpdir.join(name))]
+    argv.append('env')
+    with mock.patch.object(sys, 'argv', argv):
+        args = nodeenv.parse_args()
+    with mock.patch.object(nodeenv, 'callit') as m_callit:
+        nodeenv.install_packages(str(tmpdir), args)
+    return [call[1]['cmd'][0] for call in m_callit.call_args_list]
+
+
+def test_install_packages_installs_requirements_globally(tmpdir):
+    cmds = _install_packages_commands(tmpdir, [
+        ('-r', 'first.txt', 'express@2.2.2\n'),
+        ('-r', 'second.txt', 'jade@0.10.4\n'),
+    ])
+    assert len(cmds) == 2
+    assert cmds[0].endswith(' && npm install -g express@2.2.2')
+    assert cmds[1].endswith(' && npm install -g jade@0.10.4')
+
+
+def test_install_packages_installs_local_requirements_without_g(tmpdir):
+    cmds = _install_packages_commands(tmpdir, [
+        ('--local-requirements', 'local.txt', 'mime@1.2.1\n'),
+        ('-r', 'global.txt', 'express@2.2.2\n'),
+    ])
+    assert len(cmds) == 2
+    assert cmds[0].endswith(' && npm install -g express@2.2.2')
+    assert cmds[1].endswith(' && npm install mime@1.2.1')
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
 @pytest.mark.usefixtures('mock_host_platform')
 def test_main_prefer_system_uses_system_node(cap_logging_info):

@@ -522,8 +522,17 @@ def make_parser():
 
     parser.add_argument(
         '-r', '--requirements',
-        dest='requirements', default='', metavar='FILENAME',
-        help='Install all the packages listed in the given requirements file.')
+        dest='requirements', default=[], action='append', metavar='FILENAME',
+        help='Install all the packages listed in the given requirements file '
+        'globally. May be given more than once.')
+
+    parser.add_argument(
+        '--local-requirements',
+        dest='local_requirements', default=[], action='append',
+        metavar='FILENAME',
+        help='Install all the packages listed in the given requirements file '
+        'locally, into "node_modules" of the current directory. '
+        'May be given more than once.')
 
     parser.add_argument(
         '--prompt', dest='prompt',
@@ -1138,29 +1147,41 @@ def install_npm_win(env_dir, src_dir, args):
         writefile(join(env_dir, 'bin', 'npm'), urlopen(npm_bin_url).read())
 
 
+def _read_packages(filenames):
+    """
+    Read package names from the given requirements files
+    """
+    packages = []
+    for filename in filenames:
+        with open(filename) as f:
+            packages.extend(package.strip() for package in f.readlines())
+    return packages
+
+
 def install_packages(env_dir, args):
     """
     Install node.js packages via npm
     """
     logger.info(' * Install node.js packages ... ',
                 extra=dict(continued=True))
-    packages = [package.strip() for package in
-                open(args.requirements).readlines()]
     activate_path = join(env_dir, 'bin', 'activate')
     real_npm_ver = args.npm if args.npm.count(".") == 2 else args.npm + ".0"
     if args.npm == "latest" or real_npm_ver >= "1.0.0":
         cmd = '. ' + _quote(activate_path) + \
-              ' && npm install -g %(pack)s'
+              ' && npm install %(opt)s%(pack)s'
     else:
         cmd = '. ' + _quote(activate_path) + \
               ' && npm install %(pack)s' + \
               ' && npm activate %(pack)s'
 
-    for package in packages:
-        if not package:
-            continue
-        callit(cmd=[
-            cmd % {"pack": package}], show_stdout=args.verbose, in_shell=True)
+    # global packages first, local ones go to the current directory
+    for opt, filenames in (('-g ', args.requirements),
+                           ('', args.local_requirements)):
+        for package in _read_packages(filenames):
+            if not package:
+                continue
+            callit(cmd=[cmd % {"pack": package, "opt": opt}],
+                   show_stdout=args.verbose, in_shell=True)
 
     logger.info('done.')
 
@@ -1286,7 +1307,7 @@ def create_environment(env_dir, args):
     if node_version_from_args(args) < (0, 6, 3) or args.with_npm:
         instfunc = install_npm_win if is_WIN or is_CYGWIN else install_npm
         instfunc(env_dir, src_dir, args)
-    if args.requirements:
+    if args.requirements or args.local_requirements:
         install_packages(env_dir, args)
     if args.python_virtualenv:
         set_predeactivate_hook(env_dir)

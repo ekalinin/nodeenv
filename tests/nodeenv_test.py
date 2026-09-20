@@ -732,6 +732,53 @@ def test_parse_args_isolate_npm():
         assert nodeenv.parse_args().isolate_npm is False
 
 
+def test_clean_src_default():
+    assert nodeenv.Config._default['clean_src'] is True
+
+
+def test_clean_src_is_configurable(tmpdir):
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nclean_src = false\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.clean_src is False
+    finally:
+        nodeenv.Config.clean_src = True
+
+
+def test_parse_args_clean_src():
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().clean_src is True
+    # still accepted, pre-commit passes it explicitly
+    with mock.patch.object(sys, 'argv', ['nodeenv', '-c', 'env']):
+        assert nodeenv.parse_args().clean_src is True
+    with mock.patch.object(sys, 'argv', ['nodeenv', '--no-clean-src', 'env']):
+        assert nodeenv.parse_args().clean_src is False
+
+
+def _run_create_environment(tmpdir, extra):
+    """
+    Run create_environment() in tmpdir without installing anything
+    """
+    argv = ['nodeenv', '--node', '26.9.0', '-p'] + extra
+    with mock.patch.object(sys, 'argv', argv):
+        args = nodeenv.parse_args()
+    with mock.patch.object(nodeenv, 'install_node'), \
+            mock.patch.object(nodeenv, 'install_activate'), \
+            mock.patch.object(nodeenv, 'set_predeactivate_hook'):
+        nodeenv.create_environment(str(tmpdir), args)
+
+
+def test_create_environment_cleans_src_by_default(tmpdir):
+    _run_create_environment(tmpdir, [])
+    assert not tmpdir.join('src').check()
+
+
+def test_create_environment_keeps_src_when_asked(tmpdir):
+    _run_create_environment(tmpdir, ['--no-clean-src'])
+    assert tmpdir.join('src').check(dir=True)
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='-n system is posix only')
 @pytest.mark.usefixtures('mock_host_platform')
 def test_main_prefer_system_uses_system_node(cap_logging_info):

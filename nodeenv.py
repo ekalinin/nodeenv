@@ -108,6 +108,7 @@ class Config(object):
     mirror = None
     prefer_system = False
     isolate_npm = False
+    clean_src = True
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -572,8 +573,13 @@ def make_parser():
 
     parser.add_argument(
         '--clean-src', '-c', dest='clean_src',
-        action='store_true', default=False,
-        help='Remove "src" directory after installation')
+        action='store_true', default=Config.clean_src,
+        help='Remove "src" directory after installation (default)')
+
+    parser.add_argument(
+        '--no-clean-src', dest='clean_src',
+        action='store_false',
+        help='Keep "src" directory after installation')
 
     parser.add_argument(
         '--force', dest='force',

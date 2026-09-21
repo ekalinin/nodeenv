@@ -1191,7 +1191,11 @@ def install_activate(env_dir, args):
     Install virtual environment activation script
     """
     if is_WIN:
+        # `activate` is written on Windows too, for git-bash and the other
+        # posix shells available there
+        # https://github.com/ekalinin/nodeenv/issues/226
         files = {
+            'activate': ACTIVATE_SH,
             'activate.bat': ACTIVATE_BAT,
             "deactivate.bat": DEACTIVATE_BAT,
             "Activate.ps1": ACTIVATE_PS1
@@ -1214,7 +1218,9 @@ def install_activate(env_dir, args):
     if args.node == "system":
         files["node"] = SHIM
 
-    mod_dir = join('lib', 'node_modules')
+    # npm keeps the global modules next to node.exe on Windows,
+    # under lib/ everywhere else
+    mod_dir = 'Scripts/node_modules' if is_WIN else join('lib', 'node_modules')
     prompt = args.prompt or '(%s)' % os.path.basename(os.path.abspath(env_dir))
 
     if args.node == "system":
@@ -1238,6 +1244,10 @@ def install_activate(env_dir, args):
                 ['cygpath', '-w', os.path.abspath(bin_dir)],
                 show_stdout=False, in_shell=False)
             content = content.replace('__NPM_CONFIG_PREFIX__', cyg_bin_dir[0])
+        elif is_WIN:
+            # npm's prefix on Windows is the directory holding node.exe
+            content = content.replace('__NPM_CONFIG_PREFIX__',
+                                      '$NODE_VIRTUAL_ENV/Scripts')
         else:
             content = content.replace('__NPM_CONFIG_PREFIX__',
                                       '$NODE_VIRTUAL_ENV')
@@ -1796,7 +1806,7 @@ freeze () {
 
 # Detect calling this file as a script
 case $0 in
-    */bin/activate )
+    */bin/activate | */Scripts/activate )
         echo "Do not call $0 directly.  Instead source it with \`source $0\`."
         exit 1
         ;;
@@ -1825,7 +1835,7 @@ fi
 export NODE_VIRTUAL_ENV
 
 _OLD_NODE_VIRTUAL_PATH="$PATH"
-PATH="$NODE_VIRTUAL_ENV/lib/node_modules/.bin:$NODE_VIRTUAL_ENV/__BIN_NAME__:$PATH"
+PATH="$NODE_VIRTUAL_ENV/__MOD_NAME__/.bin:$NODE_VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
 _OLD_NODE_PATH="${NODE_PATH:-}"
@@ -1839,6 +1849,17 @@ npm_config_prefix="__NPM_CONFIG_PREFIX__"
 export NPM_CONFIG_PREFIX
 export npm_config_prefix
 __NPM_ISOLATE__
+
+# Windows shells (git-bash, MSYS, Cygwin) run a native node.exe, which
+# cannot read the posix paths built above: hand it the native ones.
+# $PATH stays posix, that one is read by the shell itself.
+case "$(uname -s 2>/dev/null)" in
+    CYGWIN*|MSYS*|MINGW*)
+        NODE_PATH="$(cygpath -w "$NODE_PATH")"
+        NPM_CONFIG_PREFIX="$(cygpath -w "$NPM_CONFIG_PREFIX")"
+        npm_config_prefix="$NPM_CONFIG_PREFIX"
+        ;;
+esac
 
 if [ -z "${NODE_VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     _OLD_NODE_VIRTUAL_PS1="${PS1:-}"

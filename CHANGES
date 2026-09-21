@@ -45,6 +45,9 @@ Version [unreleased]
 - Documented that `--mirror` takes a `file://` URL, so a local directory can
   serve as the download source
   `#193 <https://github.com/ekalinin/nodeenv/issues/193>`_
+- The posix `activate` is now written on Windows too, into "Scripts", so
+  git-bash and the other posix shells there can activate an environment
+  `#226 <https://github.com/ekalinin/nodeenv/issues/226>`_
 
 Version 1.10.0
 --------------

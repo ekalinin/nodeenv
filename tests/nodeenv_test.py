@@ -9,6 +9,7 @@ else:
 import io
 import os.path
 import pathlib
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -50,6 +51,36 @@ def _resolve_and_run(activate, command):
     return resolved, version
 
 
+def _git_bash():
+    """
+    Path of the git-bash executable, or None.
+
+    The CI job already runs inside git-bash and passes its own shell in
+    NODEENV_GIT_BASH.  Outside it `bash` from PATH is used, unless that
+    is the WSL launcher shipped in System32: with no distribution
+    installed it answers "Windows Subsystem for Linux has no installed
+    distributions" and exits 1.  git-bash also ships sh.exe, which
+    System32 does not, so bash.exe is looked for next to it as well.
+    """
+    from_env = os.environ.get('NODEENV_GIT_BASH')
+    if from_env:
+        return from_env
+
+    system_root = os.environ.get('SystemRoot', r'C:\Windows').lower()
+    candidates = []
+    on_path = shutil.which('bash')
+    if on_path and not on_path.lower().startswith(system_root):
+        candidates.append(on_path)
+    sh = shutil.which('sh')
+    if sh:
+        candidates.append(os.path.join(os.path.dirname(sh), 'bash.exe'))
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+
 def _inside(path, env_dir):
     """
     Is `path` inside `env_dir`?
@@ -72,8 +103,8 @@ def test_smoke(tmpdir):
     ])
     assert os.path.exists(nenv_path)
     if sys.platform == 'win32':
-        # on Windows nodeenv installs into Scripts/ and provides
-        # activate.bat/Activate.ps1, there is no posix activate script
+        # on Windows nodeenv installs into Scripts/, the posix activate
+        # written there is covered by test_smoke_git_bash
         subprocess.check_call([
             os.path.join(nenv_path, 'Scripts', 'node.exe'), '--version',
         ])
@@ -88,6 +119,54 @@ def test_smoke(tmpdir):
                 '%s resolved to %s, outside %s' % (
                     command, resolved, nenv_path)
             assert version, '%s --version printed nothing' % command
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    sys.platform != 'win32', reason='git-bash only exists on Windows')
+def test_smoke_git_bash(tmpdir):
+    """
+    The posix activate written on Windows has to work from git-bash.
+    https://github.com/ekalinin/nodeenv/issues/226
+    """
+    bash = _git_bash()
+    assert bash, 'git-bash not found, this test would prove nothing'
+
+    nenv_path = tmpdir.join('nenv').strpath
+    subprocess.check_call([
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '--prebuilt', nenv_path,
+    ])
+
+    # bash reads the script from a file: passing it inline would put the
+    # quoting rules of two command line parsers between the test and what
+    # the shell ends up running.  `set -x` sends a trace to stderr, which
+    # is only reported when the probe fails.
+    # node.exe and npm answer with native paths, so both can be compared
+    # with the environment directory as python knows it.
+    probe = tmpdir.join('probe.sh')
+    probe.write(
+        'set -ex\n'
+        '. "%s/Scripts/activate"\n'
+        'node -p "process.execPath"\n'
+        'npm root -g\n' % nenv_path.replace(os.sep, '/')
+    )
+    proc = subprocess.run(
+        [bash, probe.strpath.replace(os.sep, '/')],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
+        proc.returncode,
+        proc.stdout.decode('utf-8', 'replace'),
+        proc.stderr.decode('utf-8', 'replace'))
+
+    assert proc.returncode == 0, report
+    node_exe, npm_root = proc.stdout.decode('utf-8').splitlines()[-2:]
+    assert _inside(node_exe, nenv_path), \
+        'node resolved to %s, outside %s' % (node_exe, nenv_path)
+    # npm would answer with a path outside the environment if activate
+    # had left it a posix prefix it cannot read
+    assert _inside(npm_root, nenv_path), \
+        'npm root -g is %s, outside %s' % (npm_root, nenv_path)
 
 
 @pytest.mark.integration

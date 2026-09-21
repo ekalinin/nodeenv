@@ -113,7 +113,10 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run git-bash activation test
+        # $BASH is the shell running this step, which is the git-bash the
+        # test needs: `bash` from PATH would be the WSL launcher
         run: |
+          export NODEENV_GIT_BASH="$(cygpath -w "$BASH")"
           pytest -m integration -k git_bash tests/ -v
 
   coverage:

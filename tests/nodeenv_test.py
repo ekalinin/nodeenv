@@ -55,16 +55,30 @@ def _git_bash():
     """
     Path of the git-bash executable, or None.
 
-    `bash` on PATH is the WSL launcher shipped in System32, which answers
-    "Windows Subsystem for Linux has no installed distributions" and
-    exits 1, so git-bash is looked up next to git itself instead.
+    The CI job already runs inside git-bash and passes its own shell in
+    NODEENV_GIT_BASH.  Outside it `bash` from PATH is used, unless that
+    is the WSL launcher shipped in System32: with no distribution
+    installed it answers "Windows Subsystem for Linux has no installed
+    distributions" and exits 1.  git-bash also ships sh.exe, which
+    System32 does not, so bash.exe is looked for next to it as well.
     """
-    git = shutil.which('git')
-    if git is None:
-        return None
-    git_dir = os.path.dirname(os.path.dirname(git))
-    bash = os.path.join(git_dir, 'bin', 'bash.exe')
-    return bash if os.path.exists(bash) else None
+    from_env = os.environ.get('NODEENV_GIT_BASH')
+    if from_env:
+        return from_env
+
+    system_root = os.environ.get('SystemRoot', r'C:\Windows').lower()
+    candidates = []
+    on_path = shutil.which('bash')
+    if on_path and not on_path.lower().startswith(system_root):
+        candidates.append(on_path)
+    sh = shutil.which('sh')
+    if sh:
+        candidates.append(os.path.join(os.path.dirname(sh), 'bash.exe'))
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    return None
 
 
 def _inside(path, env_dir):

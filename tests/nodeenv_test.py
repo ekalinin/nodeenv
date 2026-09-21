@@ -9,6 +9,7 @@ else:
 import io
 import os.path
 import pathlib
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -48,6 +49,22 @@ def _resolve_and_run(activate, command):
     assert os.path.isabs(resolved), \
         '%s resolved to %r, not an absolute path' % (command, resolved)
     return resolved, version
+
+
+def _git_bash():
+    """
+    Path of the git-bash executable, or None.
+
+    `bash` on PATH is the WSL launcher shipped in System32, which answers
+    "Windows Subsystem for Linux has no installed distributions" and
+    exits 1, so git-bash is looked up next to git itself instead.
+    """
+    git = shutil.which('git')
+    if git is None:
+        return None
+    git_dir = os.path.dirname(os.path.dirname(git))
+    bash = os.path.join(git_dir, 'bin', 'bash.exe')
+    return bash if os.path.exists(bash) else None
 
 
 def _inside(path, env_dir):
@@ -98,6 +115,9 @@ def test_smoke_git_bash(tmpdir):
     The posix activate written on Windows has to work from git-bash.
     https://github.com/ekalinin/nodeenv/issues/226
     """
+    bash = _git_bash()
+    assert bash, 'git-bash not found, this test would prove nothing'
+
     nenv_path = tmpdir.join('nenv').strpath
     subprocess.check_call([
         'coverage', 'run', '-p',
@@ -118,7 +138,7 @@ def test_smoke_git_bash(tmpdir):
         'npm root -g\n' % nenv_path.replace(os.sep, '/')
     )
     proc = subprocess.run(
-        ['bash', probe.strpath.replace(os.sep, '/')],
+        [bash, probe.strpath.replace(os.sep, '/')],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
         proc.returncode,

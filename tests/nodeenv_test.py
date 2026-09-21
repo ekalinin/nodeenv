@@ -104,18 +104,29 @@ def test_smoke_git_bash(tmpdir):
         '-m', 'nodeenv', '--prebuilt', nenv_path,
     ])
 
-    # node.exe and npm report native paths, so both answers can be
-    # compared with the environment directory as python knows it
-    script = (
-        'set -e\n'
-        'env_dir="$(cygpath "$1")"\n'
-        '. "$env_dir/Scripts/activate"\n'
+    # bash reads the script from a file: passing it inline would put the
+    # quoting rules of two command line parsers between the test and what
+    # the shell ends up running.  `set -x` sends a trace to stderr, which
+    # is only reported when the probe fails.
+    # node.exe and npm answer with native paths, so both can be compared
+    # with the environment directory as python knows it.
+    probe = tmpdir.join('probe.sh')
+    probe.write(
+        'set -ex\n'
+        '. "%s/Scripts/activate"\n'
         'node -p "process.execPath"\n'
-        'npm root -g\n'
+        'npm root -g\n' % nenv_path.replace(os.sep, '/')
     )
-    out = subprocess.check_output(['bash', '-c', script, 'bash', nenv_path])
-    node_exe, npm_root = out.decode('utf-8').splitlines()
+    proc = subprocess.run(
+        ['bash', probe.strpath.replace(os.sep, '/')],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
+        proc.returncode,
+        proc.stdout.decode('utf-8', 'replace'),
+        proc.stderr.decode('utf-8', 'replace'))
 
+    assert proc.returncode == 0, report
+    node_exe, npm_root = proc.stdout.decode('utf-8').splitlines()[-2:]
     assert _inside(node_exe, nenv_path), \
         'node resolved to %s, outside %s' % (node_exe, nenv_path)
     # npm would answer with a path outside the environment if activate

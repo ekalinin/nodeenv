@@ -496,7 +496,9 @@ def test_win_activate_is_valid_sh(tmpdir, fake_win):
 
 
 def test_win_activate_refuses_to_be_run_directly(tmpdir, fake_win):
-    activate = str(_install_win(tmpdir).join('activate'))
+    # the guard matches on $0, and a shell reports the path it was given:
+    # from a posix shell on Windows that is the forward slash form
+    activate = str(_install_win(tmpdir).join('activate')).replace(os.sep, '/')
 
     proc = subprocess.Popen(
         ['sh', activate], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

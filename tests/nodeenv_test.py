@@ -440,6 +440,57 @@ def test__download_node_file():
         assert m_urlopen.call_count == 5
 
 
+PROXY_VARS = ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY')
+
+
+def _failing_urlopen(reason):
+    return mock.patch.object(
+        nodeenv.urllib2, 'urlopen',
+        side_effect=nodeenv.urllib2.URLError(reason))
+
+
+def _logged_errors(m_error):
+    return ' '.join(str(arg) for call in m_error.call_args_list
+                    for arg in call[0])
+
+
+def test_urlopen_reports_the_url_it_failed_to_reach(monkeypatch):
+    """A dead connection must be reported, not dumped as a traceback."""
+    for name in PROXY_VARS:
+        monkeypatch.delenv(name, raising=False)
+    with _failing_urlopen('Name or service not known'), \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        with pytest.raises(SystemExit):
+            nodeenv.urlopen('https://nodejs.org/download/release/index.json')
+
+    errors = _logged_errors(m_error)
+    assert 'https://nodejs.org/download/release/index.json' in errors
+    assert 'Name or service not known' in errors
+
+
+def test_urlopen_reports_the_proxy_it_went_through(monkeypatch):
+    """A broken proxy is the usual cause, so name it (issue #229)."""
+    for name in PROXY_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('https_proxy', 'https://:3128')
+    with _failing_urlopen('Name or service not known'), \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        with pytest.raises(SystemExit):
+            nodeenv.urlopen('https://nodejs.org/download/release/index.json')
+
+    assert 'https_proxy=https://:3128' in _logged_errors(m_error)
+
+
+def test_urlopen_keeps_raising_http_errors():
+    """download_node_src() falls back to x64 on an arm64 HTTPError."""
+    http_error = nodeenv.urllib2.HTTPError(
+        'https://dummy/nodejs.tar.gz', 404, 'Not Found', {}, None)
+    with mock.patch.object(nodeenv.urllib2, 'urlopen',
+                           side_effect=http_error):
+        with pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv.urlopen('https://dummy/nodejs.tar.gz')
+
+
 def _zip_with_node(node_version):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w') as zf:

@@ -48,6 +48,10 @@ Version [unreleased]
 - The posix `activate` is now written on Windows too, into "Scripts", so
   git-bash and the other posix shells there can activate an environment
   `#226 <https://github.com/ekalinin/nodeenv/issues/226>`_
+- A download that reaches nothing at all, which a broken `http_proxy` or
+  `https_proxy` usually causes, now reports the url and the proxy settings
+  instead of a traceback
+  `#229 <https://github.com/ekalinin/nodeenv/issues/229>`_
 
 Version 1.10.0
 --------------

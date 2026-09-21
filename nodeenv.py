@@ -905,10 +905,15 @@ def make_certifi_context():
     return ssl.create_default_context(cafile=certifi.where())
 
 
-def urlopen(url):
-    home_url = "https://github.com/ekalinin/nodeenv/"
-    headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
-    req = urllib2.Request(url, None, headers)
+def get_proxy_settings():
+    """
+    Proxy environment variables urllib acts on, as 'name=value' strings.
+    """
+    names = ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY')
+    return ['%s=%s' % (n, os.environ[n]) for n in names if os.environ.get(n)]
+
+
+def _urlopen(req):
     if ignore_ssl_certs:
         # py27: protocol required, py3: optional
         # https://github.com/ekalinin/nodeenv/issues/296
@@ -921,6 +926,26 @@ def urlopen(url):
         return urllib2.urlopen(req, context=certifi_context)
 
     return urllib2.urlopen(req)
+
+
+def urlopen(url):
+    home_url = "https://github.com/ekalinin/nodeenv/"
+    headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
+    req = urllib2.Request(url, None, headers)
+    try:
+        return _urlopen(req)
+    except urllib2.HTTPError:
+        # The server answered, callers decide what the status means
+        raise
+    except urllib2.URLError as e:
+        # Nothing was reached at all: a broken proxy, no DNS, no route.
+        # https://github.com/ekalinin/nodeenv/issues/229
+        logger.error('Error: cannot download %s: %s' % (url, e.reason))
+        proxies = get_proxy_settings()
+        if proxies:
+            logger.error('Error: check the proxy settings: %s'
+                         % ', '.join(proxies))
+        sys.exit(1)
 
 # ---------------------------------------------------------
 # Virtual environment functions

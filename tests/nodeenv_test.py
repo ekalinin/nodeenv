@@ -1542,7 +1542,7 @@ class TestInstallNode:
             mock_copy.assert_called_once()
 
     def test_install_node_wrapped_http_error_non_arm64(self, tmpdir):
-        """Test that HTTPError is re-raised for non-arm64 URLs"""
+        """Test that a non-arm64 URL is not retried before giving up"""
         args = mock.Mock()
         args.node = '18.0.0'
         args.prebuilt = True
@@ -1573,18 +1573,15 @@ class TestInstallNode:
              ) as mock_download, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch.object(nodeenv.logger, 'info'), \
-             mock.patch.object(nodeenv.logger, 'warning') as mock_warning, \
-             pytest.raises(nodeenv.urllib2.HTTPError):
+             mock.patch.object(nodeenv.logger, 'error') as mock_error, \
+             pytest.raises(SystemExit):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
-            # Verify warning was logged
-            mock_warning.assert_called_once()
-            warning_call = mock_warning.call_args[0][0]
-            assert 'Failed to download' in warning_call
-            assert x64_url in warning_call
+        # Verify the failed URL was reported
+        assert x64_url in _logged_errors(mock_error)
 
-            # Verify download was called only once (no fallback for x64)
-            mock_download.assert_called_once()
+        # Verify download was called only once (no fallback for x64)
+        mock_download.assert_called_once()
 
     def test_install_node_wrapped_skips_download_if_exists(self, tmpdir):
         """Test that download is skipped if node source dir exists"""
@@ -1697,7 +1694,7 @@ class TestInstallNode:
             mock_bin_url.assert_not_called()
 
     def test_install_node_wrapped_arm64_fallback_both_fail(self, tmpdir):
-        """Test that both arm64 and x64 failures raise exception"""
+        """Test that both arm64 and x64 failures stop the install"""
         args = mock.Mock()
         args.node = '16.0.0'
         args.prebuilt = True
@@ -1728,11 +1725,12 @@ class TestInstallNode:
              ) as mock_download, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch.object(nodeenv.logger, 'info'), \
-             pytest.raises(nodeenv.urllib2.HTTPError):
+             mock.patch.object(nodeenv.logger, 'error'), \
+             pytest.raises(SystemExit):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
-            # Both arm64 and x64 should have been tried
-            assert mock_download.call_count == 2
+        # Both arm64 and x64 should have been tried
+        assert mock_download.call_count == 2
 
     def test_install_node_wrapped_no_copy_after_download_failure(
         self, tmpdir
@@ -1771,12 +1769,12 @@ class TestInstallNode:
              ) as mock_copy, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch.object(nodeenv.logger, 'info'), \
-             mock.patch.object(nodeenv.logger, 'warning'), \
-             pytest.raises(nodeenv.urllib2.HTTPError):
+             mock.patch.object(nodeenv.logger, 'error'), \
+             pytest.raises(SystemExit):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
-            # Verify copy was NOT called after download failure
-            mock_copy.assert_not_called()
+        # Verify copy was NOT called after download failure
+        mock_copy.assert_not_called()
 
     def test_install_node_wrapped_no_build_after_download_failure(
         self, tmpdir
@@ -1815,12 +1813,12 @@ class TestInstallNode:
              ) as mock_build, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch.object(nodeenv.logger, 'info'), \
-             mock.patch.object(nodeenv.logger, 'warning'), \
-             pytest.raises(nodeenv.urllib2.HTTPError):
+             mock.patch.object(nodeenv.logger, 'error'), \
+             pytest.raises(SystemExit):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
-            # Verify build was NOT called after download failure
-            mock_build.assert_not_called()
+        # Verify build was NOT called after download failure
+        mock_build.assert_not_called()
 
     def test_install_node_wrapped_no_copy_after_arm64_fallback_failure(
         self, tmpdir
@@ -1859,14 +1857,97 @@ class TestInstallNode:
              ) as mock_copy, \
              mock.patch('os.path.exists', return_value=False), \
              mock.patch.object(nodeenv.logger, 'info'), \
-             pytest.raises(nodeenv.urllib2.HTTPError):
+             mock.patch.object(nodeenv.logger, 'error'), \
+             pytest.raises(SystemExit):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
-            # Verify both attempts were made
-            assert mock_download.call_count == 2
+        # Verify both attempts were made
+        assert mock_download.call_count == 2
 
-            # Verify copy was NOT called after both download failures
-            mock_copy.assert_not_called()
+        # Verify copy was NOT called after both download failures
+        mock_copy.assert_not_called()
+
+    def _run_failing_install(self, tmpdir, url, args, code=404,
+                             reason='Not Found'):
+        """
+        Run install_node_wrapped() with every download answering `code`.
+
+        Returns everything that was passed to logger.error().
+        """
+        def download_side_effect(url, src_dir, args):
+            raise nodeenv.urllib2.HTTPError(url, code, reason, {}, None)
+
+        src_dir = tmpdir.join('src').strpath
+        os.makedirs(src_dir)
+        url_getter = ('get_node_bin_url' if args.prebuilt
+                      else 'get_node_src_url')
+
+        with mock.patch.object(nodeenv, url_getter, return_value=url), \
+             mock.patch.object(nodeenv, 'download_node_src',
+                               side_effect=download_side_effect), \
+             mock.patch('os.path.exists', return_value=False), \
+             mock.patch.object(nodeenv.logger, 'info'), \
+             mock.patch.object(nodeenv.logger, 'error') as m_error, \
+             pytest.raises(SystemExit):
+            nodeenv.install_node_wrapped(
+                tmpdir.join('env').strpath, src_dir, args)
+
+        return _logged_errors(m_error)
+
+    def test_install_node_wrapped_reports_a_missing_prebuilt_package(
+        self, tmpdir
+    ):
+        """A 404 must be explained, not dumped as a traceback (issue #250)."""
+        args = mock.Mock(node='18.0.0', prebuilt=True, verbose=False)
+        url = ('https://nodejs.org/download/release/v18.0.0/'
+               'node-v18.0.0-linux-x64.tar.gz')
+
+        errors = self._run_failing_install(tmpdir, url, args)
+
+        assert url in errors
+        assert 'HTTP 404 Not Found' in errors
+        assert '18.0.0' in errors
+        assert '--list' in errors
+        assert '--source' in errors
+
+    def test_install_node_wrapped_reports_both_urls_when_arm64_also_fails(
+        self, tmpdir
+    ):
+        """The x64 retry must not bury the arm64 404 in a chained traceback."""
+        args = mock.Mock(node='16.0.0', prebuilt=True, verbose=False)
+        arm64_url = ('https://nodejs.org/download/release/v16.0.0/'
+                     'node-v16.0.0-darwin-arm64.tar.gz')
+
+        errors = self._run_failing_install(tmpdir, arm64_url, args)
+
+        assert arm64_url in errors
+        assert arm64_url.replace('arm64', 'x64') in errors
+
+    def test_install_node_wrapped_reports_a_missing_source_archive(
+        self, tmpdir
+    ):
+        """--source has no prebuilt package to fall back to."""
+        args = mock.Mock(node='18.0.0', prebuilt=False, verbose=False)
+        url = ('https://nodejs.org/download/release/v18.0.0/'
+               'node-v18.0.0.tar.gz')
+
+        errors = self._run_failing_install(tmpdir, url, args)
+
+        assert url in errors
+        assert '--list' in errors
+        assert '--source' not in errors
+
+    def test_install_node_wrapped_reports_a_server_error_as_is(self, tmpdir):
+        """A 500 is not a missing build, so do not advise another version."""
+        args = mock.Mock(node='18.0.0', prebuilt=True, verbose=False)
+        url = ('https://nodejs.org/download/release/v18.0.0/'
+               'node-v18.0.0-linux-x64.tar.gz')
+
+        errors = self._run_failing_install(
+            tmpdir, url, args, code=500, reason='Internal Server Error')
+
+        assert 'HTTP 500 Internal Server Error' in errors
+        assert '--list' not in errors
 
 
 class TestGetEnvDir:

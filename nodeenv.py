@@ -1079,6 +1079,34 @@ def install_node(env_dir, src_dir, args):
         raise
 
 
+def report_node_download_error(errors, args):
+    """
+    Report an undownloadable node.js archive instead of a traceback.
+
+    A 404 usually means the version ships no build for the host platform.
+    https://github.com/ekalinin/nodeenv/issues/250
+    """
+    # this restores the newline suppressed by continued=True
+    logger.info('')
+    for node_url, error in errors:
+        logger.error('Error: cannot download %s: HTTP %s %s'
+                     % (node_url, error.code, error.reason))
+
+    if errors[-1][1].code == 404:
+        if args.prebuilt:
+            logger.error('Error: there is no prebuilt node.js %s for %s-%s'
+                         % (args.node, platform.system().lower(),
+                            platform.machine().lower()))
+            logger.error('Error: check "nodeenv --list" for the available '
+                         'versions, or build from source with --source')
+        else:
+            logger.error('Error: there is no node.js %s source archive'
+                         % args.node)
+            logger.error('Error: check "nodeenv --list" for the available '
+                         'versions')
+    sys.exit(1)
+
+
 def install_node_wrapped(env_dir, src_dir, args):
     env_dir = abspath(env_dir)
     node_src_dir = join(src_dir, to_utf8('node-v%s' % args.node))
@@ -1092,18 +1120,24 @@ def install_node_wrapped(env_dir, src_dir, args):
     else:
         node_url = get_node_src_url(args.node)
 
+    node_urls = [node_url]
+    if "arm64" in node_url:
+        # if arm64 not found, try x64
+        node_urls.append(node_url.replace('arm64', 'x64'))
+
     # get src if not downloaded yet
     if not os.path.exists(node_src_dir):
-        try:
-            download_node_src(node_url, src_dir, args)
-        except urllib2.HTTPError:
-            if "arm64" in node_url:
-                # if arm64 not found, try x64
-                download_node_src(node_url.replace('arm64', 'x64'),
-                                  src_dir, args)
-            else:
-                logger.warning('Failed to download from %s' % node_url)
-                raise
+        errors = []
+        # retry outside the handler, so that a second failure is not
+        # reported as "during handling of the above exception"
+        for url in node_urls:
+            try:
+                download_node_src(url, src_dir, args)
+                break
+            except urllib2.HTTPError as e:
+                errors.append((url, e))
+        else:
+            report_node_download_error(errors, args)
 
     logger.info('.', extra=dict(continued=True))
 

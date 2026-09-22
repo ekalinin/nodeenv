@@ -667,6 +667,9 @@ def make_executable(filename):
     os.chmod(filename, mode_0755)
 
 
+PS1_SIGNATURE = b'# SIG # Begin signature block'
+
+
 # noinspection PyArgumentList
 def writefile(dest, content, overwrite=True, append=False):
     """
@@ -696,10 +699,21 @@ def writefile(dest, content, overwrite=True, append=False):
 
         if append:
             logger.info(' * Appending data to %s', dest)
-            with open(dest, 'ab') as f:
-                if c and not c.endswith(b'\n'):
-                    f.write(b'\n')
-                f.write(content)
+            # PowerShell refuses to parse code that follows the signature
+            # block of a signed script, and the Activate.ps1 python ships
+            # on Windows is signed, so the new part goes in front of it.
+            # Editing the script voids that signature either way
+            # https://github.com/ekalinin/nodeenv/issues/243
+            head, signature, rest = c.partition(PS1_SIGNATURE)
+            # and the appended part starts on a line of its own: a
+            # "deactivate.bat" ending with `:END` and no newline would
+            # swallow the first appended line into the label
+            if head and not head.endswith(b'\n'):
+                head += b'\n'
+            if signature and not content.endswith(b'\n'):
+                content += b'\n'
+            with open(dest, 'wb') as f:
+                f.write(head + content + signature + rest)
             return
 
         logger.info(' * Overwriting %s with new content', dest)

@@ -104,13 +104,19 @@ def _parse(out, shell):
     out = out.replace('\r\n', '\n')
     _, sentinel, dump = out.partition(DUMP_SENTINEL + '\n')
     assert sentinel, 'no dump in the output of %s: %r' % (shell, out)
-    return dict(line.split('=', 1) for line in dump.splitlines() if line)
+    # anything the shell itself reported comes before the dump, but an
+    # error message can still follow it
+    return dict(line.split('=', 1) for line in dump.splitlines()
+                if line.split('=', 1)[0] in PROBED)
 
 
 def _run(args, script, lines, shell):
     script.write('\n'.join(lines) + '\n')
+    # stderr goes to stdout so a failing script reports why in the
+    # assertion instead of leaving an empty dump behind
     out = subprocess.check_output(
-        args + [str(script)], env=_child_env(), cwd=str(script.dirname))
+        args + [str(script)], stderr=subprocess.STDOUT,
+        env=_child_env(), cwd=str(script.dirname))
     return _parse(out.decode('utf-8'), shell)
 
 
@@ -122,7 +128,11 @@ def run_cmd(env, steps=()):
 
 def run_ps1(env, steps=()):
     """Run the steps in PowerShell and return the probed environment."""
-    lines = list(steps) + [_dump_line(env.dumper, call='&')]
+    # without this a script that cannot be parsed, which is what a
+    # signed Activate.ps1 with code appended after the signature block
+    # is, would be reported on stderr and otherwise ignored
+    lines = ["$ErrorActionPreference = 'Stop'"] + list(steps) + [
+        _dump_line(env.dumper, call='&')]
     return _run(
         ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File'],
         env.tmpdir.join('probe.ps1'), lines, 'powershell')

@@ -2597,3 +2597,23 @@ class TestWritefile:
 
         assert dest.read() == (
             '@echo off\n:END\n@echo off\nset NODE_VIRTUAL_ENV=\n')
+
+    def test_append_goes_before_a_powershell_signature(self, tmpdir):
+        """
+        PowerShell refuses to parse code that follows the signature
+        block, and the Activate.ps1 python ships on Windows is signed
+        """
+        dest = tmpdir.join('Activate.ps1')
+        dest.write('$env:VIRTUAL_ENV = "C:\\ws"\n'
+                   '# SIG # Begin signature block\n'
+                   '# MIIF...\n'
+                   '# SIG # End signature block\n')
+
+        nodeenv.writefile(
+            str(dest), '$env:NODE_VIRTUAL_ENV = "C:\\ws"\n', append=True)
+
+        assert dest.read() == ('$env:VIRTUAL_ENV = "C:\\ws"\n'
+                               '$env:NODE_VIRTUAL_ENV = "C:\\ws"\n'
+                               '# SIG # Begin signature block\n'
+                               '# MIIF...\n'
+                               '# SIG # End signature block\n')

@@ -12,7 +12,6 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import sysconfig
 import platform
 import ssl
 import zipfile
@@ -362,10 +361,8 @@ def test_mirror_option():
              'https://npm.some-mirror.com/download/release/index.json'),
             ('',
              'https://nodejs.org/download/release/index.json')]
-    sys_type = sysconfig.get_config_var('HOST_GNU_TYPE')
-    musl_type = ['x86_64-pc-linux-musl', 'x86_64-unknown-linux-musl']
     # Check if running on musl system and delete last mirror if it is
-    if sys_type in musl_type:
+    if nodeenv.is_x86_64_musl():
         urls.pop()
     elif platform.machine() == "riscv64":
         urls.pop()
@@ -715,6 +712,25 @@ def test_has_platform_build_musl():
 def test_has_platform_build_riscv64():
     assert nodeenv._has_platform_build({'files': []}) is False
     assert nodeenv._has_platform_build({'files': ['linux-riscv64']}) is True
+
+
+@pytest.mark.parametrize(
+    ('host_gnu_type', 'expected'),
+    (
+        # the vendor field depends on how python itself was configured
+        ('x86_64-pc-linux-musl', True),
+        ('x86_64-unknown-linux-musl', True),
+        ('x86_64-alpine-linux-musl', True),   # alpine's own python, see #290
+        ('x86_64-pc-linux-gnu', False),
+        ('aarch64-alpine-linux-musl', False),
+        ('', False),
+        (None, False),
+    ),
+)
+def test_is_x86_64_musl(host_gnu_type, expected):
+    with mock.patch.object(nodeenv.sysconfig, 'get_config_var',
+                           return_value=host_gnu_type):
+        assert nodeenv.is_x86_64_musl() is expected
 
 
 def _run_main_resolving(argv):

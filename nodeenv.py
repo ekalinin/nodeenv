@@ -798,7 +798,10 @@ def get_root_url(version_str):
 
 
 def is_x86_64_musl():
-    return sysconfig.get_config_var('HOST_GNU_TYPE') == 'x86_64-pc-linux-musl'
+    # the vendor field differs between distros: pc, unknown, alpine, ...
+    host_gnu_type = sysconfig.get_config_var('HOST_GNU_TYPE') or ''
+    return (host_gnu_type.startswith('x86_64-')
+            and host_gnu_type.endswith('-linux-musl'))
 
 
 def is_riscv64():

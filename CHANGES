@@ -56,6 +56,9 @@ Version [unreleased]
   "Activate.ps1" of the python virtualenv instead of overwriting them, so
   `VIRTUAL_ENV` and the virtualenv's own deactivation survive
   `#243 <https://github.com/ekalinin/nodeenv/issues/243>`_
+- A missing node.js archive now reports the urls that were tried and points
+  at `--list` and `--source` instead of a traceback
+  `#250 <https://github.com/ekalinin/nodeenv/issues/250>`_
 
 Version 1.10.0
 --------------

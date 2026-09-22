@@ -667,6 +667,9 @@ def make_executable(filename):
     os.chmod(filename, mode_0755)
 
 
+PS1_SIGNATURE = b'# SIG # Begin signature block'
+
+
 # noinspection PyArgumentList
 def writefile(dest, content, overwrite=True, append=False):
     """
@@ -696,8 +699,21 @@ def writefile(dest, content, overwrite=True, append=False):
 
         if append:
             logger.info(' * Appending data to %s', dest)
-            with open(dest, 'ab') as f:
-                f.write(content)
+            # PowerShell refuses to parse code that follows the signature
+            # block of a signed script, and the Activate.ps1 python ships
+            # on Windows is signed, so the new part goes in front of it.
+            # Editing the script voids that signature either way
+            # https://github.com/ekalinin/nodeenv/issues/243
+            head, signature, rest = c.partition(PS1_SIGNATURE)
+            # and the appended part starts on a line of its own: a
+            # "deactivate.bat" ending with `:END` and no newline would
+            # swallow the first appended line into the label
+            if head and not head.endswith(b'\n'):
+                head += b'\n'
+            if signature and not content.endswith(b'\n'):
+                content += b'\n'
+            with open(dest, 'wb') as f:
+                f.write(head + content + signature + rest)
             return
 
         logger.info(' * Overwriting %s with new content', dest)
@@ -1211,6 +1227,16 @@ def install_packages(env_dir, args):
     logger.info('done.')
 
 
+# Files python's own venv/virtualenv writes: with `-p` nodeenv works
+# inside such an environment and has to extend them.  Overwriting them
+# throws VIRTUAL_ENV and the deactivation script away
+# https://github.com/ekalinin/nodeenv/issues/243
+PYTHON_VIRTUALENV_FILES = frozenset((
+    'activate', 'activate.fish', 'activate.bat', 'deactivate.bat',
+    'Activate.ps1',
+))
+
+
 def install_activate(env_dir, args):
     """
     Install virtual environment activation script
@@ -1287,7 +1313,7 @@ def install_activate(env_dir, args):
             disable_prompt = DISABLE_PROMPT.get(name, '')
             enable_prompt = ENABLE_PROMPT.get(name, '')
             content = disable_prompt + content + enable_prompt
-            need_append = bool(disable_prompt)
+            need_append = name in PYTHON_VIRTUALENV_FILES
         writefile(file_path, content, append=need_append)
 
     if not os.path.exists(shim_nodejs):
@@ -1714,6 +1740,15 @@ set NODE_VIRTUAL_ENV=
 """
 
 ACTIVATE_PS1 = r"""
+# `nodeenv -p` appends this to the Activate.ps1 of the python virtualenv,
+# which defines `deactivate` too: keep it and call it from ours instead
+# of taking the name over for good
+# https://github.com/ekalinin/nodeenv/issues/243
+if ((Test-Path function:deactivate) -and
+        -not (Test-Path function:_OLD_NODE_DEACTIVATE)) {
+    copy-item function:deactivate function:global:_OLD_NODE_DEACTIVATE
+}
+
 function global:deactivate ([switch]$NonDestructive) {
     # Revert to original values
     if (Test-Path function:_OLD_VIRTUAL_PROMPT) {
@@ -1734,6 +1769,12 @@ function global:deactivate ([switch]$NonDestructive) {
     if (!$NonDestructive) {
         # Self destruct!
         remove-item function:deactivate
+        # the python virtualenv's `deactivate` is next in line
+        if (Test-Path function:_OLD_NODE_DEACTIVATE) {
+            copy-item function:_OLD_NODE_DEACTIVATE function:global:deactivate
+            remove-item function:_OLD_NODE_DEACTIVATE
+            deactivate
+        }
     }
 }
 

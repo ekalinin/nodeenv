@@ -52,6 +52,10 @@ Version [unreleased]
   `https_proxy` usually causes, now reports the url and the proxy settings
   instead of a traceback
   `#229 <https://github.com/ekalinin/nodeenv/issues/229>`_
+- On Windows `-p` extends "activate.bat", "deactivate.bat" and
+  "Activate.ps1" of the python virtualenv instead of overwriting them, so
+  `VIRTUAL_ENV` and the virtualenv's own deactivation survive
+  `#243 <https://github.com/ekalinin/nodeenv/issues/243>`_
 
 Version 1.10.0
 --------------

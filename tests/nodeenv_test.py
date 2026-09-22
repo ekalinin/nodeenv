@@ -2580,3 +2580,40 @@ class TestCertifi:
     def test_with_certifi_is_configurable(self):
         """with_certifi can be set from the config file, like other options"""
         assert 'with_certifi' in nodeenv.Config._default
+
+
+class TestWritefile:
+    """Tests for writefile()"""
+
+    def test_append_starts_on_its_own_line(self, tmpdir):
+        """A file not ending with a newline must not swallow the first
+        appended line: `:END` plus `@echo off` is a label, not a command
+        """
+        dest = tmpdir.join('deactivate.bat')
+        dest.write('@echo off\n:END')
+
+        nodeenv.writefile(str(dest), '@echo off\nset NODE_VIRTUAL_ENV=\n',
+                          append=True)
+
+        assert dest.read() == (
+            '@echo off\n:END\n@echo off\nset NODE_VIRTUAL_ENV=\n')
+
+    def test_append_goes_before_a_powershell_signature(self, tmpdir):
+        """
+        PowerShell refuses to parse code that follows the signature
+        block, and the Activate.ps1 python ships on Windows is signed
+        """
+        dest = tmpdir.join('Activate.ps1')
+        dest.write('$env:VIRTUAL_ENV = "C:\\ws"\n'
+                   '# SIG # Begin signature block\n'
+                   '# MIIF...\n'
+                   '# SIG # End signature block\n')
+
+        nodeenv.writefile(
+            str(dest), '$env:NODE_VIRTUAL_ENV = "C:\\ws"\n', append=True)
+
+        assert dest.read() == ('$env:VIRTUAL_ENV = "C:\\ws"\n'
+                               '$env:NODE_VIRTUAL_ENV = "C:\\ws"\n'
+                               '# SIG # Begin signature block\n'
+                               '# MIIF...\n'
+                               '# SIG # End signature block\n')

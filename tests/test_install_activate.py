@@ -80,13 +80,14 @@ def test_python_virtualenv(tmpdir, name, content_var):
         nodeenv.install_activate(str(tmpdir), opts)
 
     content = getattr(nodeenv, content_var)
-    # If there's disable prompt content to be added, we're appending to
-    # the file so prepend the original content (and the wrapped
-    # disable/enable prompt content).
-    disable_prompt = nodeenv.DISABLE_PROMPT.get(name)
-    if disable_prompt:
+    # The files python's virtualenv owns are extended, not replaced, so
+    # the original content comes first (and the new content is wrapped in
+    # the disable/enable prompt content).  writefile() starts the
+    # appended part on a line of its own.
+    if name in nodeenv.PYTHON_VIRTUALENV_FILES:
+        disable_prompt = nodeenv.DISABLE_PROMPT.get(name, '')
         enable_prompt = nodeenv.ENABLE_PROMPT.get(name, '')
-        content = name + disable_prompt + content + enable_prompt
+        content = name + '\n' + disable_prompt + content + enable_prompt
     assert bin_dir.join(name).read() == fix_content(content, tmpdir)
 
 
@@ -520,6 +521,43 @@ def test_win_python_virtualenv_appends_to_activate(tmpdir, fake_win):
     content = bin_dir.join('activate').read()
     assert content.startswith('# python venv activate\n')
     assert 'NODE_VIRTUAL_ENV_DISABLE_PROMPT=1' in content
+
+
+# python's venv writes these for cmd and PowerShell, and `nodeenv -p`
+# used to overwrite them, throwing VIRTUAL_ENV away with them
+# https://github.com/ekalinin/nodeenv/issues/243
+VENV_WIN_SCRIPTS = {
+    'activate.bat': '@echo off\nset "VIRTUAL_ENV=C:\\ws\\.venv"\n',
+    'deactivate.bat': '@echo off\nset VIRTUAL_ENV=\n',
+    'Activate.ps1': '$env:VIRTUAL_ENV = "C:\\ws\\.venv"\n',
+}
+
+
+@pytest.mark.parametrize('name', sorted(VENV_WIN_SCRIPTS))
+def test_win_python_virtualenv_keeps_venv_scripts(tmpdir, fake_win, name):
+    bin_dir = tmpdir.join('Scripts')
+    bin_dir.mkdir()
+    for script, script_content in VENV_WIN_SCRIPTS.items():
+        bin_dir.join(script).write(script_content)
+
+    _install_win(tmpdir, '-p')
+
+    content = bin_dir.join(name).read()
+    assert content.startswith(VENV_WIN_SCRIPTS[name])
+    assert 'NODE_VIRTUAL_ENV' in content
+
+
+def test_win_activate_ps1_keeps_a_previous_deactivate(tmpdir, fake_win):
+    # Activate.ps1 defines `deactivate`, and so does the python venv's
+    # own Activate.ps1 this one is appended to: replacing it would leave
+    # no way to unset VIRTUAL_ENV again
+    content = _install_win(tmpdir).join('Activate.ps1').read()
+
+    # saved before ours takes the name over ...
+    assert content.index('function:_OLD_NODE_DEACTIVATE') < \
+        content.index('function global:deactivate')
+    # ... and put back and called on a real (destructive) deactivate
+    assert 'copy-item function:_OLD_NODE_DEACTIVATE' in content
 
 
 @pytest.mark.skipif(nodeenv.is_WIN, reason='system node is POSIX only')

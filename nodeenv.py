@@ -1885,7 +1885,6 @@ __NPM_UNISOLATE__
 
 freeze () {
     local NPM_VER=`npm -v | cut -d '.' -f 1`
-    local re="[a-zA-Z0-9\.\-]+@[0-9]+\.[0-9]+\.[0-9]+([\+\-][a-zA-Z0-9\.\-]+)*"
     if [ "$NPM_VER" = '0' ]; then
         NPM_LIST=`npm list installed active 2>/dev/null | \
                   cut -d ' ' -f 1 | grep -v npm`
@@ -1895,8 +1894,13 @@ freeze () {
             npmls="npm ls"
             shift
         fi
-        NPM_LIST=$(eval ${npmls} | grep -E '^.{4}\w{1}'| \
-                                   grep -o -E "$re"| grep -v npm)
+        # `path:name@version[:flags]`, one package per line.  The drawn
+        # tree cannot be parsed: it loses the scope of `@scope/name`.
+        # The root is the only line without `/node_modules/` in the path,
+        # and npm and corepack come with node.js itself
+        NPM_LIST=$(eval ${npmls} --depth=0 --parseable --long | \
+                   sed -n 's|^.*/node_modules/[^:]*:\([^:]*\).*|\1|p' | \
+                   grep -v -E '^(npm|corepack)@')
     fi
 
     if [ -z "$@" ]; then
@@ -2048,26 +2052,30 @@ end
 
 function freeze -d 'Show a list of installed packages - like `pip freeze`'
     set -l NPM_VER (npm -v | cut -d '.' -f 1)
-    set -l RE "[a-zA-Z0-9\\.\\-]+@[0-9]+\\.[0-9]+\\.[0-9]+([\\+\\-][a-zA-Z0-9\\.\\-]+)*"
+    set -l NPM_LIST
 
     if test "$NPM_VER" = "0"
-        set -g NPM_LIST (npm list installed active >/dev/null ^/dev/null | \
-                         cut -d ' ' -f 1 | grep -v npm)
+        set NPM_LIST (npm list installed active 2>/dev/null | \
+                      cut -d ' ' -f 1 | grep -v npm)
     else
         set -l NPM_LS "npm ls -g"
         if test (count $argv) -gt 0 -a "$argv[1]" = "-l"
             set NPM_LS "npm ls"
             set -e argv[1]
         end
-        set -l NPM_LIST (eval $NPM_LS | grep -E '^.{4}\\w{1}' | \
-                                        grep -o -E "$re" | \
-                                        grep -v npm)
+        # `path:name@version[:flags]`, one package per line.  The drawn
+        # tree cannot be parsed: it loses the scope of `@scope/name`.
+        # The root is the only line without `/node_modules/` in the path,
+        # and npm and corepack come with node.js itself
+        set NPM_LIST (eval $NPM_LS --depth=0 --parseable --long | \
+            sed -n 's|^.*/node_modules/[^:]*:\\([^:]*\\).*|\\1|p' | \
+            grep -v -E '^(npm|corepack)@')
     end
 
     if test (count $argv) = 0
-        echo $NPM_LIST
+        printf '%s\\n' $NPM_LIST
     else
-        echo $NPM_LIST > $argv[1]
+        printf '%s\\n' $NPM_LIST > $argv[1]
     end
 end
 

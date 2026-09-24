@@ -201,6 +201,15 @@ If you want to list locally installed packages use ``-l`` option::
 
     (env-4.3)$ freeze -l ../prod-requirements.txt
 
+``npm`` and ``corepack`` are installed by node.js itself and are left out of
+the list: pinning them would downgrade the copies the next node.js brings.
+
+``freeze`` saves the packages, not the runtime. To pin the node.js version as
+well, write it next to the requirements file - nodeenv reads
+``.node-version`` from the directory it is run in::
+
+    (env-4.3)$ node --version > ../.node-version
+
 Create an environment from a requirements file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
@@ -229,7 +238,6 @@ Requirements file example::
     express@2.2.2
     jade@0.10.4
     mime@1.2.1
-    npm@0.3.17
     qs@0.0.7
 
 If you already have the python virtualenv tool, and want to use nodeenv and

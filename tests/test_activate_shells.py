@@ -62,6 +62,61 @@ for name in sys.argv[1:]:
     print('%s=%s' % (name, os.environ.get(name, '<unset>')))
 """.replace('__SENTINEL__', DUMP_SENTINEL)
 
+# as much of the npm CLI as `freeze` calls: a version and the listing of
+# `npm ls --parseable --long`, picked by the presence of `-g`
+NPM_STUB = """\
+#!/bin/sh
+if [ "$1" = '-v' ]; then
+    echo 11.19.0
+    exit 0
+fi
+for arg in "$@"; do
+    if [ "$arg" = '-g' ]; then
+        cat <<'LISTING'
+__GLOBAL__
+LISTING
+        exit 0
+    fi
+done
+cat <<'LISTING'
+__LOCAL__
+LISTING
+"""
+
+# `path:name@version[:FLAGS]`, one package per line.  The tree root is the
+# only line without `/node_modules/` in its path, global or local
+GLOBAL_LISTING = (
+    '/env/lib:lib@:/env/lib',
+    '/env/lib/node_modules/@scope/pkg:@scope/pkg@1.2.3',
+    '/env/lib/node_modules/cheerio:cheerio@1.2.0',
+    '/env/lib/node_modules/corepack:corepack@0.36.0',
+    '/env/lib/node_modules/extra:extra@1.0.0:EXTRANEOUS',
+    '/env/lib/node_modules/npm:npm@11.19.0',
+    '/env/lib/node_modules/npmlog:npmlog@7.0.1',
+)
+
+# npm and corepack are installed by node.js itself: freezing them pins a
+# version the user never asked for and downgrades the bundled copy on the
+# next install.  Everything else is kept, including the extraneous package,
+# with its `:EXTRANEOUS` flag stripped
+FROZEN_GLOBAL = [
+    '@scope/pkg@1.2.3',
+    'cheerio@1.2.0',
+    'extra@1.0.0',
+    'npmlog@7.0.1',
+]
+
+LOCAL_LISTING = (
+    '/project:project@0.0.0',
+    '/project/node_modules/@scope/local:@scope/local@2.0.0',
+    '/project/node_modules/npmlog:npmlog@7.0.1',
+)
+
+FROZEN_LOCAL = [
+    '@scope/local@2.0.0',
+    'npmlog@7.0.1',
+]
+
 ZSH_SOURCE_GUARD = (
     'zsh sets $0 to the sourced file, so the "do not call directly" guard '
     'added to ACTIVATE_SH in 68abdc3 fires on `source bin/activate`')
@@ -317,6 +372,43 @@ def _fish_prompt_output(shell, env, steps=()):
     lines.extend(steps)
     lines.append('fish_prompt')
     return _launch(shell, env, lines)
+
+
+def _freeze(shell, env, args=''):
+    """
+    Install the stub npm and run `freeze` in the activated shell.
+
+    The stub goes next to the stub node, which activation puts at the head
+    of PATH, so it shadows any npm installed on the machine.
+    """
+    npm = os.path.join(env.path, 'bin', 'npm')
+    with open(npm, 'w') as fd:
+        fd.write(NPM_STUB
+                 .replace('__GLOBAL__', '\n'.join(GLOBAL_LISTING))
+                 .replace('__LOCAL__', '\n'.join(LOCAL_LISTING)))
+    os.chmod(npm, 0o755)
+
+    lines = [shell.source_line(env.script(shell)),
+             ('freeze %s' % args).strip()]
+    return _launch(shell, env, lines)
+
+
+@activating_shell
+def test_freeze_lists_packages(shell, env):
+    assert _freeze(shell, env).splitlines() == FROZEN_GLOBAL
+
+
+@activating_shell
+def test_freeze_local(shell, env):
+    assert _freeze(shell, env, '-l').splitlines() == FROZEN_LOCAL
+
+
+@activating_shell
+def test_freeze_writes_file(shell, env, tmpdir):
+    target = tmpdir.join('node-requirements.txt')
+    _freeze(shell, env, nodeenv._quote(str(target)))
+
+    assert target.read().splitlines() == FROZEN_GLOBAL
 
 
 @activating_shell

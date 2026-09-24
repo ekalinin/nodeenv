@@ -59,6 +59,12 @@ Version [unreleased]
 - A missing node.js archive now reports the urls that were tried and points
   at `--list` and `--source` instead of a traceback
   `#250 <https://github.com/ekalinin/nodeenv/issues/250>`_
+- `freeze` now reads `npm ls --parseable` instead of the drawn tree: scoped
+  packages keep their scope, a package whose name contains "npm" is no longer
+  dropped, and `npm` and `corepack`, which come with node.js itself, are left
+  out of the list. The fish version, which printed nothing at all under
+  npm >= 1, now writes the same file as the posix one
+  `#287 <https://github.com/ekalinin/nodeenv/issues/287>`_
 
 Version 1.10.0
 --------------

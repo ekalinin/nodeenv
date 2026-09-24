@@ -423,11 +423,11 @@ def test_isolate_npm_shim_content(tmpdir):
 @pytest.fixture
 def fake_win():
     """
-    Pretend the host is Windows.  install_activate() links nodejs.exe with
-    mklink there, which exists on Windows only, so callit() is stubbed too.
+    Pretend the host is Windows.  The nodejs.exe link is stubbed out, so
+    Scripts/ holds only the generated scripts.
     """
     with mock.patch.object(nodeenv, 'is_WIN', True):
-        with mock.patch.object(nodeenv, 'callit'):
+        with mock.patch.object(os, 'symlink'):
             yield
 
 
@@ -581,3 +581,58 @@ def test_isolate_npm_node_system_shim_exports(tmpdir):
     env_dir = str(tmpdir)
     assert out.decode('utf-8').strip() == '|'.join((
         env_dir + '/.npm', env_dir + '/.npmrc', env_dir + '/.npm-init.js'))
+
+
+# nodejs.exe is linked with os.symlink/os.link, not with `mklink` through
+# cmd, which needed quoting and elevation
+# https://github.com/ekalinin/nodeenv/issues/303
+#
+# is_WIN is faked, so these run on every platform.
+
+
+def _install_win_node(tmpdir):
+    bin_dir = tmpdir.join('Scripts')
+    bin_dir.mkdir()
+    bin_dir.join('node.exe').write('node')
+
+    with mock.patch.object(nodeenv, 'is_WIN', True), \
+            mock.patch.object(sys, 'argv', ['nodeenv', str(tmpdir)]):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+    return bin_dir
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='symlinks need privileges on win32')
+def test_win_nodejs_symlink_created(tmpdir):
+    # forward slashes and a space broke the unquoted mklink command line
+    env_dir = tmpdir.join('with space')
+    env_dir.mkdir()
+
+    bin_dir = _install_win_node(env_dir)
+
+    nodejs_file = bin_dir.join('nodejs.exe')
+    assert os.path.islink(str(nodejs_file))
+    assert os.readlink(str(nodejs_file)) == 'node.exe'
+
+
+def test_win_nodejs_hardlink_when_symlink_fails(tmpdir):
+    # no elevation and no Developer Mode: a hard link needs neither
+    with mock.patch.object(os, 'symlink', side_effect=OSError):
+        bin_dir = _install_win_node(tmpdir)
+
+    nodejs_file = bin_dir.join('nodejs.exe')
+    assert not os.path.islink(str(nodejs_file))
+    assert os.path.samefile(str(nodejs_file), str(bin_dir.join('node.exe')))
+
+
+def test_win_nodejs_link_failure_is_a_warning(tmpdir):
+    with mock.patch.object(os, 'symlink', side_effect=OSError), \
+            mock.patch.object(os, 'link', side_effect=OSError), \
+            mock.patch.object(nodeenv.logger, 'warning') as m_warning, \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        bin_dir = _install_win_node(tmpdir)
+
+    assert not bin_dir.join('nodejs.exe').check()
+    m_error.assert_not_called()
+    m_warning.assert_called_once()
+    assert 'nodejs.exe' in m_warning.call_args[0][0]

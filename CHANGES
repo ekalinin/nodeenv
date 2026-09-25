@@ -4,6 +4,7 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- Fixed zsh `source bin/activate` aborting on the direct-call guard `#398 <https://github.com/ekalinin/nodeenv/issues/398>`_
 - Added check for how `activate` is called
   `#384 <https://github.com/ekalinin/nodeenv/pull/384>`_
 - Addressed the ``tarfile.extractall`` deprecation on Python >= 3.12 by

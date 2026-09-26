@@ -1355,10 +1355,19 @@ def install_activate(env_dir, args):
 
     if not os.path.exists(shim_nodejs):
         if is_WIN:
+            # a symlink needs elevation or Developer Mode, a hard link
+            # needs neither
+            # https://github.com/ekalinin/nodeenv/issues/303
             try:
-                callit(['mklink', shim_nodejs, 'node.exe'], True, True)
+                os.symlink('node.exe', shim_nodejs)
             except OSError:
-                logger.error('Error: Failed to create nodejs.exe link')
+                try:
+                    os.link(join(bin_dir, 'node.exe'), shim_nodejs)
+                except OSError:
+                    logger.warning(
+                        'Could not create the nodejs.exe link; this is '
+                        'harmless unless something on your system invokes '
+                        'node as "nodejs"')
         else:
             os.symlink("node", shim_nodejs)
 

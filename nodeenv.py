@@ -1911,13 +1911,35 @@ freeze () {
 }
 
 
-# Detect calling this file as a script
-case $0 in
-    */bin/activate | */Scripts/activate )
-        echo "Do not call $0 directly.  Instead source it with \`source $0\`."
-        exit 1
-        ;;
-esac
+# Detect calling this file as a script rather than sourcing it.
+# bash: BASH_SOURCE[0] equals $0 when executed as a script.
+# zsh:  ZSH_EVAL_CONTEXT contains :file when sourced; $0 alone matches
+#       the activate path under FUNCTION_ARGZERO (default), so a $0 case
+#       would false-positive on every `source bin/activate`.
+# other (dash/sh): $0 is the script path when executed and the shell name
+#       when sourced, so the */bin/activate case still works.
+_NODEENV_RUN_AS_SCRIPT=0
+if [ -n "${BASH_VERSION:-}" ]; then
+    if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+        _NODEENV_RUN_AS_SCRIPT=1
+    fi
+elif [ -n "${ZSH_VERSION:-}" ]; then
+    case ${ZSH_EVAL_CONTEXT:-} in
+        *:file*) ;;
+        *) _NODEENV_RUN_AS_SCRIPT=1 ;;
+    esac
+else
+    case $0 in
+        */bin/activate | */Scripts/activate )
+            _NODEENV_RUN_AS_SCRIPT=1
+            ;;
+    esac
+fi
+if [ "$_NODEENV_RUN_AS_SCRIPT" -eq 1 ]; then
+    echo "Do not call $0 directly.  Instead source it with \`source $0\`."
+    exit 1
+fi
+unset _NODEENV_RUN_AS_SCRIPT
 
 
 # unset irrelevant variables

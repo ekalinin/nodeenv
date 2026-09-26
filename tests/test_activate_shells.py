@@ -117,10 +117,6 @@ FROZEN_LOCAL = [
     'npmlog@7.0.1',
 ]
 
-ZSH_SOURCE_GUARD = (
-    'zsh sets $0 to the sourced file, so the "do not call directly" guard '
-    'added to ACTIVATE_SH in 68abdc3 fires on `source bin/activate`')
-
 FISH_NODE_PATH_CLOBBER = (
     'activate.fish runs `deactivate_node nondestructive` before it saves '
     '_OLD_NODE_PATH, and that pass erases a pre-existing NODE_PATH, so the '
@@ -185,14 +181,10 @@ def _params(xfail):
 # shell, and names the shells whose nodeenv bug makes it fail there.  A test
 # picks the decorator that lists the bugs it is able to trip over.
 every_shell = pytest.mark.parametrize('shell', _params({}))
-activating_shell = pytest.mark.parametrize(
-    'shell', _params({'zsh': ZSH_SOURCE_GUARD}))
 restoring_shell = pytest.mark.parametrize(
-    'shell', _params({'zsh': ZSH_SOURCE_GUARD,
-                      'fish': FISH_NODE_PATH_CLOBBER}))
+    'shell', _params({'fish': FISH_NODE_PATH_CLOBBER}))
 path_shell = pytest.mark.parametrize(
-    'shell', _params({'zsh': ZSH_SOURCE_GUARD,
-                      'fish': FISH_CARET_REDIRECT}))
+    'shell', _params({'fish': FISH_CARET_REDIRECT}))
 
 
 def _binary(shell):
@@ -339,7 +331,7 @@ def test_deactivate_restores_env(shell, env):
     assert dump['npm_config_prefix'] == BASE_ENV['npm_config_prefix']
 
 
-@activating_shell
+@every_shell
 def test_activate_deactivate_twice(shell, env):
     baseline = run(shell, env, source=False)
     again = shell.source_line(env.script(shell))
@@ -348,7 +340,7 @@ def test_activate_deactivate_twice(shell, env):
     assert dump['PATH'] == baseline['PATH']
 
 
-@activating_shell
+@every_shell
 def test_isolate_npm_roundtrip(shell, env):
     active = run(shell, env)
     restored = run(shell, env, ['deactivate_node'])
@@ -393,17 +385,17 @@ def _freeze(shell, env, args=''):
     return _launch(shell, env, lines)
 
 
-@activating_shell
+@every_shell
 def test_freeze_lists_packages(shell, env):
     assert _freeze(shell, env).splitlines() == FROZEN_GLOBAL
 
 
-@activating_shell
+@every_shell
 def test_freeze_local(shell, env):
     assert _freeze(shell, env, '-l').splitlines() == FROZEN_LOCAL
 
 
-@activating_shell
+@every_shell
 def test_freeze_writes_file(shell, env, tmpdir):
     target = tmpdir.join('node-requirements.txt')
     _freeze(shell, env, nodeenv._quote(str(target)))
@@ -411,7 +403,7 @@ def test_freeze_writes_file(shell, env, tmpdir):
     assert target.read().splitlines() == FROZEN_GLOBAL
 
 
-@activating_shell
+@every_shell
 def test_prompt_override(shell, env):
     active = run(shell, env)
     restored = run(shell, env, ['deactivate_node'])

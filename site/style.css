@@ -1,0 +1,322 @@
+/* nodeenv landing page. No build step: this file is served as is. */
+
+:root {
+  color-scheme: light dark;
+  --paper: #f6f7f9;
+  --surface: #eceff3;
+  --ink: #18202b;
+  --muted: #555f6d;
+  --rule: #d9dee5;
+  --accent: #2b7a31;
+  /* Lines typed inside an environment are tinted with the accent. */
+  --band: color-mix(in srgb, var(--accent) 11%, transparent);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #111519;
+    --surface: #1a2027;
+    --ink: #e3e8ee;
+    --muted: #9aa5b1;
+    --rule: #2a323c;
+    --accent: #7cc47f;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 1rem/1.6 var(--sans);
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.2em;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
+
+code:not(.line) {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--surface);
+  /* Keep flags such as --requirements from breaking at a hyphen. */
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.wrap {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Top bar */
+
+.topbar {
+  border-bottom: 1px solid var(--rule);
+}
+
+.topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  min-height: 3.5rem;
+}
+
+.wordmark {
+  color: var(--ink);
+  font: 700 1.125rem/1 var(--mono);
+  text-decoration: none;
+}
+
+.wordmark span {
+  color: var(--accent);
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.topbar nav a {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.topbar nav a:hover {
+  color: var(--accent);
+}
+
+/* Sections */
+
+main > section {
+  padding: 2.75rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+main > section.hero {
+  padding: clamp(3rem, 9vw, 6rem) 0 3rem;
+  border-top: 0;
+}
+
+h1 {
+  max-width: 14ch;
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.25rem, 1.5rem + 3.5vw, 3.75rem);
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.375rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h2 code:not(.line) {
+  padding: 0;
+  background: none;
+}
+
+h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+}
+
+p {
+  max-width: 40rem;
+  margin: 0 0 1rem;
+}
+
+.lead {
+  margin-bottom: 2rem;
+  color: var(--muted);
+  font-size: 1.1875rem;
+}
+
+.note {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+}
+
+.badges img {
+  display: block;
+}
+
+/* Terminal blocks */
+
+.term {
+  /* A grid lets every line stretch to the widest one, so the tint of
+     lines inside an environment stays even when the block scrolls. */
+  display: grid;
+  overflow-x: auto;
+  padding: 0.875rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  font: 0.875rem/1.75 var(--mono);
+}
+
+.line {
+  display: block;
+  padding: 0 1rem;
+  font-size: inherit;
+  white-space: pre;
+}
+
+.line.in {
+  background: var(--band);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Prompts are not selectable, so copying a block copies only commands. */
+.ps {
+  color: var(--muted);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.env {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.install {
+  max-width: 24rem;
+  font-size: 1.0625rem;
+}
+
+.file {
+  max-width: 24rem;
+}
+
+/* Feature cards */
+
+.cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1.25rem 1.25rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+
+.card p {
+  margin-bottom: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.card .term {
+  margin: auto -1.25rem 0;
+  border-width: 1px 0 0;
+  border-radius: 0;
+}
+
+@media (min-width: 60rem) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Node sources */
+
+.sources {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem 2rem;
+  margin: 0;
+}
+
+.sources dt {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.sources dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+@media (min-width: 48rem) {
+  .sources {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Links and footer */
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer {
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.footer p {
+  margin: 0;
+  padding: 1.5rem 0 2.5rem;
+}

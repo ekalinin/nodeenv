@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description"
+        content="nodeenv is a tool to create isolated node.js environments.">
+  <title>nodeenv - Node.js virtual environment</title>
+  <link rel="canonical" href="https://ekalinin.github.io/nodeenv/">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="wordmark" href="./">node<span>env</span></a>
+      <nav aria-label="Project">
+        <a href="https://github.com/ekalinin/nodeenv">GitHub</a>
+        <a href="https://pypi.org/project/nodeenv/">PyPI</a>
+        <a href="https://github.com/ekalinin/nodeenv/blob/master/CHANGES"
+          >Changes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title">Node.js virtual environment</h1>
+      <p class="lead">
+        A tool to create isolated node.js environments. Each environment has
+        its own installation directories and doesn't share libraries with
+        other environments. It can also be added to a Python virtualenv.
+      </p>
+      <div class="term install">
+        <code class="line"><span class="ps">$ </span>pip install nodeenv</code>
+      </div>
+      <p class="badges">
+        <a href="https://pypi.org/project/nodeenv/"><img
+          src="https://img.shields.io/pypi/v/nodeenv"
+          alt="PyPI version" height="20"></a>
+        <a href="https://github.com/ekalinin/nodeenv/actions/workflows/main.yml"
+          ><img
+          src="https://github.com/ekalinin/nodeenv/actions/workflows/main.yml/badge.svg?branch=master"
+          alt="CI status" height="20"></a>
+        <a href="https://pypi.org/project/nodeenv/"><img
+          src="https://img.shields.io/pypi/pyversions/nodeenv"
+          alt="Supported Python versions" height="20"></a>
+      </p>
+    </section>
+
+    <section aria-labelledby="quick-start">
+      <h2 id="quick-start">Quick start</h2>
+      <div class="term">
+        <code class="line"><span class="ps">$ </span>nodeenv env</code>
+        <code class="line"><span class="ps">$ </span>. env/bin/activate</code>
+        <code class="line in"><span class="ps"><span class="env">(env)</span> $ </span>node -v</code>
+        <code class="line in"><span class="ps"><span class="env">(env)</span> $ </span>deactivate_node</code>
+      </div>
+      <p class="note">
+        On Windows, activate with the script for your shell in
+        <code>env\Scripts</code>: <code>activate.bat</code> for cmd,
+        <code>Activate.ps1</code> for PowerShell, or <code>activate</code>
+        for git-bash.
+      </p>
+    </section>
+
+    <section aria-labelledby="features">
+      <h2 id="features" class="visually-hidden">Features</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Any node version</h3>
+          <p>
+            Choose an exact version, an npm semver range, or <code>lts</code>
+            for the latest LTS release. Ranges also work in a
+            <code>.node-version</code> file. <code>--list</code> shows the
+            available versions.
+          </p>
+          <div class="term">
+            <code class="line"><span class="ps">$ </span>nodeenv --list</code>
+            <code class="line"><span class="ps">$ </span>nodeenv --node=22 env</code>
+            <code class="line"><span class="ps">$ </span>nodeenv --node=lts env</code>
+            <code class="line"><span class="ps">$ </span>nodeenv --node="&gt;=20 &lt;22" env</code>
+          </div>
+        </article>
+        <article class="card">
+          <h3>Reproducible</h3>
+          <p>
+            <code>freeze</code> saves the installed packages to a file.
+            <code>-r</code>, short for <code>--requirements</code>, installs
+            them into a new environment. Add <code>--update</code> to install
+            them into an existing one. <code>.node-version</code> pins node.js
+            itself.
+          </p>
+          <div class="term">
+            <code class="line in"><span class="ps"><span class="env">(env)</span> $ </span>freeze reqs.txt</code>
+            <code class="line in"><span class="ps"><span class="env">(env)</span> $ </span>node -v &gt; .node-version</code>
+            <code class="line"><span class="ps">$ </span>nodeenv -r reqs.txt copy</code>
+          </div>
+        </article>
+        <article class="card">
+          <h3>Inside virtualenv</h3>
+          <p>
+            Add node.js to an existing Python virtualenv. Packages installed
+            with <code>npm install -g</code> then go into the virtualenv.
+          </p>
+          <div class="term">
+            <code class="line"><span class="ps">$ </span>. venv/bin/activate</code>
+            <code class="line in"><span class="ps"><span class="env">(venv)</span> $ </span>nodeenv -p</code>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sources">
+      <h2 id="sources">Prebuilt, mirror or system node.js</h2>
+      <dl class="sources">
+        <div>
+          <dt><code>--prebuilt</code></dt>
+          <dd>
+            Install node.js from a prebuilt package. This is the default.
+          </dd>
+        </div>
+        <div>
+          <dt><code>--mirror=URL</code></dt>
+          <dd>
+            Download from a mirror of nodejs.org. A <code>file://</code> URL
+            points at a local directory.
+          </dd>
+        </div>
+        <div>
+          <dt><code>--node=system</code></dt>
+          <dd>
+            Use the system-wide node.js. <code>--prefer-system</code> uses it
+            only when it is found in <code>PATH</code>. Not supported on
+            Windows.
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="config">
+      <h2 id="config">Defaults in <code>~/.nodeenvrc</code></h2>
+      <p>
+        Set default values for options in an INI file. The keys are the long
+        option names, written with underscores. With this file nodeenv uses
+        the system-wide node.js when it is found in <code>PATH</code>, and
+        installs the latest LTS release otherwise.
+      </p>
+      <div class="term file">
+        <code class="line">[nodeenv]</code>
+        <code class="line">node = lts</code>
+        <code class="line">prefer_system = True</code>
+      </div>
+    </section>
+
+    <section aria-labelledby="more">
+      <h2 id="more">Read more</h2>
+      <ul class="more">
+        <li><a href="https://github.com/ekalinin/nodeenv#usage">Usage</a></li>
+        <li><a href="https://github.com/ekalinin/nodeenv#command-line-options"
+          >Command line options</a></li>
+        <li><a href="https://github.com/ekalinin/nodeenv#configuration"
+          >Configuration</a></li>
+        <li><a href="https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv"
+          >Who uses nodeenv</a></li>
+        <li><a href="https://github.com/ekalinin/nodeenv/blob/master/CHANGES"
+          >Changelog</a></li>
+        <li><a href="https://github.com/ekalinin/nodeenv/blob/master/LICENSE"
+          >BSD license</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p>
+        nodeenv is maintained by
+        <a href="https://github.com/ekalinin">ekalinin</a>.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

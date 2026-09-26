@@ -23,7 +23,7 @@ pytestmark = pytest.mark.skipif(
 
 UNSET = '<unset>'
 
-PROBED = ('VIRTUAL_ENV', 'NODE_VIRTUAL_ENV', 'PATH')
+PROBED = ('VIRTUAL_ENV', 'NODE_VIRTUAL_ENV', 'PATH', 'npm_config_prefix')
 
 # printed before the variables so the dump can be told apart from
 # whatever the activation scripts write to stdout themselves
@@ -78,19 +78,22 @@ def env(tmpdir):
     return Env(env_dir, str(dumper), tmpdir)
 
 
-def _child_env():
+def _child_env(extra=None):
     """
     A clean environment: no leftovers from an environment active in the
-    shell running the tests, nor from the virtualenv tox builds.
+    shell running the tests, nor from the virtualenv tox builds.  `extra`
+    is what the shell is meant to inherit on top of that.
     """
     ignored = ('VIRTUAL_ENV', 'VIRTUAL_ENV_PROMPT', 'NODE_VIRTUAL_ENV',
                'NODE_PATH', 'NPM_CONFIG_PREFIX',
                'NODE_VIRTUAL_ENV_DISABLE_PROMPT')
-    return dict(
+    env = dict(
         (k, v) for k, v in os.environ.items()
         if not k.startswith('_OLD_')
         and not k.startswith('npm_config_')
         and k not in ignored)
+    env.update(extra or {})
+    return env
 
 
 def _dump_line(dumper, call=''):
@@ -110,23 +113,24 @@ def _parse(out, shell):
                 if line.split('=', 1)[0] in PROBED)
 
 
-def _run(args, script, lines, shell):
+def _run(args, script, lines, shell, extra_env=None):
     script.write('\n'.join(lines) + '\n')
     # stderr goes to stdout so a failing script reports why in the
     # assertion instead of leaving an empty dump behind
     out = subprocess.check_output(
         args + [str(script)], stderr=subprocess.STDOUT,
-        env=_child_env(), cwd=str(script.dirname))
+        env=_child_env(extra_env), cwd=str(script.dirname))
     return _parse(out.decode('utf-8'), shell)
 
 
-def run_cmd(env, steps=()):
+def run_cmd(env, steps=(), extra_env=None):
     """Run the steps in cmd.exe and return the probed environment."""
     lines = ['@echo off'] + list(steps) + [_dump_line(env.dumper)]
-    return _run(['cmd', '/c'], env.tmpdir.join('probe.bat'), lines, 'cmd')
+    return _run(['cmd', '/c'], env.tmpdir.join('probe.bat'), lines, 'cmd',
+                extra_env)
 
 
-def run_ps1(env, steps=()):
+def run_ps1(env, steps=(), extra_env=None):
     """Run the steps in PowerShell and return the probed environment."""
     # without this a script that cannot be parsed, which is what a
     # signed Activate.ps1 with code appended after the signature block
@@ -135,7 +139,7 @@ def run_ps1(env, steps=()):
         _dump_line(env.dumper, call='&')]
     return _run(
         ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File'],
-        env.tmpdir.join('probe.ps1'), lines, 'powershell')
+        env.tmpdir.join('probe.ps1'), lines, 'powershell', extra_env)
 
 
 def _call_bat(env, name):
@@ -190,3 +194,53 @@ def test_deactivate_ps1_restores_the_environment(env):
     assert dump['VIRTUAL_ENV'] == UNSET
     assert dump['NODE_VIRTUAL_ENV'] == UNSET
     assert dump['PATH'] == baseline['PATH']
+
+
+# npx exports npm_config_prefix, and npm.cmd runs the npm it finds under
+# that prefix instead of the one next to it
+# https://github.com/ekalinin/nodeenv/issues/309
+LEAKED = {'npm_config_prefix': 'C:\\outer\\nvs\\default'}
+
+
+def test_activate_bat_points_npm_at_scripts(env):
+    dump = run_cmd(env, [_call_bat(env, 'activate.bat')], LEAKED)
+
+    assert _same(dump['npm_config_prefix'],
+                 os.path.join(env.path, 'Scripts'))
+
+
+def test_deactivate_bat_restores_npm_config_prefix(env):
+    dump = run_cmd(env, [_call_bat(env, 'activate.bat'),
+                         _call_bat(env, 'deactivate.bat')], LEAKED)
+
+    assert dump['npm_config_prefix'] == LEAKED['npm_config_prefix']
+
+
+def test_deactivate_bat_unsets_npm_config_prefix(env):
+    # activated twice with no deactivate in between: the value the first
+    # activation set must not be taken for an inherited one
+    dump = run_cmd(env, [_call_bat(env, 'activate.bat'),
+                         _call_bat(env, 'activate.bat'),
+                         _call_bat(env, 'deactivate.bat')])
+
+    assert dump['npm_config_prefix'] == UNSET
+
+
+def test_activate_ps1_points_npm_at_scripts(env):
+    dump = run_ps1(env, [_dot_source_ps1(env)], LEAKED)
+
+    assert _same(dump['npm_config_prefix'],
+                 os.path.join(env.path, 'Scripts'))
+
+
+def test_deactivate_ps1_restores_npm_config_prefix(env):
+    dump = run_ps1(env, [_dot_source_ps1(env), 'deactivate'], LEAKED)
+
+    assert dump['npm_config_prefix'] == LEAKED['npm_config_prefix']
+
+
+def test_deactivate_ps1_unsets_npm_config_prefix(env):
+    dump = run_ps1(env, [_dot_source_ps1(env), _dot_source_ps1(env),
+                         'deactivate'])
+
+    assert dump['npm_config_prefix'] == UNSET

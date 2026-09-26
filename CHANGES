@@ -1,9 +1,8 @@
 Nodeenv changelog
 =================
 
-Version [unreleased]
---------------------
-
+Version 1.11.0
+--------------
 - Fixed zsh `source bin/activate` aborting on the direct-call guard `#398 <https://github.com/ekalinin/nodeenv/issues/398>`_
 - Added check for how `activate` is called
   `#384 <https://github.com/ekalinin/nodeenv/pull/384>`_
@@ -66,6 +65,14 @@ Version [unreleased]
   out of the list. The fish version, which printed nothing at all under
   npm >= 1, now writes the same file as the posix one
   `#287 <https://github.com/ekalinin/nodeenv/issues/287>`_
+- musl is now detected whatever the vendor field of the host triplet says,
+  so Alpine's own python3 (``x86_64-alpine-linux-musl``) gets the musl build
+  of node.js instead of the glibc one
+  `#290 <https://github.com/ekalinin/nodeenv/issues/290>`_
+- On Windows "nodejs.exe" is linked with ``os.symlink``, falling back to a
+  hard link, instead of ``mklink``, which broke on paths with forward slashes
+  or spaces and needs elevation or Developer Mode. If both fail, only a
+  warning is logged `#303 <https://github.com/ekalinin/nodeenv/issues/303>`_
 
 Version 1.10.0
 --------------

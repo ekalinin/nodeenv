@@ -560,6 +560,42 @@ def test_win_activate_ps1_keeps_a_previous_deactivate(tmpdir, fake_win):
     assert 'copy-item function:_OLD_NODE_DEACTIVATE' in content
 
 
+# npx exports npm_config_prefix, and npm.cmd runs the npm it finds under
+# that prefix instead of its own: cmd and PowerShell have to point it at
+# the environment, the way the posix activate already does
+# https://github.com/ekalinin/nodeenv/issues/309
+BAT_PREFIX = 'set "npm_config_prefix=%NODE_VIRTUAL_ENV%\\Scripts"'
+BAT_SAVE = 'set "_OLD_VIRTUAL_NPM_CONFIG_PREFIX=%npm_config_prefix%"'
+PS1_PREFIX = '$env:npm_config_prefix = "$env:NODE_VIRTUAL_ENV\\Scripts"'
+PS1_SAVE = 'copy-item env:npm_config_prefix env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX'
+PS1_RESTORE = ('copy-item env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX '
+               'env:npm_config_prefix')
+
+
+def test_win_activate_bat_points_npm_at_scripts(tmpdir, fake_win):
+    content = _install_win(tmpdir).join('activate.bat').read()
+
+    assert BAT_PREFIX in content
+    # the inherited value is saved first, so deactivate.bat can restore it
+    assert content.index(BAT_SAVE) < content.index(BAT_PREFIX)
+
+
+def test_win_deactivate_bat_restores_npm_config_prefix(tmpdir, fake_win):
+    content = _install_win(tmpdir).join('deactivate.bat').read()
+
+    assert 'set "npm_config_prefix=%_OLD_VIRTUAL_NPM_CONFIG_PREFIX%"' \
+        in content
+
+
+def test_win_activate_ps1_points_npm_at_scripts(tmpdir, fake_win):
+    content = _install_win(tmpdir).join('Activate.ps1').read()
+
+    assert PS1_PREFIX in content
+    assert PS1_SAVE in content
+    # ... and put back by deactivate
+    assert PS1_RESTORE in content
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='system node is POSIX only')
 def test_isolate_npm_node_system_shim_exports(tmpdir):
     bin_dir = tmpdir.join('bin')

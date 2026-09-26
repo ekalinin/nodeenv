@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version [unreleased]
+--------------------
+
+- `activate.bat` and `Activate.ps1` now set `npm_config_prefix` to the
+  environment and restore it on deactivate: `npx` exports the outer prefix,
+  and `npm.cmd` runs the npm it finds there instead of its own
+  `#309 <https://github.com/ekalinin/nodeenv/issues/309>`_
+
 Version 1.11.0
 --------------
 - Fixed zsh `source bin/activate` aborting on the direct-call guard `#398 <https://github.com/ekalinin/nodeenv/issues/398>`_

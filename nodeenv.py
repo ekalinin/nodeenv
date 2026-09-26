@@ -1741,6 +1741,11 @@ exec '__SHIM_NODE__' "$@"
 
 ACTIVATE_BAT = r"""
 @echo off
+if defined _OLD_VIRTUAL_NPM_CONFIG_PREFIX (
+    set "npm_config_prefix=%_OLD_VIRTUAL_NPM_CONFIG_PREFIX%"
+) else if defined NODE_VIRTUAL_ENV (
+    set npm_config_prefix=
+)
 set "NODE_VIRTUAL_ENV=__NODE_VIRTUAL_ENV__"
 if not defined PROMPT (
     set "PROMPT=$P$G"
@@ -1763,6 +1768,13 @@ if defined _OLD_VIRTUAL_PATH (
     set "_OLD_VIRTUAL_PATH=%PATH%"
 )
 set "PATH=%NODE_VIRTUAL_ENV%\Scripts;%PATH%"
+rem npm.cmd runs the npm found under npm_config_prefix, which npx exports,
+rem instead of its own: point it at the environment
+rem https://github.com/ekalinin/nodeenv/issues/309
+if defined npm_config_prefix (
+    set "_OLD_VIRTUAL_NPM_CONFIG_PREFIX=%npm_config_prefix%"
+)
+set "npm_config_prefix=%NODE_VIRTUAL_ENV%\Scripts"
 :END
 
 """
@@ -1781,6 +1793,12 @@ if defined _OLD_VIRTUAL_PATH (
     set "PATH=%_OLD_VIRTUAL_PATH%"
 )
 set _OLD_VIRTUAL_PATH=
+if defined _OLD_VIRTUAL_NPM_CONFIG_PREFIX (
+    set "npm_config_prefix=%_OLD_VIRTUAL_NPM_CONFIG_PREFIX%"
+    set _OLD_VIRTUAL_NPM_CONFIG_PREFIX=
+) else if defined NODE_VIRTUAL_ENV (
+    set npm_config_prefix=
+)
 set NODE_VIRTUAL_ENV=
 :END
 """
@@ -1808,6 +1826,12 @@ function global:deactivate ([switch]$NonDestructive) {
     if (Test-Path env:_OLD_VIRTUAL_PATH) {
         copy-item env:_OLD_VIRTUAL_PATH env:PATH
         remove-item env:_OLD_VIRTUAL_PATH
+    }
+    if (Test-Path env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX) {
+        copy-item env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX env:npm_config_prefix
+        remove-item env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX
+    } elseif (Test-Path env:NODE_VIRTUAL_ENV) {
+        remove-item env:npm_config_prefix -ErrorAction SilentlyContinue
     }
     if (Test-Path env:NODE_VIRTUAL_ENV) {
         remove-item env:NODE_VIRTUAL_ENV
@@ -1845,6 +1869,14 @@ if (Test-Path env:NODE_PATH) {
 # Add the venv to the PATH
 copy-item env:PATH env:_OLD_VIRTUAL_PATH
 $env:PATH = "$env:NODE_VIRTUAL_ENV\Scripts;$env:PATH"
+
+# npm.cmd runs the npm found under npm_config_prefix, which npx exports,
+# instead of its own: point it at the environment
+# https://github.com/ekalinin/nodeenv/issues/309
+if (Test-Path env:npm_config_prefix) {
+    copy-item env:npm_config_prefix env:_OLD_VIRTUAL_NPM_CONFIG_PREFIX
+}
+$env:npm_config_prefix = "$env:NODE_VIRTUAL_ENV\Scripts"
 """
 
 ACTIVATE_SH = r"""

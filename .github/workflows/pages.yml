@@ -1,0 +1,42 @@
+name: Pages
+
+on:
+  push:
+    branches:
+    - master
+    paths:
+    - 'site/**'
+    - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a queued run waits instead of cancelling
+# the one in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - uses: actions/configure-pages@v6
+
+    # The files in site/ are served as is, there is no build step.
+    - uses: actions/upload-pages-artifact@v5
+      with:
+        path: site
+
+    - id: deployment
+      uses: actions/deploy-pages@v5

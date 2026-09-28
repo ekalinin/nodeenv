@@ -7,6 +7,7 @@ if sys.version_info < (3, 3):
 else:
     from shlex import quote as _quote
 import io
+import json
 import os.path
 import pathlib
 import shutil
@@ -166,6 +167,57 @@ def test_smoke_git_bash(tmpdir):
     # had left it a posix prefix it cannot read
     assert _inside(npm_root, nenv_path), \
         'npm root -g is %s, outside %s' % (npm_root, nenv_path)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    sys.platform != 'win32', reason='install_npm_win only runs on Windows')
+@pytest.mark.parametrize('versions', (
+    # the command from the issue
+    ['--node=17.4.0', '--npm=8.3.1'],
+    # --npm defaults to latest
+    [],
+), ids=('issue', 'default'))
+def test_smoke_with_npm_win(tmpdir, versions):
+    """
+    The npm --with-npm installs on Windows has to install packages, not
+    only answer `npm --version`.
+    https://github.com/ekalinin/nodeenv/issues/310
+    """
+    nenv_path = tmpdir.join('nenv').strpath
+    subprocess.check_call([
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '--prebuilt', '--with-npm',
+    ] + versions + [nenv_path])
+
+    # the steps of the issue: activate.bat, then npm in a project
+    project = tmpdir.mkdir('project')
+    project.join('package.json').write('{"name": "p", "version": "1.0.0"}')
+    probe = tmpdir.join('probe.bat')
+    probe.write(
+        '@echo off\n'
+        'call "%s\\Scripts\\activate.bat"\n'
+        'call npm --version > npm-version.txt\n'
+        'if errorlevel 1 exit /b 1\n'
+        'call npm install is-number --no-audit --no-fund\n' % nenv_path)
+    proc = subprocess.run(
+        ['cmd', '/c', probe.strpath], cwd=project.strpath,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
+        proc.returncode,
+        proc.stdout.decode('utf-8', 'replace'),
+        proc.stderr.decode('utf-8', 'replace'))
+
+    assert proc.returncode == 0, report
+    # the npm that ran is the one in the environment, not one the runner
+    # has on PATH
+    npm_package = os.path.join(
+        nenv_path, 'Scripts', 'node_modules', 'npm', 'package.json')
+    with open(npm_package) as f:
+        installed = json.load(f)['version']
+    assert project.join('npm-version.txt').read().strip() == installed, \
+        report
+    assert project.join('node_modules', 'is-number').check(dir=1), report
 
 
 @pytest.mark.integration

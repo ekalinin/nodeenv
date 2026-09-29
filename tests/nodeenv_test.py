@@ -7,6 +7,7 @@ if sys.version_info < (3, 3):
 else:
     from shlex import quote as _quote
 import io
+import json
 import os.path
 import pathlib
 import shutil
@@ -14,6 +15,7 @@ import subprocess
 import sys
 import platform
 import ssl
+import tarfile
 import zipfile
 
 try:
@@ -166,6 +168,57 @@ def test_smoke_git_bash(tmpdir):
     # had left it a posix prefix it cannot read
     assert _inside(npm_root, nenv_path), \
         'npm root -g is %s, outside %s' % (npm_root, nenv_path)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    sys.platform != 'win32', reason='install_npm_win only runs on Windows')
+@pytest.mark.parametrize('versions', (
+    # the command from the issue
+    ['--node=17.4.0', '--npm=8.3.1'],
+    # --npm defaults to latest
+    [],
+), ids=('issue', 'default'))
+def test_smoke_with_npm_win(tmpdir, versions):
+    """
+    The npm --with-npm installs on Windows has to install packages, not
+    only answer `npm --version`.
+    https://github.com/ekalinin/nodeenv/issues/310
+    """
+    nenv_path = tmpdir.join('nenv').strpath
+    subprocess.check_call([
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '--prebuilt', '--with-npm',
+    ] + versions + [nenv_path])
+
+    # the steps of the issue: activate.bat, then npm in a project
+    project = tmpdir.mkdir('project')
+    project.join('package.json').write('{"name": "p", "version": "1.0.0"}')
+    probe = tmpdir.join('probe.bat')
+    probe.write(
+        '@echo off\n'
+        'call "%s\\Scripts\\activate.bat"\n'
+        'call npm --version > npm-version.txt\n'
+        'if errorlevel 1 exit /b 1\n'
+        'call npm install is-number --no-audit --no-fund\n' % nenv_path)
+    proc = subprocess.run(
+        ['cmd', '/c', probe.strpath], cwd=project.strpath,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
+        proc.returncode,
+        proc.stdout.decode('utf-8', 'replace'),
+        proc.stderr.decode('utf-8', 'replace'))
+
+    assert proc.returncode == 0, report
+    # the npm that ran is the one in the environment, not one the runner
+    # has on PATH
+    npm_package = os.path.join(
+        nenv_path, 'Scripts', 'node_modules', 'npm', 'package.json')
+    with open(npm_package) as f:
+        installed = json.load(f)['version']
+    assert project.join('npm-version.txt').read().strip() == installed, \
+        report
+    assert project.join('node_modules', 'is-number').check(dir=1), report
 
 
 @pytest.mark.integration
@@ -2375,251 +2428,158 @@ class TestInstallNpm:
                 assert env['npm_install'] == version
 
 
+NPM_REGISTRY = 'https://registry.npmjs.org/npm'
+
+# A published npm tarball: everything lives under package/, the scripts in
+# bin/ are executable and the workspaces are bundled as plain directories
+NPM_TARBALL_FILES = {
+    'package/package.json': ('{"name": "npm"}', 0o644),
+    'package/bin/npm': ('#!/usr/bin/env bash\n# npm\n', 0o755),
+    'package/bin/npm.cmd': (':: npm.cmd\n', 0o755),
+    'package/bin/npm-cli.js': ('#!/usr/bin/env node\n// npm-cli\n', 0o755),
+    'package/node_modules/@npmcli/config/package.json':
+        ('{"name": "@npmcli/config"}', 0o644),
+}
+
+
+def _npm_tarball(files):
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode='w:gz') as tf:
+        for name, (content, mode) in sorted(files.items()):
+            data = content.encode('utf-8')
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            info.mode = mode
+            tf.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def _npm_registry(spec, version, files):
+    """
+    Answer like the npm registry does for `spec` (a version or a dist-tag):
+    its metadata document, and the tarball that document points to.  Any
+    other URL gets a 404.
+    """
+    tarball = '%s/-/npm-%s.tgz' % (NPM_REGISTRY, version)
+    meta = {
+        'name': 'npm',
+        'version': version,
+        'dist': {
+            'shasum': '0' * 40,
+            'tarball': tarball,
+            'fileCount': len(files),
+            'integrity': 'sha512-',
+        },
+    }
+    responses = {
+        '%s/%s' % (NPM_REGISTRY, spec): json.dumps(meta).encode('utf-8'),
+        tarball: _npm_tarball(files),
+    }
+
+    def urlopen(url):
+        if url not in responses:
+            raise nodeenv.urllib2.HTTPError(url, 404, 'Not Found', {}, None)
+        return io.BytesIO(responses[url])
+    return urlopen
+
+
+def _npm_env(tmpdir):
+    """An environment as install_npm_win finds it: node in, no npm yet"""
+    env_dir = tmpdir.mkdir('env')
+    env_dir.mkdir('Scripts')
+    env_dir.mkdir('bin')
+    env_dir.mkdir('src')
+    return env_dir
+
+
+def _install_npm_win(env_dir, spec='8.3.1', version='8.3.1',
+                     files=NPM_TARBALL_FILES):
+    class args:
+        npm = spec
+
+    with mock.patch.object(nodeenv, 'urlopen',
+                           _npm_registry(spec, version, files)):
+        nodeenv.install_npm_win(env_dir.strpath, env_dir.join('src').strpath,
+                                args)
+
+
 class TestInstallNpmWin:
     """Tests for install_npm_win function"""
 
-    def test_install_npm_win_basic(self):
-        """Test basic Windows npm installation"""
-        args = mock.Mock()
-        args.npm = '8.19.2'
+    @pytest.mark.parametrize(('spec', 'version'), (
+        ('8.3.1', '8.3.1'),
+        # the default --npm, a dist-tag the registry resolves
+        ('latest', '12.1.0'),
+    ))
+    def test_install_npm_win_installs_the_registry_tarball(self, tmpdir,
+                                                           spec, version):
+        """
+        The GitHub source archive of npm is not an installable npm: its
+        workspace symlinks unpack as text files (npm 8) or the workspaces
+        are missing altogether (npm >= 9).
+        https://github.com/ekalinin/nodeenv/issues/310
+        """
+        env_dir = _npm_env(tmpdir)
+        with mock.patch.object(nodeenv, 'is_CYGWIN', False):
+            _install_npm_win(env_dir, spec, version)
 
-        env_dir = 'C:\\path\\to\\env'
-        src_dir = 'C:\\path\\to\\src'
+        scripts = env_dir.join('Scripts')
+        npm_dir = scripts.join('node_modules', 'npm')
+        assert npm_dir.join('node_modules', '@npmcli', 'config',
+                            'package.json').read() == \
+            '{"name": "@npmcli/config"}'
+        assert npm_dir.join('bin', 'npm-cli.js').read() == \
+            '#!/usr/bin/env node\n// npm-cli\n'
+        assert scripts.join('npm.cmd').read() == ':: npm.cmd\n'
+        assert scripts.join('npm-cli.js').read() == \
+            '#!/usr/bin/env node\n// npm-cli\n'
 
-        # Mock the zip file content
-        mock_zip_content = b'PK\x03\x04...'  # Simplified zip header
-        mock_response = mock.Mock()
-        mock_response.read.return_value = mock_zip_content
+    def test_install_npm_win_removes_existing_files(self, tmpdir):
+        """A reinstall replaces the npm already in Scripts"""
+        env_dir = _npm_env(tmpdir)
+        scripts = env_dir.join('Scripts')
+        scripts.mkdir('node_modules').mkdir('npm').join('stale.js').write('')
+        scripts.join('npm.cmd').write(':: old npm.cmd\n')
+        scripts.join('npm-cli.js').write('// old npm-cli\n')
 
-        mock_zip = mock.Mock()
-        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-        mock_zip.__exit__ = mock.Mock(return_value=False)
+        with mock.patch.object(nodeenv, 'is_CYGWIN', False):
+            _install_npm_win(env_dir)
 
-        with mock.patch.object(
-                nodeenv, 'urlopen', return_value=mock_response
-        ), \
-             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
-             mock.patch('os.path.exists', return_value=False), \
-             mock.patch('shutil.copytree') as mock_copytree, \
-             mock.patch('shutil.copy') as mock_copy, \
-             mock.patch.object(nodeenv.logger, 'info') as mock_logger:
-            nodeenv.install_npm_win(env_dir, src_dir, args)
+        assert not scripts.join('node_modules', 'npm', 'stale.js').check()
+        assert scripts.join('npm.cmd').read() == ':: npm.cmd\n'
+        assert scripts.join('npm-cli.js').read() == \
+            '#!/usr/bin/env node\n// npm-cli\n'
 
-            # Verify URL was constructed correctly
-            expected_url = 'https://github.com/npm/cli/archive/v8.19.2.zip'
-            nodeenv.urlopen.assert_called_once_with(expected_url)
+    def test_install_npm_win_cygwin(self, tmpdir):
+        """bin/npm for Cygwin ships in the tarball, no second download"""
+        env_dir = _npm_env(tmpdir)
+        with mock.patch.object(nodeenv, 'is_CYGWIN', True):
+            _install_npm_win(env_dir)
 
-            # Verify extraction happened
-            mock_zip.extractall.assert_called_once_with(src_dir)
+        bin_npm = env_dir.join('bin', 'npm')
+        assert bin_npm.read() == '#!/usr/bin/env bash\n# npm\n'
+        assert os.access(bin_npm.strpath, os.X_OK)
+        assert env_dir.join('bin', 'npm-cli.js').read() == \
+            '#!/usr/bin/env node\n// npm-cli\n'
+        assert env_dir.join('bin', 'node_modules', 'npm', 'node_modules',
+                            '@npmcli', 'config', 'package.json').check(file=1)
 
-            # Verify copytree and copy were called
-            assert mock_copytree.called
-            assert mock_copy.call_count == 2
+    @pytest.mark.skipif(sys.version_info < (3, 12),
+                        reason='tarfile has extraction filters since 3.12')
+    def test_install_npm_win_keeps_data_filter(self, tmpdir):
+        """
+        A member pointing out of the unpack directory is refused
+        (CVE-2007-4559)
+        """
+        env_dir = _npm_env(tmpdir)
+        files = dict(NPM_TARBALL_FILES)
+        files['package/../../escaped'] = ('', 0o644)
 
-            # Verify logging
-            log_calls = [call[0][0] for call in mock_logger.call_args_list]
-            assert any('8.19.2' in str(call) for call in log_calls)
+        with mock.patch.object(nodeenv, 'is_CYGWIN', False), \
+                pytest.raises(tarfile.OutsideDestinationError):
+            _install_npm_win(env_dir, files=files)
 
-    def test_install_npm_win_removes_existing_files(self):
-        """Test that existing npm files are removed before installation"""
-        args = mock.Mock()
-        args.npm = '9.0.0'
-
-        env_dir = 'C:\\env'
-        src_dir = 'C:\\src'
-
-        mock_zip_content = b'PK\x03\x04...'
-        mock_response = mock.Mock()
-        mock_response.read.return_value = mock_zip_content
-
-        mock_zip = mock.Mock()
-        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-        mock_zip.__exit__ = mock.Mock(return_value=False)
-
-        # Simulate existing files
-        def exists_side_effect(path):
-            if ('node_modules' in path or 'npm.cmd' in path or
-                    'npm-cli.js' in path):
-                return True
-            return False
-
-        with mock.patch.object(
-                nodeenv, 'urlopen', return_value=mock_response
-        ), \
-             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
-             mock.patch('os.path.exists', side_effect=exists_side_effect), \
-             mock.patch('shutil.rmtree') as mock_rmtree, \
-             mock.patch('os.remove') as mock_remove, \
-             mock.patch('shutil.copytree'), \
-             mock.patch('shutil.copy'), \
-             mock.patch.object(nodeenv.logger, 'info'):
-            nodeenv.install_npm_win(env_dir, src_dir, args)
-
-            # Verify cleanup happened
-            mock_rmtree.assert_called_once()
-            assert mock_remove.call_count == 2
-
-    def test_install_npm_win_cygwin(self):
-        """Test Windows npm installation on CYGWIN"""
-        args = mock.Mock()
-        args.npm = '7.24.2'
-
-        env_dir = '/cygdrive/c/env'
-        src_dir = '/cygdrive/c/src'
-
-        mock_zip_content = b'PK\x03\x04...'
-        mock_response = mock.Mock()
-        mock_response.read.return_value = mock_zip_content
-
-        mock_npm_script = b'#!/bin/sh\n# npm script'
-        mock_npm_response = mock.Mock()
-        mock_npm_response.read.return_value = mock_npm_script
-
-        mock_zip = mock.Mock()
-        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-        mock_zip.__exit__ = mock.Mock(return_value=False)
-
-        with mock.patch.object(nodeenv, 'urlopen') as mock_urlopen, \
-             mock.patch.object(nodeenv, 'is_CYGWIN', True), \
-             mock.patch.object(nodeenv, 'writefile') as mock_writefile, \
-             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
-             mock.patch('os.path.exists', return_value=False), \
-             mock.patch('shutil.copytree'), \
-             mock.patch('shutil.copy'), \
-             mock.patch.object(nodeenv.logger, 'info'):
-            mock_urlopen.side_effect = [mock_response, mock_npm_response]
-
-            nodeenv.install_npm_win(env_dir, src_dir, args)
-
-            # Verify that CYGWIN-specific operations happened
-            assert mock_urlopen.call_count == 2
-            assert mock_writefile.called
-
-            # Verify the raw GitHub URL was called
-            calls = [str(call) for call in mock_urlopen.call_args_list]
-            assert any(
-                'raw.githubusercontent.com' in str(call) for call in calls
-            )
-
-    def test_install_npm_win_different_versions(self):
-        """Test Windows npm installation with different version formats"""
-        test_versions = ['8.0.0', '9.5.1', '10.0.0']
-
-        for version in test_versions:
-            args = mock.Mock()
-            args.npm = version
-
-            env_dir = 'C:\\env'
-            src_dir = 'C:\\src'
-
-            mock_zip_content = b'PK\x03\x04...'
-            mock_response = mock.Mock()
-            mock_response.read.return_value = mock_zip_content
-
-            mock_zip = mock.Mock()
-            mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-            mock_zip.__exit__ = mock.Mock(return_value=False)
-
-            with mock.patch.object(
-                    nodeenv, 'urlopen', return_value=mock_response
-            ) as mock_urlopen, \
-                 mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-                 mock.patch('zipfile.ZipFile', return_value=mock_zip), \
-                 mock.patch('os.path.exists', return_value=False), \
-                 mock.patch('shutil.copytree'), \
-                 mock.patch('shutil.copy'), \
-                 mock.patch.object(nodeenv.logger, 'info'):
-                nodeenv.install_npm_win(env_dir, src_dir, args)
-
-                # Verify correct URL for each version
-                expected_url = (
-                    f'https://github.com/npm/cli/archive/v{version}.zip'
-                )
-                mock_urlopen.assert_called_with(expected_url)
-
-    def test_install_npm_win_paths(self):
-        """Test that Windows npm installation uses correct paths"""
-        args = mock.Mock()
-        args.npm = '8.5.0'
-
-        env_dir = 'C:\\Users\\test\\env'
-        src_dir = 'C:\\Users\\test\\src'
-
-        mock_zip_content = b'PK\x03\x04...'
-        mock_response = mock.Mock()
-        mock_response.read.return_value = mock_zip_content
-
-        mock_zip = mock.Mock()
-        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-        mock_zip.__exit__ = mock.Mock(return_value=False)
-
-        with mock.patch.object(
-                nodeenv, 'urlopen', return_value=mock_response
-        ), \
-             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-             mock.patch('zipfile.ZipFile', return_value=mock_zip), \
-             mock.patch('os.path.exists', return_value=False), \
-             mock.patch('shutil.copytree') as mock_copytree, \
-             mock.patch('shutil.copy') as mock_copy, \
-             mock.patch.object(nodeenv.logger, 'info'):
-            nodeenv.install_npm_win(env_dir, src_dir, args)
-
-            # Verify paths
-            copytree_call = mock_copytree.call_args[0]
-            src_path = copytree_call[0]
-            dst_path = copytree_call[1]
-
-            assert 'cli-8.5.0' in src_path
-            expected_path = os.path.join(
-                env_dir, 'Scripts', 'node_modules', 'npm'
-            )
-            assert expected_path == dst_path
-
-            # Verify copy calls use correct paths
-            copy_calls = mock_copy.call_args_list
-            assert len(copy_calls) == 2
-            assert any('npm.cmd' in str(call) for call in copy_calls)
-            assert any('npm-cli.js' in str(call) for call in copy_calls)
-
-    def test_install_npm_win_zip_extraction(self):
-        """Test that zip file is properly extracted"""
-        args = mock.Mock()
-        args.npm = '9.1.0'
-
-        env_dir = 'C:\\test'
-        src_dir = 'C:\\test\\src'
-
-        mock_zip_content = b'PK\x03\x04...'
-        mock_response = mock.Mock()
-        mock_response.read.return_value = mock_zip_content
-
-        mock_zip = mock.Mock()
-        mock_zip.__enter__ = mock.Mock(return_value=mock_zip)
-        mock_zip.__exit__ = mock.Mock(return_value=False)
-        mock_zip.extractall = mock.Mock()
-
-        with mock.patch.object(
-                nodeenv, 'urlopen', return_value=mock_response
-        ), \
-             mock.patch.object(nodeenv, 'is_CYGWIN', False), \
-             mock.patch(
-                 'zipfile.ZipFile', return_value=mock_zip
-             ) as mock_zipfile, \
-             mock.patch('os.path.exists', return_value=False), \
-             mock.patch('shutil.copytree'), \
-             mock.patch('shutil.copy'), \
-             mock.patch.object(nodeenv.logger, 'info'):
-            nodeenv.install_npm_win(env_dir, src_dir, args)
-
-            # Verify ZipFile was created with the BytesIO content
-            mock_zipfile.assert_called_once()
-            zip_args = mock_zipfile.call_args[0]
-            assert hasattr(zip_args[0], 'read')  # Should be BytesIO object
-
-            # Verify extraction
-            mock_zip.extractall.assert_called_once_with(src_dir)
+        assert not env_dir.join('src', 'escaped').check()
 
 
 class TestCertifi:

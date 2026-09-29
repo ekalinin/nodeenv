@@ -1185,12 +1185,17 @@ def install_npm(env_dir, _src_dir, args):
 
 def install_npm_win(env_dir, src_dir, args):
     """
-    Download source code for npm, unpack it
+    Download npm as published to the registry, unpack it
     and install it in virtual environment.
     """
     logger.info(' * Install npm.js (%s) ... ' % args.npm,
                 extra=dict(continued=True))
-    npm_url = 'https://github.com/npm/cli/archive/v%s.zip' % args.npm
+    # Not the GitHub source archive: its workspace symlinks unpack as text
+    # files, or the workspaces are missing from it altogether
+    # https://github.com/ekalinin/nodeenv/issues/310
+    npm_meta_url = 'https://registry.npmjs.org/npm/%s' % args.npm
+    npm_meta = json.loads(urlopen(npm_meta_url).read().decode('UTF-8'))
+    npm_url = npm_meta['dist']['tarball']
     npm_contents = io.BytesIO(urlopen(npm_url).read())
 
     bin_path = join(env_dir, 'Scripts')
@@ -1205,10 +1210,14 @@ def install_npm_win(env_dir, src_dir, args):
     if os.path.exists(join(bin_path, 'npm-cli.js')):
         os.remove(join(bin_path, 'npm-cli.js'))
 
-    with zipfile.ZipFile(npm_contents, 'r') as zipf:
-        zipf.extractall(src_dir)
+    npm_src_dir = join(src_dir, 'npm-%s' % npm_meta['version'])
+    with tarfile_open(fileobj=npm_contents) as tarf:
+        if sys.version_info >= (3, 12):
+            tarf.extractall(npm_src_dir, filter="data")
+        else:
+            tarf.extractall(npm_src_dir)
 
-    npm_ver = 'cli-%s' % args.npm
+    npm_ver = join('npm-%s' % npm_meta['version'], 'package')
     shutil.copytree(join(src_dir, npm_ver), node_modules_path)
     shutil.copy(join(src_dir, npm_ver, 'bin', 'npm.cmd'),
                 join(bin_path, 'npm.cmd'))
@@ -1220,9 +1229,8 @@ def install_npm_win(env_dir, src_dir, args):
                     join(env_dir, 'bin', 'npm-cli.js'))
         shutil.copytree(join(bin_path, 'node_modules'),
                         join(env_dir, 'bin', 'node_modules'))
-        npm_gh_url = 'https://raw.githubusercontent.com/npm/cli'
-        npm_bin_url = '{}/{}/bin/npm'.format(npm_gh_url, args.npm)
-        writefile(join(env_dir, 'bin', 'npm'), urlopen(npm_bin_url).read())
+        shutil.copy(join(src_dir, npm_ver, 'bin', 'npm'),
+                    join(env_dir, 'bin', 'npm'))
 
 
 def _read_packages(filenames):

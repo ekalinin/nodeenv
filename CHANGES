@@ -8,6 +8,11 @@ Version [unreleased]
   environment and restore it on deactivate: `npx` exports the outer prefix,
   and `npm.cmd` runs the npm it finds there instead of its own
   `#309 <https://github.com/ekalinin/nodeenv/issues/309>`_
+- `--with-npm` on Windows and Cygwin installs npm from the registry tarball
+  instead of the GitHub source archive, whose workspace symlinks unpacked as
+  text files (npm 8) and whose workspaces are missing (npm >= 9); the default
+  `--npm=latest` no longer ends in a 404 there
+  `#310 <https://github.com/ekalinin/nodeenv/issues/310>`_
 
 Version 1.11.0
 --------------

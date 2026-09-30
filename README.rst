@@ -153,6 +153,11 @@ or a version range, an ``index.json`` next to them::
 
     $ nodeenv --node=22.14.0 --mirror=file:///srv/node-mirror env-22
 
+A mirror that asks for a login takes it in the URL, with special characters
+percent-encoded::
+
+    $ nodeenv --mirror=https://user:p%2Fss@artifactory.example.com/nodejs env
+
 Install the highest node.js release matching a version range::
 
     $ nodeenv --node=22 env-22
@@ -349,7 +354,9 @@ Installation options
 
 ``--mirror=URL``
     Set mirror server of nodejs.org to download from. A ``file://`` URL
-    points nodeenv at a local directory instead of a server.
+    points nodeenv at a local directory instead of a server. The
+    ``user:password@`` part of the URL goes to the mirror with HTTP Basic
+    authentication, and to no other host.
 
 ``-c, --clean-src``
     Remove "src" directory after installation. This is the default.

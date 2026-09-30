@@ -10,6 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
+import base64
 import contextlib
 import io
 import json
@@ -37,6 +38,8 @@ try:  # pragma: no cover (py2 only)
     from ConfigParser import SafeConfigParser as ConfigParser  # pyright: ignore[reportMissingImports]  # noqa: E501
     # noinspection PyCompatibility
     import urllib2  # pyright: ignore[reportMissingImports]
+    from urlparse import urlsplit, urlunsplit  # pyright: ignore[reportMissingImports]  # noqa: E501
+    from urllib import unquote  # pyright: ignore[reportAttributeAccessIssue]
     iteritems = operator.methodcaller('iteritems')
     import httplib  # pyright: ignore[reportMissingImports]
     IncompleteRead = httplib.IncompleteRead
@@ -44,6 +47,7 @@ except ImportError:  # pragma: no cover (py3 only)
     from configparser import ConfigParser
     # noinspection PyUnresolvedReferences
     import urllib.request as urllib2
+    from urllib.parse import unquote, urlsplit, urlunsplit
     iteritems = operator.methodcaller('items')
     import http
     IncompleteRead = http.client.IncompleteRead
@@ -62,6 +66,9 @@ ignore_ssl_certs = False
 # SSL context backed by the certifi bundle, built once by main()
 # when --with-certifi is given and certifi is importable
 certifi_context = None
+# Authorization header for src_base_url, built by main() from the
+# user:password@ part of --mirror, which is cut off src_base_url
+src_auth = None
 
 # ---------------------------------------------------------
 # Utils
@@ -137,6 +144,9 @@ class Config(object):
                     val = ini_file.getboolean(section, attr)
                 else:
                     val = ini_file.get(section, attr)
+                    # ConfigParser keeps the quotes the README shows, #321
+                    if len(val) > 1 and val[0] == val[-1] and val[0] in '\'"':
+                        val = val[1:-1]
 
                 if verbose:
                     print('CONFIG {0}: {1} = {2}'.format(
@@ -947,10 +957,30 @@ def _urlopen(req):
     return urllib2.urlopen(req)
 
 
+def split_url_auth(url):
+    """
+    Cut user:password@ off the URL, urllib takes it for a part of the host,
+    and return it as a Basic Authorization header.
+    https://github.com/ekalinin/nodeenv/issues/321
+    """
+    parts = urlsplit(url)
+    if parts.username is None:
+        return url, None
+    credentials = '%s:%s' % (unquote(parts.username),
+                             unquote(parts.password or ''))
+    auth = base64.b64encode(credentials.encode('utf-8')).decode('ascii')
+    netloc = parts.netloc.rpartition('@')[2]
+    return urlunsplit(parts._replace(netloc=netloc)), 'Basic ' + auth
+
+
 def urlopen(url):
     home_url = "https://github.com/ekalinin/nodeenv/"
     headers = {'User-Agent': 'nodeenv/%s (%s)' % (nodeenv_version, home_url)}
     req = urllib2.Request(url, None, headers)
+    # the mirror's password is neither for other hosts, like the npm
+    # registry, nor for the ones the mirror redirects to
+    if src_auth and url.startswith(src_base_url):
+        req.add_unredirected_header('Authorization', src_auth)
     try:
         return _urlopen(req)
     except urllib2.HTTPError:
@@ -1574,6 +1604,7 @@ def main():
         exit(1)
 
     global src_base_url
+    global src_auth
     global ignore_ssl_certs
     global certifi_context
 
@@ -1594,6 +1625,7 @@ def main():
         src_domain = 'nodejs.org'
     if src_base_url is None:
         src_base_url = 'https://%s/download/release' % src_domain
+    src_base_url, src_auth = split_url_auth(src_base_url)
 
     # Decide on the system node before any version resolution, so that
     # a found system node never triggers a request for index.json

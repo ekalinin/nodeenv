@@ -6,16 +6,20 @@ if sys.version_info < (3, 3):
     from pipes import quote as _quote
 else:
     from shlex import quote as _quote
+import contextlib
+import http.server
 import io
 import json
 import os.path
 import pathlib
 import shutil
+import socket
 import subprocess
 import sys
 import platform
 import ssl
 import tarfile
+import threading
 import zipfile
 
 try:
@@ -451,6 +455,140 @@ def test_mirror_option_local_directory(tmpdir):
         nodeenv.src_base_url = None
         nodeenv.main()
         mock_logger.assert_called_with('99.0.0')
+
+
+def test_config_strips_quotes(tmpdir):
+    """Values quoted as in the README are read without the quotes, see #321"""
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\n'
+             "node = '22.14.0'\n"
+             'mirror = "https://example.com/mirror"\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.node == '22.14.0'
+        assert nodeenv.Config.mirror == 'https://example.com/mirror'
+    finally:
+        nodeenv.Config.node = nodeenv.Config._default['node']
+        nodeenv.Config.mirror = nodeenv.Config._default['mirror']
+
+
+@pytest.fixture
+def auth_mirror(monkeypatch):
+    """
+    A local mirror that serves index.json only to an authorized request.
+    /moved/ redirects to /cdn/, which needs no authorization, like
+    a presigned URL of a cloud storage.
+    Yields its port and the paths with the Authorization headers it has seen.
+    """
+    for name in PROXY_VARS:
+        monkeypatch.delenv(name, raising=False)
+    seen = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            auth = self.headers.get('Authorization')
+            seen.append((self.path, auth))
+            if self.path.startswith('/moved/'):
+                self.send_response(302)
+                self.send_header('Location', '/cdn/' + self.path[7:])
+                self.end_headers()
+                return
+            if auth is None and not self.path.startswith('/cdn/'):
+                self.send_response(401)
+                self.send_header('WWW-Authenticate', 'Basic realm="mirror"')
+                self.end_headers()
+                return
+            body = (b'[{"version": "v99.0.0", "date": "2026-01-01",'
+                    b' "lts": false, "files": ["linux-x64",'
+                    b' "linux-x64-musl", "linux-riscv64"]}]')
+            self.send_response(200)
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.HTTPServer(('127.0.0.1', 0), Handler)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    try:
+        yield server.server_address[1], seen
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+@pytest.mark.parametrize('userinfo, header', [
+    ('user:secret', 'Basic dXNlcjpzZWNyZXQ='),
+    # me@corp.com:p/ss, a URL has room for these characters only encoded
+    ('me%40corp.com:p%2Fss', 'Basic bWVAY29ycC5jb206cC9zcw=='),
+])
+def test_mirror_credentials_are_sent_as_basic_auth(auth_mirror,
+                                                   userinfo, header):
+    """user:password@ in --mirror authenticates to the mirror, see #321"""
+    port, seen = auth_mirror
+    mirror = 'http://%s@127.0.0.1:%d' % (userinfo, port)
+    argv = [__file__, '--list', '--mirror=' + mirror]
+    with mock.patch.object(sys, 'argv', argv), \
+            mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+        nodeenv.src_base_url = None
+        nodeenv.main()
+        mock_logger.assert_called_with('99.0.0')
+
+    assert set(seen) == {('/index.json', header)}
+
+
+def test_mirror_credentials_do_not_follow_redirects(auth_mirror):
+    """A redirect may lead to another host, the password stays behind"""
+    port, seen = auth_mirror
+    mirror = 'http://user:secret@127.0.0.1:%d/moved' % port
+    argv = [__file__, '--list', '--mirror=' + mirror]
+    with mock.patch.object(sys, 'argv', argv), \
+            mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+        nodeenv.src_base_url = None
+        nodeenv.main()
+        mock_logger.assert_called_with('99.0.0')
+
+    assert set(seen) == {('/moved/index.json', 'Basic dXNlcjpzZWNyZXQ='),
+                         ('/cdn/index.json', None)}
+
+
+def test_mirror_credentials_stay_out_of_error_messages(monkeypatch):
+    """A failed download must not print the mirror's password"""
+    for name in PROXY_VARS:
+        monkeypatch.delenv(name, raising=False)
+    # a port that was free a moment ago refuses the connection
+    with contextlib.closing(socket.socket()) as sock:
+        sock.bind(('127.0.0.1', 0))
+        port = sock.getsockname()[1]
+    mirror = 'http://user:secret@127.0.0.1:%d' % port
+    argv = [__file__, '--list', '--mirror=' + mirror]
+    with mock.patch.object(sys, 'argv', argv), \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        nodeenv.src_base_url = None
+        with pytest.raises(SystemExit):
+            nodeenv.main()
+
+    errors = _logged_errors(m_error)
+    assert 'http://127.0.0.1:%d/index.json' % port in errors
+    assert 'secret' not in errors
+
+
+def test_mirror_credentials_stay_with_the_mirror():
+    """The npm registry must not get the mirror's password"""
+    with mock.patch.object(nodeenv, 'src_base_url',
+                           'https://mirror.example.com/node'), \
+            mock.patch.object(nodeenv, 'src_auth',
+                              'Basic dXNlcjpzZWNyZXQ='), \
+            mock.patch.object(nodeenv.urllib2, 'urlopen') as m_urlopen:
+        nodeenv.urlopen('https://mirror.example.com/node/index.json')
+        nodeenv.urlopen('https://registry.npmjs.org/npm/latest')
+
+    to_mirror, to_registry = [c[0][0] for c in m_urlopen.call_args_list]
+    assert to_mirror.has_header('Authorization')
+    assert not to_registry.has_header('Authorization')
 
 
 @pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')

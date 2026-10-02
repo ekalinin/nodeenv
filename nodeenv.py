@@ -2166,9 +2166,7 @@ begin
 end
 
 set -gx _OLD_NODE_VIRTUAL_PATH $PATH
-# The node_modules/.bin path doesn't exists and it will print a warning, and
-# that's why we redirect stderr to /dev/null :)
-set -gx PATH "$NODE_VIRTUAL_ENV/lib/node_modules/.bin" "$NODE_VIRTUAL_ENV/__BIN_NAME__" $PATH ^/dev/null
+set -gx PATH "$NODE_VIRTUAL_ENV/__MOD_NAME__/.bin" "$NODE_VIRTUAL_ENV/__BIN_NAME__" $PATH
 
 if set -q NODE_PATH
     set -gx _OLD_NODE_PATH $NODE_PATH

@@ -13,6 +13,11 @@ Version [unreleased]
   text files (npm 8) and whose workspaces are missing (npm >= 9); the default
   `--npm=latest` no longer ends in a 404 there
   `#310 <https://github.com/ekalinin/nodeenv/issues/310>`_
+- Quoted values in the config file, as the README shows them, are read
+  without the quotes, and `user:password@` in the `--mirror` URL is sent to
+  the mirror with HTTP Basic authentication instead of being taken for a part
+  of the host; the password stays out of error messages and redirects
+  `#321 <https://github.com/ekalinin/nodeenv/issues/321>`_
 
 Version 1.11.0
 --------------

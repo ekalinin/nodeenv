@@ -65,6 +65,33 @@ def test_write(tmpdir, name, content_var):
     assert bin_dir.join(name).read() == fix_content(content, tmpdir)
 
 
+@pytest.mark.skipif(nodeenv.is_WIN, reason='activate.fish is POSIX only')
+def test_activate_fish_has_no_caret_redirect(tmpdir):
+    """Generated activate.fish must not contain caret stderr redirects.
+
+    fish 3.1+ treats ^ as a normal character (stderr-nocaret default), so a
+    trailing ^/dev/null on the PATH set line would land in PATH as a literal
+    entry (#400).  This check does not need fish installed.
+    """
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+    for n in FILES:
+        bin_dir.join(n).write(n)
+
+    with mock.patch.object(sys, 'argv', ['nodeenv', str(tmpdir)]):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+
+    content = bin_dir.join('activate.fish').read()
+    assert '^/dev/null' not in content
+    path_lines = [ln for ln in content.splitlines()
+                  if ln.lstrip().startswith('set -gx PATH')]
+    assert path_lines, 'expected a set -gx PATH line in activate.fish'
+    assert all('2>/dev/null' not in ln and '^/dev/null' not in ln
+               for ln in path_lines)
+    assert '$NODE_VIRTUAL_ENV/lib/node_modules/.bin' in content
+
+
 @pytest.mark.parametrize('name, content_var', FILES.items())
 def test_python_virtualenv(tmpdir, name, content_var):
     if nodeenv.is_WIN:

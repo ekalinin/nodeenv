@@ -4,6 +4,12 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- The node.js archive download also retries when the connection is reset or
+  times out in the middle of the body, pauses between the attempts and ends
+  with an error message instead of a traceback when all of them fail; a
+  server that stops answering is given up on after 60 seconds instead of
+  hanging nodeenv
+  `#324 <https://github.com/ekalinin/nodeenv/issues/324>`_
 - `activate.fish` no longer puts a literal `^/dev/null` on `PATH`: fish 3.1+
   defaults to `stderr-nocaret`, so the old caret redirect was one more path
   entry; existing environments keep the old `activate.fish` until recreated

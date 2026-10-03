@@ -24,6 +24,7 @@ import operator
 import argparse
 import subprocess
 import tarfile
+import time
 if sys.version_info < (3, 3):
     from pipes import quote as _quote
 else:
@@ -31,6 +32,7 @@ else:
 import platform
 import zipfile
 import shutil
+import socket
 import sysconfig
 import glob
 
@@ -69,6 +71,9 @@ certifi_context = None
 # Authorization header for src_base_url, built by main() from the
 # user:password@ part of --mirror, which is cut off src_base_url
 src_auth = None
+# Seconds to wait for a server to answer or to send more of the body,
+# so that a stalled download fails instead of hanging forever
+download_timeout = 60
 
 # ---------------------------------------------------------
 # Utils
@@ -867,20 +872,28 @@ def tarfile_open(*args, **kwargs):
         tf.close()
 
 
-def _download_node_file(node_url, n_attempt=3):
+def _download_node_file(node_url, n_attempt=3, delay=3):
     """Do multiple attempts to avoid incomplete data in case
     of unstable network"""
     while n_attempt > 0:
         try:
             return io.BytesIO(urlopen(node_url).read())
-        except IncompleteRead as e:
+        except urllib2.HTTPError:
+            # The server answered, install_node_wrapped() decides what
+            # the status means
+            raise
+        except (IncompleteRead, OSError) as e:
+            # OSError: a connection reset or timed out in the middle
+            # of the body https://github.com/ekalinin/nodeenv/issues/324
             logger.warning(
                 'Incomplete read while reading '
                 'from {} - {}'.format(node_url, e)
             )
             n_attempt -= 1
             if n_attempt == 0:
-                raise e
+                logger.error('Error: cannot download %s: %s' % (node_url, e))
+                sys.exit(1)
+            time.sleep(delay)
 
 
 def download_node_src(node_url, src_dir, args):
@@ -948,13 +961,15 @@ def _urlopen(req):
         # https://github.com/ekalinin/nodeenv/issues/296
         context = ssl.SSLContext(ssl.PROTOCOL_TLS)
         context.verify_mode = ssl.CERT_NONE
-        return urllib2.urlopen(req, context=context)
+        return urllib2.urlopen(req, context=context,
+                               timeout=download_timeout)
 
     # Use certifi certificates if they were requested and are available
     if certifi_context is not None:
-        return urllib2.urlopen(req, context=certifi_context)
+        return urllib2.urlopen(req, context=certifi_context,
+                               timeout=download_timeout)
 
-    return urllib2.urlopen(req)
+    return urllib2.urlopen(req, timeout=download_timeout)
 
 
 def split_url_auth(url):
@@ -986,10 +1001,13 @@ def urlopen(url):
     except urllib2.HTTPError:
         # The server answered, callers decide what the status means
         raise
-    except urllib2.URLError as e:
+    except (urllib2.URLError, socket.timeout) as e:
         # Nothing was reached at all: a broken proxy, no DNS, no route.
         # https://github.com/ekalinin/nodeenv/issues/229
-        logger.error('Error: cannot download %s: %s' % (url, e.reason))
+        # Or nothing answered in download_timeout seconds: urllib wraps
+        # a timeout into URLError only while it sends the request.
+        logger.error('Error: cannot download %s: %s'
+                     % (url, getattr(e, 'reason', e)))
         proxies = get_proxy_settings()
         if proxies:
             logger.error('Error: check the proxy settings: %s'

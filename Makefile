@@ -1,7 +1,8 @@
 .PHONY: default deploy deploy-github deploy-pypi update-pypi clean tests env
+PYTHON=python3
 TEST_ENV=env
 DEV_TEST_ENV=env-dev
-SETUP=pip install -U pip setuptools && python setup.py install > /dev/null
+SETUP=pip install -U pip setuptools && $(PYTHON) setup.py install > /dev/null
 
 default:
 	: do nothing when dpkg-buildpackage runs this project Makefile
@@ -12,13 +13,15 @@ deploy-github:
 
 deploy-pypi:
 	rm -rf dist
-	python setup.py sdist bdist_wheel
-	twine upload --repository pypi dist/*
+	@. ${DEV_TEST_ENV}/bin/activate && \
+		pip install -U setuptools wheel twine && \
+		$(PYTHON) setup.py sdist bdist_wheel && \
+		twine upload --repository pypi dist/*
 
 update-pypi:
-	python setup.py register
+	$(PYTHON) setup.py register
 
-deploy: contributors deploy-github deploy-pypi
+deploy: contributors ut deploy-github deploy-pypi
 
 clean:
 	@rm -rf nodeenv.egg-info/
@@ -37,13 +40,13 @@ setup-test-env:
 
 env: clean-test-env setup-test-env
 	@. ${TEST_ENV}/bin/activate                && \
-		python setup.py install
+		$(PYTHON) setup.py install
 
 # https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
 # https://github.com/pypa/virtualenv/issues/1681
 env-dev:
 	@rm -rf ${DEV_TEST_ENV}                           && \
-		virtualenv ${DEV_TEST_ENV} 	                  && \
+		$(PYTHON) -m venv ${DEV_TEST_ENV}             && \
 		. ${DEV_TEST_ENV}/bin/activate                && \
 		pip install -r requirements-dev.txt
 
@@ -135,11 +138,11 @@ test10: clean clean-test-env setup-test-env
 tests: test1 test2 test3 test4 test7 test8 test9 test10 clean
 
 ut: env-dev
-	@. ${DEV_TEST_ENV}/bin/activate && tox -e py39
+	@. ${DEV_TEST_ENV}/bin/activate && tox -e py314
 
 coverage: env-dev
 	@. ${DEV_TEST_ENV}/bin/activate && \
-		coverage run -p -m pytest && \
+		coverage run -p -m pytest -m 'not integration' && \
 		coverage report -m && \
 		coverage html
 

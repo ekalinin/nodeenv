@@ -1,10 +1,10 @@
 Node.js virtual environment
 ===========================
 
-``nodeenv`` (node.js virtual environment) is a tool to create 
+``nodeenv`` (node.js virtual environment) is a tool to create
 isolated node.js environments.
 
-It creates an environment that has its own installation directories, 
+It creates an environment that has its own installation directories,
 that doesn't share libraries with other node.js virtual environments.
 
 Also the new environment can be integrated with the environment which was built
@@ -14,8 +14,9 @@ If you use nodeenv feel free to add your project on wiki: `Who-Uses-Nodeenv`_.
 
 .. _Who-Uses-Nodeenv: https://github.com/ekalinin/nodeenv/wiki/Who-Uses-Nodeenv
 
-.. image:: https://travis-ci.org/ekalinin/nodeenv.svg?branch=master
-    :target: https://travis-ci.org/ekalinin/nodeenv
+.. image:: https://github.com/ekalinin/nodeenv/actions/workflows/main.yml/badge.svg?branch=master
+    :target: https://github.com/ekalinin/nodeenv/actions/workflows/main.yml
+    :alt: CI
 
 .. contents:: :local:
 
@@ -54,7 +55,7 @@ pip_/easy_install_ inside any virtual environment built with virtualenv::
     (env) $ nodeenv --version
     0.6.5
 
-If you want to work with the latest version of the nodeenv you can 
+If you want to work with the latest version of the nodeenv you can
 install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
@@ -98,6 +99,12 @@ Activate new environment::
 
     $ . env/bin/activate
 
+On Windows the environment is created in ``env\Scripts`` instead, with a
+script per shell: ``activate.bat`` for cmd, ``Activate.ps1`` for
+PowerShell and ``activate`` for posix shells such as git-bash::
+
+    $ . env/Scripts/activate
+
 Check versions of main packages::
 
     (env) $ node -v
@@ -127,7 +134,7 @@ Get available node.js versions::
     0.3.2   0.3.3   0.3.4   0.3.5   0.3.6   0.3.7   0.3.8
     0.4.1   0.4.2   0.4.3   0.4.4   0.4.5   0.4.6
 
-Install node.js "0.4.3" without ssl support with 4 parallel commands 
+Install node.js "0.4.3" without ssl support with 4 parallel commands
 for compilation and npm.js "0.3.17"::
 
     $ nodeenv --without-ssl --node=0.4.3 --npm=0.3.17 --with-npm --jobs=4 env-4.3
@@ -139,6 +146,28 @@ Install node.js from the source::
 Install node.js from a mirror::
 
     $ nodeenv --node=10.19.0 --mirror=https://npm.taobao.org/mirrors/node
+
+A local directory works as a mirror too, if it repeats the layout of
+nodejs.org: packages in ``v<version>/`` and, to resolve ``latest``, ``lts``
+or a version range, an ``index.json`` next to them::
+
+    $ nodeenv --node=22.14.0 --mirror=file:///srv/node-mirror env-22
+
+A mirror that asks for a login takes it in the URL, with special characters
+percent-encoded::
+
+    $ nodeenv --mirror=https://user:p%2Fss@artifactory.example.com/nodejs env
+
+Install the highest node.js release matching a version range::
+
+    $ nodeenv --node=22 env-22
+    $ nodeenv --node=4.x env-4
+    $ nodeenv --node="^4.3.1" env-4.3
+    $ nodeenv --node=">=20 <22" env-20
+
+Ranges use `npm semver syntax`_ and also work in a ``.node-version`` file.
+
+.. _npm semver syntax: https://docs.npmjs.com/cli/v10/using-npm/semver
 
 It's much faster to install from the prebuilt package than Install & compile
 node.js from source::
@@ -161,6 +190,11 @@ Create a new environment with the system-wide node.js::
 
     $ nodeenv --node=system
 
+Use the system-wide node.js if it is available, otherwise install the latest
+LTS release::
+
+    $ nodeenv --prefer-system --node=lts env
+
 Saving the versions of all installed packages to a file::
 
     $ . env-4.3/bin/activate
@@ -172,11 +206,35 @@ If you want to list locally installed packages use ``-l`` option::
 
     (env-4.3)$ freeze -l ../prod-requirements.txt
 
+``npm`` and ``corepack`` are installed by node.js itself and are left out of
+the list: pinning them would downgrade the copies the next node.js brings.
+
+``freeze`` saves the packages, not the runtime. To pin the node.js version as
+well, write it next to the requirements file - nodeenv reads
+``.node-version`` from the directory it is run in::
+
+    (env-4.3)$ node --version > ../.node-version
+
 Create an environment from a requirements file::
 
     $ nodeenv --requirements=../prod-requirements.txt --jobs=4 env-copy
 
-Requirements files are plain text files that contain a list of packages 
+``--requirements`` may be given more than once, and the packages of every file
+are installed globally::
+
+    $ nodeenv --requirements=../prod-requirements.txt \
+              --requirements=../dev-requirements.txt env-copy
+
+To install packages locally, into ``node_modules`` of the current directory,
+use ``--local-requirements``. It accepts the output of ``freeze -l`` and may
+also be given more than once::
+
+    $ nodeenv --requirements=../global-requirements.txt \
+              --local-requirements=../local-requirements.txt env-copy
+
+Global packages are installed first, then the local ones.
+
+Requirements files are plain text files that contain a list of packages
 to be installed. These text files allow you to create repeatable installations.
 Requirements file example::
 
@@ -185,7 +243,6 @@ Requirements file example::
     express@2.2.2
     jade@0.10.4
     mime@1.2.1
-    npm@0.3.17
     qs@0.0.7
 
 If you already have the python virtualenv tool, and want to use nodeenv and
@@ -201,7 +258,7 @@ virtual environment::
 and add a node virtual environment to this existing new_venv::
 
     $ nodeenv -p
-    
+
 If you need to set the path to make used to build node::
 
 	$ nodeenv -m /usr/local/bin/gmake ENV
@@ -213,7 +270,7 @@ environment::
     $ npm install -g coffee-script
     $ command -v coffee
     /home/monty/virtualenvs/my_env/bin/coffee
-    
+
 Creating a virtual environment with a custom prompt:
 
     $ nodeenv --node=12.18.2 --prompt="(myenv)" nodeenv
@@ -234,6 +291,153 @@ use `shim` script::
     $ ./env-4.3/bin/shim --version
     v0.4.3
 
+Command Line Options
+--------------------
+
+Basic options
+^^^^^^^^^^^^^
+
+``-n NODE_VER, --node=NODE_VER``
+    The node.js version to use, e.g., ``--node=22.11.0``. Also accepts an
+    npm-style semver range, which is resolved to the highest matching
+    release: ``--node=22``, ``--node=4.x``, ``--node="^4.3.1"``,
+    ``--node="~4.3"``, ``--node=">=20 <22"``, ``--node="8 || 10"``.
+    The default is the last stable version (``latest``). Use ``lts`` for the
+    latest LTS release. Use ``system`` to use system-wide node.
+
+``--prefer-system``
+    Use the system-wide node.js if ``nodejs`` or ``node`` is found in
+    ``PATH``, otherwise install the version given by ``--node``. A found
+    system node is used as is, its version is not checked against
+    ``--node``. Set ``prefer_system = True`` in ``~/.nodeenvrc`` to make
+    this the default. Ignored on Windows, where system-wide node.js is not
+    supported.
+
+``-l, --list``
+    Lists available node.js versions.
+
+``-p [VENV_DIR], --python-virtualenv [VENV_DIR]``
+    Use the given python virtualenv, or the current one if no directory
+    is given. Passing a directory is required when nodeenv lives in its
+    own virtualenv (``pipx``, ``pipsi``, ``uv tool``) and the activated
+    virtualenv doesn't export ``VIRTUAL_ENV``. Running it again with the
+    same node version does not reinstall node; pass ``--force`` to
+    reinstall.
+
+``-r FILENAME, --requirements=FILENAME``
+    Install all the packages listed in the given requirements file globally.
+    May be given more than once.
+
+``--local-requirements=FILENAME``
+    Install all the packages listed in the given requirements file locally,
+    into ``node_modules`` of the current directory. May be given more than
+    once.
+
+``--prompt=PROMPT``
+    Provides an alternative prompt prefix for this environment.
+
+``--force``
+    Force installation in a pre-existing directory, and reinstall node even
+    when the requested version is already installed.
+
+``--update``
+    Install npm packages from file without reinstalling node.
+
+Installation options
+^^^^^^^^^^^^^^^^^^^^
+
+``--prebuilt``
+    Install node.js from prebuilt package (default).
+
+``--source``
+    Install node.js from the source (Unix only).
+
+``--mirror=URL``
+    Set mirror server of nodejs.org to download from. A ``file://`` URL
+    points nodeenv at a local directory instead of a server. The
+    ``user:password@`` part of the URL goes to the mirror with HTTP Basic
+    authentication, and to no other host.
+
+``-c, --clean-src``
+    Remove "src" directory after installation. This is the default.
+
+``--no-clean-src``
+    Keep "src" directory after installation. With ``--source`` it holds the
+    downloaded source tree, so a repeated ``--force`` build reuses it.
+
+NPM options
+^^^^^^^^^^^
+
+``--npm=NPM_VER``
+    The npm version to use, e.g., ``--npm=10.0.0``.
+    The default is the last available version (``latest``).
+
+``--with-npm``
+    Install npm into the new virtual environment. Required for node.js < 0.6.3.
+    By default, the npm included with node.js is used.
+
+``--no-npm-clean``
+    Skip the npm 0.x cleanup. Cleanup is enabled by default.
+
+``--isolate-npm``
+    Keep npm's ``cache`` (``.npm``), ``userconfig`` (``.npmrc``) and
+    ``init-module`` (``.npm-init.js``) inside the environment instead of
+    ``$HOME``. Useful when ``$HOME`` is missing or read-only, or when the
+    environment must not touch the user's npm files. Settings from
+    ``~/.npmrc`` such as a private registry or auth tokens are then not seen
+    inside the environment. Set ``isolate_npm = True`` in ``~/.nodeenvrc`` to
+    make this the default. Ignored on Windows.
+
+Compilation options (Unix only)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``-j JOBS, --jobs=JOBS``
+    Sets number of parallel commands at node.js compilation. The default is 2 jobs.
+
+``--load-average=LOAD``
+    Sets maximum load average for executing parallel commands at node.js compilation.
+
+``-m MAKE_PATH, --make=MAKE_PATH``
+    Path to make command.
+
+``--without-ssl``
+    Build node.js without SSL support.
+
+``--debug``
+    Build debug variant of the node.js.
+
+``--profile``
+    Enable profiling for node.js.
+
+Other options
+^^^^^^^^^^^^^
+
+``-v, --verbose``
+    Verbose mode.
+
+``-q, --quiet``
+    Quiet mode.
+
+``-C CONFIG_FILE, --config-file=CONFIG_FILE``
+    Load a different config file than ``~/.nodeenvrc``.
+    Pass an empty string for no config (use built-in defaults).
+
+``--ignore_ssl_certs``
+    Ignore SSL certificates for package downloads. **UNSAFE - use at your own risk**.
+
+``--with-certifi``
+    Use the `certifi <https://pypi.org/project/certifi/>`_ certificate bundle for
+    package downloads instead of the system certificate store. Useful when the
+    system store is missing or outdated. If certifi is not installed, a warning is
+    printed and the system store is used. Ignored when ``--ignore_ssl_certs`` is
+    given. The same result can be achieved without this option by pointing
+    ``SSL_CERT_FILE`` at the bundle::
+
+        $ SSL_CERT_FILE=$(python -c 'import certifi; print(certifi.where())') nodeenv env
+
+``--version``
+    Show program version and exit.
+
 Configuration
 -------------
 You can use the INI-style file ``~/.nodeenvrc`` to set default values for many options,
@@ -252,7 +456,11 @@ These are the available options and their defaults::
     make = 'make'
     prebuilt = True
     ignore_ssl_certs = False
+    with_certifi = False
     mirror = None
+    prefer_system = False
+    isolate_npm = False
+    clean_src = True
 
 Alternatives
 ------------
@@ -263,7 +471,7 @@ There are several alternatives that create isolated environments:
   Nave stores all environments in one directory ``~/.nave``. Can create
   per node version environments using `nave use envname versionname`.
   Can not pass additional arguments into configure (for example --without-ssl)
-  Can't run on windows because it relies on bash.
+  Can't run on windows because it relies on a POSIX shell.
 
 * `nvm <https://github.com/creationix/nvm/blob/master/nvm.sh>`_ - Node Version
   Manager. It is necessarily to do `nvm sync` for caching available node.js

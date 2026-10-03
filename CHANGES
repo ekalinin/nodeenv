@@ -1,6 +1,254 @@
 Nodeenv changelog
 =================
 
+Version [unreleased]
+--------------------
+
+- `activate.bat` and `Activate.ps1` now set `npm_config_prefix` to the
+  environment and restore it on deactivate: `npx` exports the outer prefix,
+  and `npm.cmd` runs the npm it finds there instead of its own
+  `#309 <https://github.com/ekalinin/nodeenv/issues/309>`_
+- `--with-npm` on Windows and Cygwin installs npm from the registry tarball
+  instead of the GitHub source archive, whose workspace symlinks unpacked as
+  text files (npm 8) and whose workspaces are missing (npm >= 9); the default
+  `--npm=latest` no longer ends in a 404 there
+  `#310 <https://github.com/ekalinin/nodeenv/issues/310>`_
+- Quoted values in the config file, as the README shows them, are read
+  without the quotes, and `user:password@` in the `--mirror` URL is sent to
+  the mirror with HTTP Basic authentication instead of being taken for a part
+  of the host; the password stays out of error messages and redirects
+  `#321 <https://github.com/ekalinin/nodeenv/issues/321>`_
+
+Version 1.11.0
+--------------
+- Fixed zsh `source bin/activate` aborting on the direct-call guard `#398 <https://github.com/ekalinin/nodeenv/issues/398>`_
+- Added check for how `activate` is called
+  `#384 <https://github.com/ekalinin/nodeenv/pull/384>`_
+- Addressed the ``tarfile.extractall`` deprecation on Python >= 3.12 by
+  setting ``filter='data'``, which also prevents writing files via ".." or
+  absolute paths `#380 <https://github.com/ekalinin/nodeenv/pull/380>`_
+- Added support for Solaris/illumos
+  `#360 <https://github.com/ekalinin/nodeenv/issues/360>`_
+- Added `predeactivate` hooks for Windows
+- Added error handling and tests for the node installation
+  `#336 <https://github.com/ekalinin/nodeenv/issues/336>`_
+- Removed the leftover debug `print` that leaked a dict to stdout on every
+  version detection `#390 <https://github.com/ekalinin/nodeenv/issues/390>`_
+- Added `--with-certifi` to download packages with the certifi certificate
+  bundle `#388 <https://github.com/ekalinin/nodeenv/pull/388>`_
+- `--node` accepts npm-style semver ranges
+  `#393 <https://github.com/ekalinin/nodeenv/pull/393>`_
+- Added `--prefer-system` to use system-wide node.js when available and
+  install one otherwise `#153 <https://github.com/ekalinin/nodeenv/issues/153>`_
+- Added `--isolate-npm` to keep npm cache, userconfig and init-module inside
+  the environment `#154 <https://github.com/ekalinin/nodeenv/issues/154>`_
+- Added tests that run the activation scripts in sh, dash, bash, zsh and fish.
+- `-p` no longer reinstalls node when the requested version is already in the
+  virtualenv `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
+- Repeated `-p` runs no longer duplicate the `predeactivate` hook
+  `#159 <https://github.com/ekalinin/nodeenv/issues/159>`_
+- `-p` accepts an optional virtualenv directory and prefers the activated
+  `VIRTUAL_ENV` over the virtualenv nodeenv itself is installed in
+  `#156 <https://github.com/ekalinin/nodeenv/issues/156>`_
+- `-r/--requirements` may now be given more than once, and the new
+  `--local-requirements` installs the packages of a file locally, into
+  "node_modules" of the current directory, which is what `freeze -l` writes.
+  Under npm < 1.0.0, which has no `-g`, a local file is still installed the
+  old way `#206 <https://github.com/ekalinin/nodeenv/issues/206>`_
+- The "src" directory is now removed after installation by default, which
+  halves the size of an environment. Added `--no-clean-src` to keep it: with
+  `--source` that is what lets a repeated `--force` build reuse the
+  downloaded source tree
+  `#205 <https://github.com/ekalinin/nodeenv/issues/205>`_
+- Documented that `--mirror` takes a `file://` URL, so a local directory can
+  serve as the download source
+  `#193 <https://github.com/ekalinin/nodeenv/issues/193>`_
+- The posix `activate` is now written on Windows too, into "Scripts", so
+  git-bash and the other posix shells there can activate an environment
+  `#226 <https://github.com/ekalinin/nodeenv/issues/226>`_
+- A download that reaches nothing at all, which a broken `http_proxy` or
+  `https_proxy` usually causes, now reports the url and the proxy settings
+  instead of a traceback
+  `#229 <https://github.com/ekalinin/nodeenv/issues/229>`_
+- On Windows `-p` extends "activate.bat", "deactivate.bat" and
+  "Activate.ps1" of the python virtualenv instead of overwriting them, so
+  `VIRTUAL_ENV` and the virtualenv's own deactivation survive
+  `#243 <https://github.com/ekalinin/nodeenv/issues/243>`_
+- A missing node.js archive now reports the urls that were tried and points
+  at `--list` and `--source` instead of a traceback
+  `#250 <https://github.com/ekalinin/nodeenv/issues/250>`_
+- `freeze` now reads `npm ls --parseable` instead of the drawn tree: scoped
+  packages keep their scope, a package whose name contains "npm" is no longer
+  dropped, and `npm` and `corepack`, which come with node.js itself, are left
+  out of the list. The fish version, which printed nothing at all under
+  npm >= 1, now writes the same file as the posix one
+  `#287 <https://github.com/ekalinin/nodeenv/issues/287>`_
+- musl is now detected whatever the vendor field of the host triplet says,
+  so Alpine's own python3 (``x86_64-alpine-linux-musl``) gets the musl build
+  of node.js instead of the glibc one
+  `#290 <https://github.com/ekalinin/nodeenv/issues/290>`_
+- On Windows "nodejs.exe" is linked with ``os.symlink``, falling back to a
+  hard link, instead of ``mklink``, which broke on paths with forward slashes
+  or spaces and needs elevation or Developer Mode. If both fail, only a
+  warning is logged `#303 <https://github.com/ekalinin/nodeenv/issues/303>`_
+
+Version 1.10.0
+--------------
+- Added support for Python 3.13 `#367 <https://github.com/ekalinin/nodeenv/pull/367>`_
+- Added support for UV virtual environments
+  `#386 <https://github.com/ekalinin/nodeenv/pull/386>`_
+- Used `sh` instead of `bash` `#389 <https://github.com/ekalinin/nodeenv/pull/389>`_
+- Replaced the remaining `which(1)` calls with `shutil.which()`
+  `#355 <https://github.com/ekalinin/nodeenv/pull/355>`_
+- Supported a leading `v` in `.node-version`
+  `#359 <https://github.com/ekalinin/nodeenv/pull/359>`_
+- Checked the host platform when finding the `node` version
+  `#363 <https://github.com/ekalinin/nodeenv/pull/363>`_
+- Fixed `archmap` lookup to be lowercase
+  `#382 <https://github.com/ekalinin/nodeenv/pull/382>`_
+
+Version 1.9.1
+-------------
+- Fixed version discovery `#358 <https://github.com/ekalinin/nodeenv/pull/358>`_
+  `#356 <https://github.com/ekalinin/nodeenv/issues/356>`_
+
+Version 1.9.0
+-------------
+- Switched to `packaging` for version comparison
+  `#338 <https://github.com/ekalinin/nodeenv/pull/338>`_ and then dropped the
+  dependency in favor of a simple version-parsing function
+  `#352 <https://github.com/ekalinin/nodeenv/pull/352>`_
+- Fixed GitHub Actions `#347 <https://github.com/ekalinin/nodeenv/pull/347>`_
+- Added Python 3.11 and 3.12 test coverage
+  `#348 <https://github.com/ekalinin/nodeenv/pull/348>`_
+- Added support for shells with "set -u"
+  `#345 <https://github.com/ekalinin/nodeenv/pull/345>`_
+- Replaced `pipes.quote` with `shlex.quote` on Python 3.3+
+  `#342 <https://github.com/ekalinin/nodeenv/pull/342>`_
+- Removed usage of the non-portable `which`
+  `#346 <https://github.com/ekalinin/nodeenv/pull/346>`_
+
+Version 1.8.0
+-------------
+- Fixed the function name in `fish_prompt`
+  `#312 <https://github.com/ekalinin/nodeenv/pull/312>`_
+- Added support for riscv64 `#313 <https://github.com/ekalinin/nodeenv/pull/313>`_
+- Upgraded GitHub Actions `#317 <https://github.com/ekalinin/nodeenv/pull/317>`_
+- Made the `mock` dependency optional
+  `#320 <https://github.com/ekalinin/nodeenv/pull/320>`_
+- GitHub Actions: `fail-fast: false`
+  `#327 <https://github.com/ekalinin/nodeenv/pull/327>`_
+- Made multiple attempts to download the node.js archive (IncompleteRead error)
+  `#329 <https://github.com/ekalinin/nodeenv/pull/329>`_
+- Logged the URL on download failures
+  `#330 <https://github.com/ekalinin/nodeenv/pull/330>`_
+
+Version 1.7.0
+-------------
+- Dropped python3.4, python3.5 and python3.6
+- Supported python releases before 3.7 in tests
+  `#272 <https://github.com/ekalinin/nodeenv/pull/272>`_
+- Required setuptools in setup.py
+  `#289 <https://github.com/ekalinin/nodeenv/pull/289>`_
+- Used the version specified in `.node-version` if it exists
+  `#288 <https://github.com/ekalinin/nodeenv/pull/288>`_
+- Fixed the problem when used with fish and virtualenv
+  `#294 <https://github.com/ekalinin/nodeenv/pull/294>`_
+- Replaced optparse with argparse
+  `#295 <https://github.com/ekalinin/nodeenv/pull/295>`_
+- Set the SSL protocol when ssl certs are ignored
+  `#296 <https://github.com/ekalinin/nodeenv/issues/296>`_
+- Fixed tests, tested Python 3.10 and moved tests to GitHub Actions
+  `#298 <https://github.com/ekalinin/nodeenv/pull/298>`_
+- Patched node installation for M1
+  `#299 <https://github.com/ekalinin/nodeenv/pull/299>`_
+- Added ability to configure the mirror through the settings file
+  `#307 <https://github.com/ekalinin/nodeenv/pull/307>`_
+- Added `--with-npm` to README `#308 <https://github.com/ekalinin/nodeenv/pull/308>`_
+
+Version 1.6.0
+-------------
+- Tested for `nodejs` or `node` in tests
+  `#270 <https://github.com/ekalinin/nodeenv/pull/270>`_
+- Removed the main node.js mirror in tests if musl
+  `#271 <https://github.com/ekalinin/nodeenv/pull/271>`_
+- Fixed the nodeenv prompt when using Fish
+  `#273 <https://github.com/ekalinin/nodeenv/pull/273>`_
+- Used `node` instead of `nodejs` `#275 <https://github.com/ekalinin/nodeenv/pull/275>`_
+- Fixed typo, remaning -> remaining
+  `#276 <https://github.com/ekalinin/nodeenv/pull/276>`_
+- Resolved the venv dir for Fish
+  `#277 <https://github.com/ekalinin/nodeenv/pull/277>`_
+- Added support for installing the latest LTS release
+  `#281 <https://github.com/ekalinin/nodeenv/pull/281>`_
+- Created a broad mapping for M1
+  `#282 <https://github.com/ekalinin/nodeenv/pull/282>`_
+
+Version 1.5.0
+-------------
+- Improved quoting of variables in the node shim for `-n system`
+  `#259 <https://github.com/ekalinin/nodeenv/pull/259>`_
+- Added `--ignore_ssl_certs` to ignore SSL certs for MITM/firewalls
+  `#256 <https://github.com/ekalinin/nodeenv/pull/256>`_
+- Added support for MSYS2 `#263 <https://github.com/ekalinin/nodeenv/pull/263>`_
+- Added missing arch's (ppc64le, armv8l, s390x)
+  `#268 <https://github.com/ekalinin/nodeenv/pull/268>`_
+
+Version 1.4.0
+-------------
+- Switched to `/download/release/index.json` to discover versions
+- Dropped io.js support
+- Worked around IncompleteRead when downloading src
+  `#258 <https://github.com/ekalinin/nodeenv/pull/258>`_
+- Fixed erasing of NODE_VIRTUAL_ENV while `deactivate_node` in fish
+  `#255 <https://github.com/ekalinin/nodeenv/pull/255>`_
+- Accepted a URL as well as a domain name for the `--mirror` argument
+  `#252 <https://github.com/ekalinin/nodeenv/pull/252>`_
+- Downloaded musl-compatible node from unofficial-builds
+  `#247 <https://github.com/ekalinin/nodeenv/pull/247>`_
+
+Version 1.3.5
+-------------
+- Fixed error 183 ("already exists") on Windows when installing prebuilt node
+  `#249 <https://github.com/ekalinin/nodeenv/issues/249>`_
+
+Version 1.3.4
+-------------
+- Used the prebuilt windows zip which contains npm
+  `#230 <https://github.com/ekalinin/nodeenv/pull/230>`_
+- Fixed url in the CHANGES file
+  `#231 <https://github.com/ekalinin/nodeenv/pull/231>`_
+- Fixed escape sequences `#232 <https://github.com/ekalinin/nodeenv/pull/232>`_
+- Fixed `npm_url` in `install_npm_win`
+  `#233 <https://github.com/ekalinin/nodeenv/pull/233>`_
+- Changed the URL for downloading npm in Cygwin
+  `#234 <https://github.com/ekalinin/nodeenv/pull/234>`_
+- Fixed nodeenv in case python4 is ever a thing
+  `#241 <https://github.com/ekalinin/nodeenv/pull/241>`_
+- Produced py2.py3 wheels, nodeenv is a pure python package
+  `#242 <https://github.com/ekalinin/nodeenv/pull/242>`_
+- Printed a blank line when `install_node` fails
+  `#236 <https://github.com/ekalinin/nodeenv/pull/236>`_
+- Added an option to set your own mirror
+  `#208 <https://github.com/ekalinin/nodeenv/pull/208>`_
+- Fixed CI (flake8 errors) `#245 <https://github.com/ekalinin/nodeenv/pull/245>`_
+- Fixed call to `logger.info(...)`
+  `#246 <https://github.com/ekalinin/nodeenv/pull/246>`_
+
+Version 1.3.3
+-------------
+- Installed a certain npm version via `npm install`
+  `#225 <https://github.com/ekalinin/nodeenv/issues/225>`_
+
+Version 1.3.2
+-------------
+- Updated node/node -> node/cli `#222 <https://github.com/ekalinin/nodeenv/pull/222>`_
+- Fixed arch detection on FreeBSD, which returns amd64
+  `#216 <https://github.com/ekalinin/nodeenv/pull/216>`_
+- Added a space before the normal $PS1
+  `#213 <https://github.com/ekalinin/nodeenv/pull/213>`_
+- Dropped py33 support
+
 Version 1.3.1
 -------------
 - Windows related fix `#207 <https://github.com/ekalinin/nodeenv/pull/207>`_

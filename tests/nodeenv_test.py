@@ -617,15 +617,69 @@ def test_get_last_node_version_writes_nothing_to_stdout(capsys):
     assert capsys.readouterr().out == ''
 
 
+@pytest.fixture
+def no_retry_pause():
+    with mock.patch('time.sleep') as mck:
+        yield mck
+
+
+@pytest.mark.usefixtures('no_retry_pause')
 def test__download_node_file():
-    with mock.patch.object(nodeenv, 'urlopen') as m_urlopen:
-        m_urlopen.side_effect = IncompleteRead("dummy")
-        with pytest.raises(IncompleteRead):
+    """The last failure is reported, not dumped as a traceback (#324)"""
+    with mock.patch.object(nodeenv, 'urlopen') as m_urlopen, \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        m_urlopen.side_effect = IncompleteRead(b'', 157)
+        with pytest.raises(SystemExit):
             nodeenv._download_node_file(
                 "https://dummy/nodejs.tar.gz",
                 n_attempt=5
             )
         assert m_urlopen.call_count == 5
+
+    errors = _logged_errors(m_error)
+    assert 'https://dummy/nodejs.tar.gz' in errors
+    assert '157 more expected' in errors
+
+
+def test__download_node_file_pauses_between_attempts(no_retry_pause):
+    """An attempt right after a network glitch tends to hit it again"""
+    with mock.patch.object(nodeenv, 'urlopen',
+                           side_effect=IncompleteRead(b'', 157)), \
+            mock.patch.object(nodeenv.logger, 'error'):
+        with pytest.raises(SystemExit):
+            nodeenv._download_node_file('https://dummy/nodejs.tar.gz',
+                                        n_attempt=3)
+
+    # between the attempts only, nothing is left to wait for after the last
+    assert no_retry_pause.call_count == 2
+    assert all(c[0][0] > 0 for c in no_retry_pause.call_args_list)
+
+
+@pytest.mark.usefixtures('no_retry_pause')
+@pytest.mark.parametrize('error', [
+    ConnectionResetError(54, 'Connection reset by peer'),
+    socket.timeout('timed out'),
+])
+def test__download_node_file_retries_a_broken_connection(error):
+    """A connection lost in the middle of the body is retried too (#324)"""
+    response = mock.Mock()
+    response.read.side_effect = [error, b'node archive']
+    with mock.patch.object(nodeenv, 'urlopen', return_value=response):
+        contents = nodeenv._download_node_file('https://dummy/nodejs.tar.gz')
+
+    assert contents.read() == b'node archive'
+
+
+def test__download_node_file_leaves_http_errors_to_the_caller():
+    """install_node_wrapped() falls back to x64 on an arm64 HTTPError"""
+    http_error = nodeenv.urllib2.HTTPError(
+        'https://dummy/nodejs.tar.gz', 404, 'Not Found', {}, None)
+    with mock.patch.object(nodeenv, 'urlopen',
+                           side_effect=http_error) as m_urlopen:
+        with pytest.raises(nodeenv.urllib2.HTTPError):
+            nodeenv._download_node_file('https://dummy/nodejs.tar.gz')
+
+    assert m_urlopen.call_count == 1
 
 
 PROXY_VARS = ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY')
@@ -667,6 +721,42 @@ def test_urlopen_reports_the_proxy_it_went_through(monkeypatch):
             nodeenv.urlopen('https://nodejs.org/download/release/index.json')
 
     assert 'https_proxy=https://:3128' in _logged_errors(m_error)
+
+
+@pytest.mark.parametrize('ssl_mode', ['system', 'ignore_ssl_certs',
+                                      'certifi'])
+def test_urlopen_gives_up_on_a_stalled_server(monkeypatch, ssl_mode):
+    """A server that never answers must not hang nodeenv (#324)"""
+    for name in PROXY_VARS:
+        monkeypatch.delenv(name, raising=False)
+    if ssl_mode == 'ignore_ssl_certs':
+        monkeypatch.setattr(nodeenv, 'ignore_ssl_certs', True)
+    if ssl_mode == 'certifi':
+        monkeypatch.setattr(nodeenv, 'certifi_context',
+                            ssl.create_default_context())
+    monkeypatch.setattr(nodeenv, 'download_timeout', 0.2)
+    outcome = []
+
+    def fetch(url):
+        try:
+            nodeenv.urlopen(url)
+        except BaseException as e:
+            outcome.append(e)
+
+    # the kernel completes the handshake, but nobody reads the request
+    with contextlib.closing(socket.socket()) as sock, \
+            mock.patch.object(nodeenv.logger, 'error') as m_error:
+        sock.bind(('127.0.0.1', 0))
+        sock.listen(1)
+        url = 'http://127.0.0.1:%d/index.json' % sock.getsockname()[1]
+        thread = threading.Thread(target=fetch, args=(url,))
+        thread.daemon = True
+        thread.start()
+        thread.join(5)
+        assert not thread.is_alive(), 'urlopen() still waits for an answer'
+
+    assert isinstance(outcome[0], SystemExit)
+    assert 'timed out' in _logged_errors(m_error)
 
 
 def test_urlopen_keeps_raising_http_errors():
@@ -2730,7 +2820,7 @@ class TestCertifi:
              mock.patch.object(nodeenv.urllib2, 'urlopen') as m_urlopen:
             nodeenv.urlopen('https://nodejs.org/dist/index.json')
 
-        assert m_urlopen.call_args[1] == {}
+        assert 'context' not in m_urlopen.call_args[1]
 
     def test_urlopen_with_certifi(self):
         """The context built by main() is reused for every download"""

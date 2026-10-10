@@ -2902,3 +2902,26 @@ class TestWritefile:
                                '# SIG # Begin signature block\n'
                                '# MIIF...\n'
                                '# SIG # End signature block\n')
+
+
+def test_build_node_from_src_does_not_need_python2(tmpdir):
+    """
+    node.js build scripts run on Python 3, so a source build must not
+    require a python2 command or rewrite PATH to point at one
+    """
+    args = mock.Mock(load_average=None, jobs='2', without_ssl=False,
+                     debug=False, profile=False, make_path='make',
+                     verbose=False)
+    src_dir = tmpdir.join('src')
+    node_src_dir = src_dir.join('node-src')
+    with mock.patch.object(nodeenv.shutil, 'which', return_value=None), \
+            mock.patch.object(nodeenv, 'callit') as mck:
+        nodeenv.build_node_from_src(
+            str(tmpdir.join('env')), str(src_dir), str(node_src_dir), args)
+
+    assert [c[0][0][0] for c in mck.call_args_list] == [
+        './configure', 'make', 'make install']
+    for c in mck.call_args_list:
+        assert c[0][3] == str(node_src_dir)
+        assert len(c[0]) < 5 or not c[0][4]
+    assert not src_dir.join('tmpbin').exists()

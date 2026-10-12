@@ -2904,24 +2904,75 @@ class TestWritefile:
                                '# SIG # End signature block\n')
 
 
-def test_build_node_from_src_does_not_need_python2(tmpdir):
-    """
-    node.js build scripts run on Python 3, so a source build must not
-    require a python2 command or rewrite PATH to point at one
-    """
-    args = mock.Mock(load_average=None, jobs='2', without_ssl=False,
-                     debug=False, profile=False, make_path='make',
-                     verbose=False)
+def _build_node_from_src(tmpdir, node_version, python2_path):
+    args = mock.Mock(node=node_version, load_average=None, jobs='2',
+                     without_ssl=False, debug=False, profile=False,
+                     make_path='make', verbose=False)
     src_dir = tmpdir.join('src')
-    node_src_dir = src_dir.join('node-src')
-    with mock.patch.object(nodeenv.shutil, 'which', return_value=None), \
+    node_src_dir = src_dir.join('node-v%s' % node_version)
+    with mock.patch.object(nodeenv.shutil, 'which',
+                           return_value=python2_path), \
             mock.patch.object(nodeenv, 'callit') as mck:
         nodeenv.build_node_from_src(
             str(tmpdir.join('env')), str(src_dir), str(node_src_dir), args)
+    return src_dir, node_src_dir, mck.call_args_list
 
-    assert [c[0][0][0] for c in mck.call_args_list] == [
+
+def _build_env(call):
+    """extra_env passed to callit, positionally or as a keyword"""
+    args, kwargs = call
+    if 'extra_env' in kwargs:
+        return kwargs['extra_env']
+    return args[4] if len(args) > 4 else None
+
+
+def _build_calls(calls):
+    return [c for c in calls if c[0][0][0] != 'ln']
+
+
+@pytest.mark.parametrize('node_version', ['8.5.0', '22.11.0'])
+def test_build_node_from_src_current_node_ignores_python2(tmpdir,
+                                                          node_version):
+    """
+    since 8.5, node's ./configure finds a Python on its own, so a source
+    build neither needs a python2 command nor rewrites PATH, even when
+    python2 is installed
+    """
+    src_dir, node_src_dir, calls = _build_node_from_src(
+        tmpdir, node_version, '/usr/bin/python2')
+
+    assert [c[0][0][0] for c in calls] == [
         './configure', 'make', 'make install']
-    for c in mck.call_args_list:
+    for c in calls:
         assert c[0][3] == str(node_src_dir)
-        assert len(c[0]) < 5 or not c[0][4]
+        assert not _build_env(c)
     assert not src_dir.join('tmpbin').exists()
+
+
+def test_build_node_from_src_old_node_points_python_at_python2(tmpdir):
+    """
+    before 8.5, ./configure only runs on Python 2, so `python` in PATH
+    is pointed at python2 for the build
+    """
+    src_dir, node_src_dir, calls = _build_node_from_src(
+        tmpdir, '0.10.25', '/usr/bin/python2')
+
+    tmpbin = src_dir.join('tmpbin')
+    assert tmpbin.isdir()
+    assert calls[0][0][0] == [
+        'ln', '-s', '/usr/bin/python2', str(tmpbin.join('python'))]
+    build = _build_calls(calls)
+    assert [c[0][0][0] for c in build] == [
+        './configure', 'make', 'make install']
+    for c in build:
+        assert c[0][3] == str(node_src_dir)
+        assert _build_env(c)['PATH'].startswith(str(tmpbin) + ':')
+
+
+def test_build_node_from_src_old_node_without_python2(tmpdir):
+    """
+    building node.js before 8.5 without python2 fails early with a clear
+    error instead of a failed ./configure
+    """
+    with pytest.raises(OSError, match='python2.*0.10.25'):
+        _build_node_from_src(tmpdir, '0.10.25', None)

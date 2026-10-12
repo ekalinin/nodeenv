@@ -1066,6 +1066,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
 
 
 def build_node_from_src(env_dir, src_dir, node_src_dir, args):
+    env = {}
     make_param_names = ['load-average', 'jobs']
     make_param_values = map(
         lambda x: getattr(args, x.replace('-', '_')),
@@ -1076,6 +1077,24 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
         for name, value in zip(make_param_names, make_param_values)
         if value is not None
     ]
+
+    if parse_version(args.node) < (8, 5):
+        # before 8.5, ./configure is a `#!/usr/bin/env python` script
+        # that only runs on Python 2, so point `python` at python2
+        python2_path = shutil.which('python2')
+        if not python2_path:
+            raise OSError(
+                'no python2 command (required for building '
+                'node.js %s) was found' % args.node
+            )
+        logger.debug(' * Temporarily pointing python to %s', python2_path)
+        node_tmpbin_dir = join(src_dir, 'tmpbin')
+        node_tmpbin_link = join(node_tmpbin_dir, 'python')
+        mkdir(node_tmpbin_dir)
+        if not os.path.exists(node_tmpbin_link):
+            callit(['ln', '-s', python2_path, node_tmpbin_link])
+        env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
+                                     os.environ.get('PATH', ''))
 
     conf_cmd = [
         './configure',
@@ -1090,11 +1109,11 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
 
     make_cmd = args.make_path
 
-    callit(conf_cmd, args.verbose, True, node_src_dir)
+    callit(conf_cmd, args.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit([make_cmd] + make_opts, args.verbose, True, node_src_dir)
+    callit([make_cmd] + make_opts, args.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))
-    callit([make_cmd + ' install'], args.verbose, True, node_src_dir)
+    callit([make_cmd + ' install'], args.verbose, True, node_src_dir, env)
 
 
 def install_node(env_dir, src_dir, args):

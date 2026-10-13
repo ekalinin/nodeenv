@@ -1072,8 +1072,8 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
         lambda x: getattr(args, x.replace('-', '_')),
         make_param_names)
     make_opts = [
-        '--{0}={1}'.format(name, value)
-        if len(value) > 0 else '--{0}'.format(name)
+        _quote('--{0}={1}'.format(name, value)
+               if len(value) > 0 else '--{0}'.format(name))
         for name, value in zip(make_param_names, make_param_values)
         if value is not None
     ]
@@ -1108,7 +1108,7 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
     if args.profile:
         conf_cmd.append('--profile')
 
-    make_cmd = args.make_path
+    make_cmd = _quote(args.make_path)
 
     callit(conf_cmd, args.verbose, True, node_src_dir, env)
     logger.info('.', extra=dict(continued=True))

@@ -1078,23 +1078,28 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
         if value is not None
     ]
 
-    if parse_version(args.node) < (8, 5):
-        # before 8.5, ./configure is a `#!/usr/bin/env python` script
-        # that only runs on Python 2, so point `python` at python2
+    node_version = parse_version(args.node)
+    if node_version < (13, 0):
+        # up to 12.x, ./configure only accepts Python 2.7, so fail early
+        # with a clear error instead of a failed ./configure
         python2_path = shutil.which('python2')
         if not python2_path:
             raise OSError(
                 'no python2 command (required for building '
                 'node.js %s) was found' % args.node
             )
-        logger.debug(' * Temporarily pointing python to %s', python2_path)
-        node_tmpbin_dir = join(src_dir, 'tmpbin')
-        node_tmpbin_link = join(node_tmpbin_dir, 'python')
-        mkdir(node_tmpbin_dir)
-        if not os.path.exists(node_tmpbin_link):
-            callit(['ln', '-s', python2_path, node_tmpbin_link])
-        env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
-                                     os.environ.get('PATH', ''))
+        if node_version < (8, 8):
+            # before 8.8, gyp and make run `python` by name and node does
+            # not point it at Python 2 itself, so point `python` at python2
+            logger.debug(' * Temporarily pointing python to %s',
+                         python2_path)
+            node_tmpbin_dir = join(src_dir, 'tmpbin')
+            node_tmpbin_link = join(node_tmpbin_dir, 'python')
+            mkdir(node_tmpbin_dir)
+            if not os.path.exists(node_tmpbin_link):
+                callit(['ln', '-s', python2_path, node_tmpbin_link])
+            env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
+                                         os.environ.get('PATH', ''))
 
     conf_cmd = [
         './configure',

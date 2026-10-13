@@ -27,13 +27,13 @@ Install
 Global installation
 ^^^^^^^^^^^^^^^^^^^
 
-You can install nodeenv globally with `easy_install`_::
+Use `pipx`_ to install nodeenv as a command in an isolated Python
+environment. Install pipx according to its documentation, then run::
 
-    $ sudo easy_install nodeenv
+    $ pipx install nodeenv
 
-or with `pip`_::
-
-    $ sudo pip install nodeenv
+This makes the ``nodeenv`` command available without changing the packages
+in your system Python. Alternatively, use the local installation below.
 
 or on Debian using `dpkg`_::
 
@@ -46,28 +46,30 @@ or on Debian using `dpkg`_::
 Local installation
 ^^^^^^^^^^^^^^^^^^
 
-If you're using virtualenv_ then you can install nodeenv via
-pip_/easy_install_ inside any virtual environment built with virtualenv::
+Create a Python virtual environment and install nodeenv with `pip`_::
 
-    $ virtualenv env
+    $ python3 -m venv env
     $ . env/bin/activate
-    (env) $ pip install nodeenv
+    (env) $ python -m pip install nodeenv
     (env) $ nodeenv --version
-    0.6.5
+
+If you already use virtualenv_, the environment it creates works as well.
+On Windows, activate with ``env\Scripts\activate.bat`` in cmd or
+``env\Scripts\Activate.ps1`` in PowerShell.
 
 If you want to work with the latest version of the nodeenv you can
 install it from the github `repository`_::
 
     $ git clone https://github.com/ekalinin/nodeenv.git
-    $ ./nodeenv/nodeenv.py --help
+    $ python3 ./nodeenv/nodeenv.py --help
 
 or with `pip`_::
 
-    $ pip install -e git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv
+    $ python -m pip install -e 'git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv'
 
 .. _repository: https://github.com/ekalinin/nodeenv
-.. _pip: http://pypi.python.org/pypi/pip
-.. _easy_install: http://pypi.python.org/pypi/setuptools
+.. _pip: https://pypi.org/project/pip/
+.. _pipx: https://pipx.pypa.io/
 
 
 Dependency
@@ -76,7 +78,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* python (2.6+, 3.5+, or pypy)
+* Python 2.7 or 3.7+, including compatible PyPy versions
 * make
 * tail
 

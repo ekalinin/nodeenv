@@ -2126,25 +2126,29 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
         set -e _OLD_NODE_VIRTUAL_PATH
     end
 
-    if test -n "$_OLD_NODE_PATH"
-        set -gx NODE_PATH $_OLD_NODE_PATH
-        set -e _OLD_NODE_PATH
-    else
-        set -e NODE_PATH
-    end
+    # The initial nondestructive pass runs before these values are saved.
+    # Only restore them when leaving an active nodeenv.
+    if set -q NODE_VIRTUAL_ENV
+        if set -q _OLD_NODE_PATH
+            set -gx NODE_PATH $_OLD_NODE_PATH
+            set -e _OLD_NODE_PATH
+        else
+            set -e NODE_PATH
+        end
 
-    if test -n "$_OLD_NPM_CONFIG_PREFIX"
-        set -gx NPM_CONFIG_PREFIX $_OLD_NPM_CONFIG_PREFIX
-        set -e _OLD_NPM_CONFIG_PREFIX
-    else
-        set -e NPM_CONFIG_PREFIX
-    end
+        if set -q _OLD_NPM_CONFIG_PREFIX
+            set -gx NPM_CONFIG_PREFIX $_OLD_NPM_CONFIG_PREFIX
+            set -e _OLD_NPM_CONFIG_PREFIX
+        else
+            set -e NPM_CONFIG_PREFIX
+        end
 
-    if test -n "$_OLD_npm_config_prefix"
-        set -gx npm_config_prefix $_OLD_npm_config_prefix
-        set -e _OLD_npm_config_prefix
-    else
-        set -e npm_config_prefix
+        if set -q _OLD_npm_config_prefix
+            set -gx npm_config_prefix $_OLD_npm_config_prefix
+            set -e _OLD_npm_config_prefix
+        else
+            set -e npm_config_prefix
+        end
     end
 __NPM_UNISOLATE__
 

@@ -446,21 +446,24 @@ the keys in that file are the long command-line option names.
 These are the available options and their defaults::
 
     [nodeenv]
-    node = 'latest'
-    npm = 'latest'
+    node = latest
+    npm = latest
     with_npm = False
-    jobs = '2'
+    jobs = 2
     without_ssl = False
     debug = False
     profile = False
-    make = 'make'
+    make = make
     prebuilt = True
     ignore_ssl_certs = False
     with_certifi = False
-    mirror = None
     prefer_system = False
     isolate_npm = False
     clean_src = True
+
+Options without a default, such as ``mirror``, can be omitted. Do not use
+``mirror = None``: INI values are strings, so that would select a mirror
+named ``None`` instead of using nodeenv's default download source.
 
 Alternatives
 ------------

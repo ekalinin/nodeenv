@@ -33,7 +33,8 @@ def test_source_build_preserves_make_arguments(tmpdir, monkeypatch, make_name,
     make.chmod(0o755)
     # The separate Python 2 requirement is unrelated to shell quoting.
     monkeypatch.setattr(nodeenv.shutil, 'which', lambda name: sys.executable)
-    args = Namespace(make_path=str(make), jobs=jobs, load_average=load_average,
+    args = Namespace(node='22.11.0', make_path=str(make),
+                     jobs=jobs, load_average=load_average,
                      without_ssl=False, debug=False, profile=False,
                      verbose=False)
 

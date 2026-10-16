@@ -4,9 +4,13 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- Legacy source builds also find ``python2.7`` when ``python2`` is absent.
+  The temporary ``python`` launcher preserves shim command names and
+  relative PATH entries, and refreshes stale or dangling links on retries
+  `#435 <https://github.com/ekalinin/nodeenv/issues/435>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
-  own, so the `python` to python2 link in `PATH` is only set up for older
+  own, so the `python` to python2 shim in `PATH` is only set up for older
   versions, and versions before 13 still fail early with a clear error
   when `python2` is missing
   `#419 <https://github.com/ekalinin/nodeenv/issues/419>`_

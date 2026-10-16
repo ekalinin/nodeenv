@@ -4,6 +4,10 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `activate.fish` restores the caller's `NODE_PATH` and npm configuration
+  on deactivation, including empty values; existing environments need
+  `--force` to regenerate `activate.fish`
+  `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
 - The node.js archive download also retries when the connection is reset or
   times out in the middle of the body, pauses between the attempts and ends
   with an error message instead of a traceback when all of them fail; a

@@ -40,7 +40,8 @@ BASE_ENV = {
     'PS1': 'base-ps1 ',
 }
 
-PROBED = tuple(BASE_ENV) + (
+PROBED = tuple(BASE_ENV) + tuple(
+    '_OLD_' + name for name in BASE_ENV if name != 'PS1') + (
     'PATH', 'NODE_VIRTUAL_ENV', '_OLD_NODE_FISH_PROMPT_OVERRIDE')
 
 ISOLATED_NPM = (
@@ -141,10 +142,8 @@ SHELLS = (
     Shell('fish', script='activate.fish', source='source'),
 )
 
-# a missing shell has to be reported before the tests run: pytest turns any
-# failure inside an xfail-marked test into an expected one, which would hide
-# it for the shells that carry a known-failure marker.  pytestmark is only
-# applied after the import, so Windows has to be excluded here as well
+# Require CI shells at collection time, before launching any subprocess.
+# pytestmark applies after import, so Windows has to be excluded here too.
 if REQUIRE_SHELLS and not nodeenv.is_WIN:
     _missing = [s.name for s in SHELLS
                 if s.name not in OPTIONAL_SHELLS and not shutil.which(s.name)]
@@ -280,8 +279,7 @@ def test_activate_sets_env(shell, env):
         _real(os.path.join(env.path, 'lib', 'node_modules', '.bin')),
         _real(os.path.join(env.path, 'bin')),
     ] + [_real(p) for p in baseline['PATH'].split(os.pathsep)]
-    # fish prepends to an existing NODE_PATH; the POSIX script replaces it
-    assert _real(dump['NODE_PATH'].split(os.pathsep)[0]) == \
+    assert _real(dump['NODE_PATH']) == \
         _real(os.path.join(env.path, 'lib', 'node_modules'))
     assert _real(dump['NPM_CONFIG_PREFIX']) == _real(env.path)
     assert _real(dump['npm_config_prefix']) == _real(env.path)
@@ -314,7 +312,9 @@ def test_activate_deactivate_twice(shell, env):
 @pytest.mark.parametrize('repeat', ('none', 'activate', 'deactivate'))
 def test_fish_restores_original_variables(env, monkeypatch, initial, repeat):
     shell = next(shell for shell in SHELLS if shell.name == 'fish')
-    names = ('NODE_PATH', 'NPM_CONFIG_PREFIX', 'npm_config_prefix')
+    names = ('NODE_PATH', 'NPM_CONFIG_PREFIX', 'npm_config_prefix',
+             'npm_config_cache', 'npm_config_userconfig',
+             'npm_config_init_module')
     for name in names:
         if initial is None:
             monkeypatch.delitem(BASE_ENV, name)
@@ -337,6 +337,7 @@ def test_fish_restores_original_variables(env, monkeypatch, initial, repeat):
     assert restored['PATH'] == baseline['PATH']
     assert {name: restored[name] for name in names} == {
         name: baseline[name] for name in names}
+    assert all(restored['_OLD_' + name] == UNSET for name in names)
 
 
 @every_shell

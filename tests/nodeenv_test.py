@@ -13,6 +13,7 @@ import json
 import os.path
 import pathlib
 import shutil
+import shlex
 import socket
 import subprocess
 import sys
@@ -2968,13 +2969,15 @@ def test_build_node_from_src_old_node_points_python_at_python2(tmpdir,
     before 8.8, gyp and make run `python` by name, so `python` in PATH
     is pointed at python2 for the build
     """
+    python2_path = str(tmpdir.join('selected tools', 'python2'))
     src_dir, node_src_dir, calls = _build_node_from_src(
-        tmpdir, node_version, '/usr/bin/python2')
+        tmpdir, node_version, python2_path)
 
     tmpbin = src_dir.join('tmpbin')
     assert tmpbin.isdir()
-    assert tmpbin.join('python').read() == (
-        '#!/bin/sh\nexec /usr/bin/python2 "$@"\n')
+    shebang, command = tmpbin.join('python').read().splitlines()
+    assert shebang == '#!/bin/sh'
+    assert shlex.split(command) == ['exec', python2_path, '$@']
     build = calls
     assert [c[0][0][0] for c in build] == [
         './configure', 'make', 'make install']

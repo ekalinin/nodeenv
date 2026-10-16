@@ -1082,22 +1082,29 @@ def build_node_from_src(env_dir, src_dir, node_src_dir, args):
     if node_version < (13, 0):
         # up to 12.x, ./configure only accepts Python 2.7, so fail early
         # with a clear error instead of a failed ./configure
-        python2_path = shutil.which('python2')
+        python2_path = (shutil.which('python2') or
+                        shutil.which('python2.7'))
         if not python2_path:
             raise OSError(
-                'no python2 command (required for building '
+                'no python2 or python2.7 command (required for building '
                 'node.js %s) was found' % args.node
             )
         if node_version < (8, 8):
             # before 8.8, gyp and make run `python` by name and node does
-            # not point it at Python 2 itself, so point `python` at python2
+            # not point it at Python 2 itself. Invoke the selected command
+            # by its own name so pyenv shims do not dispatch to `python`.
             logger.debug(' * Temporarily pointing python to %s',
                          python2_path)
-            node_tmpbin_dir = join(src_dir, 'tmpbin')
-            node_tmpbin_link = join(node_tmpbin_dir, 'python')
+            node_tmpbin_dir = abspath(join(src_dir, 'tmpbin'))
+            node_tmpbin_python = join(node_tmpbin_dir, 'python')
             mkdir(node_tmpbin_dir)
-            if not os.path.exists(node_tmpbin_link):
-                callit(['ln', '-s', python2_path, node_tmpbin_link])
+            # Remove old links without following them, including dangling
+            # ones left by a failed build. Refresh the launcher on retries.
+            if os.path.islink(node_tmpbin_python):
+                os.unlink(node_tmpbin_python)
+            writefile(node_tmpbin_python, '#!/bin/sh\nexec %s "$@"\n' %
+                      _quote(abspath(python2_path)))
+            make_executable(node_tmpbin_python)
             env['PATH'] = '{}:{}'.format(node_tmpbin_dir,
                                          os.environ.get('PATH', ''))
 

@@ -13,6 +13,7 @@ import json
 import os.path
 import pathlib
 import shutil
+import shlex
 import socket
 import subprocess
 import sys
@@ -2926,10 +2927,6 @@ def _build_env(call):
     return args[4] if len(args) > 4 else None
 
 
-def _build_calls(calls):
-    return [c for c in calls if c[0][0][0] != 'ln']
-
-
 @pytest.mark.parametrize('node_version', ['8.8.0', '12.22.12', '22.11.0'])
 def test_build_node_from_src_current_node_does_not_link_python(tmpdir,
                                                                node_version):
@@ -2972,14 +2969,16 @@ def test_build_node_from_src_old_node_points_python_at_python2(tmpdir,
     before 8.8, gyp and make run `python` by name, so `python` in PATH
     is pointed at python2 for the build
     """
+    python2_path = str(tmpdir.join('selected tools', 'python2'))
     src_dir, node_src_dir, calls = _build_node_from_src(
-        tmpdir, node_version, '/usr/bin/python2')
+        tmpdir, node_version, python2_path)
 
     tmpbin = src_dir.join('tmpbin')
     assert tmpbin.isdir()
-    assert calls[0][0][0] == [
-        'ln', '-s', '/usr/bin/python2', str(tmpbin.join('python'))]
-    build = _build_calls(calls)
+    shebang, command = tmpbin.join('python').read().splitlines()
+    assert shebang == '#!/bin/sh'
+    assert shlex.split(command) == ['exec', python2_path, '$@']
+    build = calls
     assert [c[0][0][0] for c in build] == [
         './configure', 'make', 'make install']
     for c in build:

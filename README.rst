@@ -27,15 +27,23 @@ Install
 Global installation
 ^^^^^^^^^^^^^^^^^^^
 
-You can install nodeenv globally with `easy_install`_::
+Use `pipx`_ to install nodeenv as a command in an isolated Python
+environment. Install pipx according to its documentation, then run::
 
-    $ sudo easy_install nodeenv
+    $ pipx install nodeenv
+    $ pipx ensurepath
 
-or with `pip`_::
+Open a new terminal after ``pipx ensurepath`` so the directory containing
+``nodeenv`` is on ``PATH``. This keeps nodeenv's Python packages separate
+from your system Python. Alternatively, use the local installation below.
 
-    $ sudo pip install nodeenv
+When using ``nodeenv -p`` with pipx, activate the project's Python virtual
+environment first, or pass its path explicitly, for example
+``nodeenv -p .venv``. Otherwise Node.js is installed in nodeenv's own pipx
+environment and is lost when ``pipx reinstall nodeenv`` recreates it.
 
-or on Debian using `dpkg`_::
+From a source checkout, Debian users can instead build and install a
+package with `dpkg`_::
 
     $ ln -s debian-upstream debian
     $ dpkg-buildpackage -uc -us -b
@@ -46,28 +54,51 @@ or on Debian using `dpkg`_::
 Local installation
 ^^^^^^^^^^^^^^^^^^
 
-If you're using virtualenv_ then you can install nodeenv via
-pip_/easy_install_ inside any virtual environment built with virtualenv::
+On Debian and Ubuntu, install the ``python3-venv`` system package first.
+On macOS and Linux, create a Python virtual environment and install
+nodeenv with `pip`_::
 
-    $ virtualenv env
-    $ . env/bin/activate
-    (env) $ pip install nodeenv
-    (env) $ nodeenv --version
-    0.6.5
+    $ python3 -m venv .venv
+    $ . .venv/bin/activate
+    (.venv) $ python -m pip install nodeenv
+    (.venv) $ nodeenv --version
 
-If you want to work with the latest version of the nodeenv you can
-install it from the github `repository`_::
+If you already use virtualenv_, the environment it creates works as well.
+The name ``.venv`` leaves ``env`` available for the Node.js environment
+created in the Usage example below.
 
-    $ git clone https://github.com/ekalinin/nodeenv.git
-    $ ./nodeenv/nodeenv.py --help
+On Windows with the Python launcher installed, use cmd::
 
-or with `pip`_::
+    C:\> py -m venv .venv
+    C:\> .venv\Scripts\activate.bat
+    (.venv) C:\> python -m pip install nodeenv
+    (.venv) C:\> nodeenv --version
 
-    $ pip install -e git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv
+PowerShell's execution policy may block ``Activate.ps1``. Activation is
+optional; in PowerShell you can invoke the environment's executables
+directly::
+
+    PS> py -m venv .venv
+    PS> .\.venv\Scripts\python.exe -m pip install nodeenv
+    PS> .\.venv\Scripts\nodeenv.exe --version
+
+To run a source checkout, use the activated Python virtual environment
+above and clone the GitHub `repository`_::
+
+    (.venv) $ git clone https://github.com/ekalinin/nodeenv.git
+    (.venv) $ python ./nodeenv/nodeenv.py --help
+
+To install the latest development version in that activated environment,
+use an editable install (requires Git)::
+
+    (.venv) $ python -m pip install -e "git+https://github.com/ekalinin/nodeenv.git#egg=nodeenv"
+
+In an unactivated PowerShell environment, use
+``.\.venv\Scripts\python.exe`` in place of ``python``.
 
 .. _repository: https://github.com/ekalinin/nodeenv
-.. _pip: http://pypi.python.org/pypi/pip
-.. _easy_install: http://pypi.python.org/pypi/setuptools
+.. _pip: https://pypi.org/project/pip/
+.. _pipx: https://pipx.pypa.io/
 
 
 Dependency
@@ -76,7 +107,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* python (2.6+, 3.5+, or pypy)
+* Python 3 (CI tests CPython 3.10 through 3.14)
 * make
 * tail
 

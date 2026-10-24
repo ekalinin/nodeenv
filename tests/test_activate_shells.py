@@ -309,7 +309,8 @@ def test_activate_deactivate_twice(shell, env):
 @pytest.mark.parametrize('initial', (None, '', '/old/value',
                                      '/old/first:/old/second'),
                          ids=('unset', 'empty', 'value', 'multiple-paths'))
-@pytest.mark.parametrize('repeat', ('none', 'activate', 'deactivate'))
+@pytest.mark.parametrize(
+    'repeat', ('none', 'activate', 'deactivate', 'erase-marker'))
 def test_fish_restores_original_variables(env, monkeypatch, initial, repeat):
     shell = next(shell for shell in SHELLS if shell.name == 'fish')
     names = ('NODE_PATH', 'NPM_CONFIG_PREFIX', 'npm_config_prefix',
@@ -328,6 +329,8 @@ def test_fish_restores_original_variables(env, monkeypatch, initial, repeat):
     steps = []
     if repeat == 'activate':
         steps.append(shell.source_line(env.script(shell)))
+    if repeat == 'erase-marker':
+        steps.append('set -e NODE_VIRTUAL_ENV')
     steps.append('deactivate_node nondestructive')
     if repeat == 'deactivate':
         steps.append('deactivate_node nondestructive')
@@ -337,7 +340,8 @@ def test_fish_restores_original_variables(env, monkeypatch, initial, repeat):
     assert restored['PATH'] == baseline['PATH']
     assert {name: restored[name] for name in names} == {
         name: baseline[name] for name in names}
-    assert all(restored['_OLD_' + name] == UNSET for name in names)
+    assert {'_OLD_' + name: restored['_OLD_' + name] for name in names} == {
+        '_OLD_' + name: UNSET for name in names}
 
 
 @every_shell

@@ -4,8 +4,10 @@ Version [unreleased]
 --------------------
 
 - `activate.fish` restores the caller's `NODE_PATH` and npm configuration
-  on deactivation, including empty values; existing environments need
-  `--force` to regenerate `activate.fish`
+  on deactivation, including empty values and when `NODE_VIRTUAL_ENV` has
+  been removed. Existing environments keep their old `activate.fish`;
+  recreate them with the same options to get the fix. With `-p`, remove the
+  old nodeenv part from the virtualenv's `activate.fish` first
   `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their

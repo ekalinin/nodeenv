@@ -2124,11 +2124,9 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
     if test -n "$_OLD_NODE_VIRTUAL_PATH"
         set -gx PATH $_OLD_NODE_VIRTUAL_PATH
         set -e _OLD_NODE_VIRTUAL_PATH
-    end
 
-    # The initial nondestructive pass runs before these values are saved.
-    # Only restore them when leaving an active nodeenv.
-    if set -q NODE_VIRTUAL_ENV
+        # Activation saves PATH before changing the other variables, so this
+        # also restores them if NODE_VIRTUAL_ENV was removed by the caller.
         if set -q _OLD_NODE_PATH
             set -gx NODE_PATH $_OLD_NODE_PATH
             set -e _OLD_NODE_PATH

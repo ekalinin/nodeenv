@@ -408,16 +408,17 @@ def test_isolate_npm_fish_content(tmpdir):
         in content
     assert ('set -gx npm_config_init_module '
             '"$NODE_VIRTUAL_ENV/.npm-init.js"') in content
-    guard = 'if set -q NODE_VIRTUAL_ENV'
+    guard = '    if test -n "$_OLD_NODE_VIRTUAL_PATH"'
     assert guard in content
+    # Nested if/end lines are indented further; this end closes the guard.
+    restore_scope = content.split(guard, 1)[1].split('\n    end', 1)[0]
     for var in ISOLATED_NPM_VARS:
         assert 'set -gx _OLD_%s $%s' % (var, var) in content
         restore = 'set -gx %s $_OLD_%s' % (var, var)
         assert restore in content
         assert 'set -e _OLD_%s' % var in content
         assert 'set -e %s' % var in content
-        # the restore must sit inside the guard, after it
-        assert content.index(guard) < content.index(restore)
+        assert restore in restore_scope
 
 
 @pytest.mark.skipif(nodeenv.is_WIN, reason='--isolate-npm is POSIX only')

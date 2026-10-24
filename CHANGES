@@ -1,6 +1,5 @@
 Nodeenv changelog
-=================
-
+==========
 Version [unreleased]
 --------------------
 
@@ -8,6 +7,12 @@ Version [unreleased]
   on deactivation, including empty values; existing environments need
   `--force` to regenerate `activate.fish`
   `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
+- `--source` builds of node.js 13 and later no longer need a `python2`
+  command; 8.8 to 12.x still need one but point `python` at it on their
+  own, so the `python` to python2 link in `PATH` is only set up for older
+  versions, and versions before 13 still fail early with a clear error
+  when `python2` is missing
+  `#419 <https://github.com/ekalinin/nodeenv/issues/419>`_
 - The node.js archive download also retries when the connection is reset or
   times out in the middle of the body, pauses between the attempts and ends
   with an error message instead of a traceback when all of them fail; a

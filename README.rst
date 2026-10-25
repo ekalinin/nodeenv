@@ -513,6 +513,18 @@ There are several alternatives that create isolated environments:
 
 .. _`virtualenv`: https://github.com/pypa/virtualenv
 
+Contributing
+------------
+
+See `CONTRIBUTING.md`_ for how to set up nodeenv for development, which
+checks a change has to pass, and how to send it. The project follows the
+`Code of Conduct`_.
+
+.. _`CONTRIBUTING.md`:
+   https://github.com/ekalinin/nodeenv/blob/master/CONTRIBUTING.md
+.. _`Code of Conduct`:
+   https://github.com/ekalinin/nodeenv/blob/master/CODE_OF_CONDUCT.md
+
 LICENSE
 =======
 

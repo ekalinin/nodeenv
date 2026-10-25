@@ -98,6 +98,45 @@ def _inside(path, env_dir):
         os.path.realpath(env_dir) + os.sep)
 
 
+def _assert_resolve_inside(env_dir, commands=ENV_COMMANDS):
+    """
+    Source `env_dir`/bin/activate and check that each of `commands`
+    resolves inside `env_dir` and prints a version.
+    """
+    activate = os.path.join(env_dir, 'bin', 'activate')
+    for command in commands:
+        resolved, version = _resolve_and_run(activate, command)
+        assert _inside(resolved, env_dir), \
+            '%s resolved to %s, outside %s' % (command, resolved, env_dir)
+        assert version, '%s --version printed nothing' % command
+
+
+def _python_virtualenv(tmpdir):
+    """
+    Create a python virtualenv for `nodeenv -p` and return its path.
+    """
+    venv = tmpdir.join('venv').strpath
+    subprocess.check_call(
+        [sys.executable, '-m', 'venv', '--without-pip', venv])
+    return venv
+
+
+def _nodeenv_in_virtualenv(venv, *args):
+    """
+    Run `nodeenv -p` as a shell with `venv` activated would.
+
+    -p without a directory takes the virtualenv from VIRTUAL_ENV, which
+    is always replaced here: run from an activated env-dev, nodeenv would
+    install node into env-dev otherwise.
+    """
+    env = dict(os.environ, VIRTUAL_ENV=venv)
+    env['PATH'] = os.path.join(venv, 'bin') + os.pathsep + env['PATH']
+    subprocess.check_call((
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '-p',
+    ) + args, env=env)
+
+
 @pytest.mark.integration
 def test_smoke(tmpdir):
     nenv_path = tmpdir.join('nenv').strpath
@@ -243,6 +282,96 @@ def test_smoke_n_system_special_chars(tmpdir):
     assert _inside(resolved, nenv_path), \
         'node resolved to %s, outside %s' % (resolved, nenv_path)
     assert version, 'node --version printed nothing'
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='activate is posix only')
+@pytest.mark.parametrize('dir_name', ('öäü', 'test dir'),
+                         ids=('unicode', 'space'))
+def test_smoke_special_dir_names(tmpdir, dir_name):
+    """
+    https://github.com/ekalinin/nodeenv/issues/49
+    https://github.com/ekalinin/nodeenv/issues/187
+    """
+    nenv_path = tmpdir.mkdir(dir_name).join('env').strpath
+    subprocess.check_call((
+        'coverage', 'run', '-p',
+        '-m', 'nodeenv', '--prebuilt', nenv_path,
+    ))
+    _assert_resolve_inside(nenv_path)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='activate is posix only')
+def test_smoke_python_virtualenv(tmpdir):
+    """
+    `nodeenv -p` installs node into the activated python virtualenv, and
+    its activate puts node, npm and npx on PATH.
+    """
+    venv = _python_virtualenv(tmpdir)
+    _nodeenv_in_virtualenv(venv, '--prebuilt')
+    _assert_resolve_inside(venv)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='-n system is posix only')
+def test_smoke_python_virtualenv_n_system(tmpdir):
+    """
+    `nodeenv -p --node=system` writes a node shim into the activated
+    python virtualenv.  The Makefile target it replaces pointed at
+    https://github.com/ekalinin/nodeenv/issues/43
+    """
+    venv = _python_virtualenv(tmpdir)
+    _nodeenv_in_virtualenv(venv, '--node=system')
+    # node only, see test_smoke_n_system_special_chars
+    _assert_resolve_inside(venv, ('node',))
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='activate is posix only')
+def test_smoke_python_virtualenv_freeze(tmpdir):
+    """
+    `freeze` lists a package installed with `npm install -g` in the
+    python virtualenv, and only that package: neither npm, which comes
+    with node, nor the dependencies of sitemap.
+    """
+    venv = _python_virtualenv(tmpdir)
+    _nodeenv_in_virtualenv(venv, '--prebuilt')
+
+    # npm reports on stdout too, so its output goes to stderr to leave
+    # stdout to `freeze`
+    script = (
+        '. {0} && '
+        'npm install -g sitemap --no-audit --no-fund >&2 && '
+        'freeze'.format(_quote(os.path.join(venv, 'bin', 'activate'))))
+    proc = subprocess.run(
+        ['sh', '-c', script], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    report = 'exit %s\n--- stdout ---\n%s\n--- stderr ---\n%s' % (
+        proc.returncode,
+        proc.stdout.decode('utf-8', 'replace'),
+        proc.stderr.decode('utf-8', 'replace'))
+
+    assert proc.returncode == 0, report
+    frozen = proc.stdout.decode('utf-8').splitlines()
+    assert len(frozen) == 1 and frozen[0].startswith('sitemap@'), report
+    assert os.path.isdir(
+        os.path.join(venv, 'lib', 'node_modules', 'sitemap')), report
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(sys.platform == 'win32', reason='activate is posix only')
+def test_smoke_python_virtualenv_twice(tmpdir):
+    """
+    Installing node again over the links the first install left in the
+    python virtualenv doesn't fail on them.
+    https://github.com/ekalinin/nodeenv/issues/189
+    """
+    venv = _python_virtualenv(tmpdir)
+    _nodeenv_in_virtualenv(venv, '--prebuilt')
+    # without --force the second run finds the same node installed and
+    # skips the install, so it would never copy over the links
+    _nodeenv_in_virtualenv(venv, '--prebuilt', '--force')
+    _assert_resolve_inside(venv)
 
 
 @pytest.fixture
@@ -815,6 +944,25 @@ def test_download_node_src_tar_keeps_data_filter(tmpdir):
             tmpdir.strpath, [], filter="data")
     else:
         archive.extractall.assert_called_once_with(tmpdir.strpath, [])
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='symlinks need privileges on win32')
+def test_copytree_keeps_existing_symlink(tmpdir):
+    """
+    Copying node over an environment that already has its links doesn't
+    fail on them.  bin/ exists in both, so copytree goes down into it as
+    it does for a prebuilt node copied into an existing environment.
+    https://github.com/ekalinin/nodeenv/issues/189
+    """
+    target = '../lib/node_modules/npm/bin/npm-cli.js'
+    for tree in ('src', 'dst'):
+        bin_dir = tmpdir.join(tree, 'bin').ensure(dir=True)
+        os.symlink(target, bin_dir.join('npm').strpath)
+
+    nodeenv.copytree(tmpdir.join('src').strpath,
+                     tmpdir.join('dst').strpath, True)
+
+    assert os.readlink(tmpdir.join('dst', 'bin', 'npm').strpath) == target
 
 
 def test_parse_version():

@@ -110,7 +110,3 @@ at the top of `CHANGES`, with a link to its issue:
 ```
 
 Changes to documentation, CI or tests only don't need an entry.
-
-## Code of conduct
-
-This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).

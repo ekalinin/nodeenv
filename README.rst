@@ -107,7 +107,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* Python 3 (CI tests CPython 3.10 through 3.14)
+* Python 3.10 or later (CI tests CPython 3.10 through 3.14)
 * make
 * tail
 
@@ -115,6 +115,8 @@ For node.js
 ^^^^^^^^^^^
 
 * libssl-dev
+* Python 2.7 when building Node.js versions older than 13 from source; this
+  is separate from the Python 3.10+ interpreter that runs nodeenv.
 
 Usage
 -----

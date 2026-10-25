@@ -29,6 +29,9 @@ Version [unreleased]
   compatibility paths. Old Node.js source builds still require Python 2.7
   as their build interpreter
   `#436 <https://github.com/ekalinin/nodeenv/issues/436>`_
+- Prebuilt node.js installs treat environment paths and versions literally,
+  with a trailing ``-`` separating the version from the platform suffix
+  `#441 <https://github.com/ekalinin/nodeenv/issues/441>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
   own, so the `python` to python2 link in `PATH` is only set up for older

@@ -1018,9 +1018,9 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     else:
         dest = env_dir
 
-    src_folder_tpl = src_dir + '/node-v%s-*' % node_version
-    src_folder, = glob.glob(src_folder_tpl)
-    copytree(src_folder, dest, True)
+    src_folder_tpl = glob.escape('node-v%s-' % node_version) + '*'
+    src_folder, = glob.glob(src_folder_tpl, root_dir=src_dir)
+    copytree(join(src_dir, src_folder), dest, True)
 
     if is_CYGWIN:
         for filename in ('npm', 'npx', 'node.exe'):

@@ -4,6 +4,11 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--source` quotes `--jobs` and `--load-average` values so shell syntax
+  reaches make as arguments. `--make` remains a shell command line;
+  paths containing spaces need quotes inside the value, for example
+  `--make '"/opt/my tools/make"'`
+  `#430 <https://github.com/ekalinin/nodeenv/issues/430>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
   own, so the `python` to python2 link in `PATH` is only set up for older

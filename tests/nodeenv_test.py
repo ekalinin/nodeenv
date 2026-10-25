@@ -1,11 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import sys
-if sys.version_info < (3, 3):
-    from pipes import quote as _quote
-else:
-    from shlex import quote as _quote
+from shlex import quote as _quote
 import contextlib
 import http.server
 import io
@@ -22,10 +15,7 @@ import tarfile
 import threading
 import zipfile
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import pytest
 
 import nodeenv

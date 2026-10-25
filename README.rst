@@ -115,8 +115,9 @@ For node.js
 ^^^^^^^^^^^
 
 * libssl-dev
-* Python 2.7 when building Node.js versions older than 13 from source; this
-  is separate from the Python 3.10+ interpreter that runs nodeenv.
+* Python 2.7 as a ``python2`` command when building Node.js versions older
+  than 13 from source; this is separate from the Python 3.10+ interpreter
+  that runs nodeenv.
 
 Usage
 -----

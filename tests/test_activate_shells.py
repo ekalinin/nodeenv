@@ -10,10 +10,7 @@ import shutil
 import subprocess
 import sys
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # pyright: ignore[reportMissingModuleSource]
+from unittest import mock
 import pytest
 
 import nodeenv

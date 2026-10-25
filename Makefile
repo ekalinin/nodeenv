@@ -77,9 +77,9 @@ test3: clean clean-test-env setup-test-env
 # https://github.com/ekalinin/nodeenv/issues/43
 test4: clean clean-test-env
 	@echo " ="
-	@echo " = test4: system nodejs's for python3.10"
+	@echo " = test4: system nodejs's for python3"
 	@echo " ="
-	@virtualenv --python=python3.10 ${TEST_ENV}    			    && \
+	@virtualenv --python=python3 ${TEST_ENV}    			    && \
 		. ${TEST_ENV}/bin/activate                              && \
 		${SETUP}           				  						&& \
 		nodeenv -p --node=system

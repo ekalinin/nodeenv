@@ -1,11 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import sys
-if sys.version_info < (3, 3):
-    from pipes import quote as _quote
-else:
-    from shlex import quote as _quote
+from shlex import quote as _quote
 import contextlib
 import http.server
 import io
@@ -22,10 +15,7 @@ import tarfile
 import threading
 import zipfile
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import pytest
 
 import nodeenv
@@ -2579,16 +2569,15 @@ class TestGetEnvDir:
         result = nodeenv.get_env_dir(args)
         assert result == '/path/to/node/env'
 
-    def test_returns_utf8_encoded_string(self):
-        """Test that get_env_dir returns UTF-8 encoded string"""
+    def test_preserves_unicode_path(self):
+        """Environment paths remain text, including non-ASCII characters."""
         args = mock.Mock()
         args.python_virtualenv = False
-        args.env_dir = '/path/to/env'
+        args.env_dir = '/path/to/öäü 环境'
 
         result = nodeenv.get_env_dir(args)
-        # The to_utf8 function is applied,
-        # but in Python 3 it returns the same string
-        assert result == '/path/to/env'
+        assert result == args.env_dir
+        assert isinstance(result, str)
 
 
 class TestInstallNpm:

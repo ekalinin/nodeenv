@@ -1294,6 +1294,31 @@ PYTHON_VIRTUALENV_FILES = frozenset((
     'Activate.ps1',
 ))
 
+# the bin/ entry `activate` and `activate.fish` put on PATH: the python
+# venv's own scripts they are appended to put it there already.  Windows
+# keeps it: before python 3.12 the venv's `activate` puts a `C:\...` path
+# there, which git-bash splits at the colon, and the cmd and PowerShell
+# scripts reset PATH to the venv's saved one first
+# https://github.com/ekalinin/nodeenv/issues/332
+# https://github.com/python/cpython/issues/103088
+VENV_BIN_PATH = {
+    'activate': '$NODE_VIRTUAL_ENV/__BIN_NAME__:',
+    'activate.fish': ' "$NODE_VIRTUAL_ENV/__BIN_NAME__"',
+}
+
+
+def is_python_venv_script(file_path, name):
+    """
+    Whether `nodeenv -p` appends to a script of the python venv.  An env
+    without one (conda) gets it written from scratch, starting with the
+    DISABLE_PROMPT part, and a rerun appends to that file
+    """
+    if not os.path.exists(file_path):
+        return False
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    return not content.startswith(DISABLE_PROMPT[name].encode('utf-8'))
+
 
 def install_activate(env_dir, args):
     """
@@ -1338,6 +1363,10 @@ def install_activate(env_dir, args):
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
+        if args.python_virtualenv and not is_WIN and \
+                name in VENV_BIN_PATH and \
+                is_python_venv_script(file_path, name):
+            content = content.replace(VENV_BIN_PATH[name], '')
         isolate = NPM_ISOLATE.get(name, '') if args.isolate_npm else ''
         unisolate = NPM_UNISOLATE.get(name, '') if args.isolate_npm else ''
         content = content.replace('__NPM_ISOLATE__', isolate)

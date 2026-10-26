@@ -112,6 +112,9 @@ def test_python_virtualenv(tmpdir, name, content_var):
         disable_prompt = nodeenv.DISABLE_PROMPT.get(name, '')
         enable_prompt = nodeenv.ENABLE_PROMPT.get(name, '')
         content = name + '\n' + disable_prompt + content + enable_prompt
+        # and leave bin/ out of PATH, the venv's activate put it there
+        content = content.replace('$NODE_VIRTUAL_ENV/__BIN_NAME__:', '')
+        content = content.replace(' "$NODE_VIRTUAL_ENV/__BIN_NAME__"', '')
     assert bin_dir.join(name).read() == fix_content(content, tmpdir)
 
 
@@ -260,6 +263,79 @@ def test_python_virtualenv_with_custom_prompt(tmpdir):
         # Check that DISABLE_PROMPT was prepended for non-Windows
         if test_file in nodeenv.DISABLE_PROMPT:
             assert 'NODE_VIRTUAL_ENV_DISABLE_PROMPT' in content
+
+
+# python's activate puts the venv's bin/ on PATH already, so the part
+# `nodeenv -p` appends to it must not put it there a second time
+# https://github.com/ekalinin/nodeenv/issues/332
+PATH_LINES = {
+    'activate': ('PATH="$NODE_VIRTUAL_ENV/lib/node_modules/.bin:'
+                 '$NODE_VIRTUAL_ENV/bin:$PATH"'),
+    'activate.fish': ('set -gx PATH "$NODE_VIRTUAL_ENV/lib/node_modules/.bin" '
+                      '"$NODE_VIRTUAL_ENV/bin" $PATH'),
+}
+VENV_PATH_LINES = {
+    'activate': 'PATH="$NODE_VIRTUAL_ENV/lib/node_modules/.bin:$PATH"',
+    'activate.fish': ('set -gx PATH "$NODE_VIRTUAL_ENV/lib/node_modules/.bin" '
+                      '$PATH'),
+}
+
+
+def _path_lines(content):
+    return [line for line in content.splitlines()
+            if line.startswith(('PATH=', 'set -gx PATH '))]
+
+
+def _install_python_virtualenv(tmpdir, *extra_args):
+    argv = ['nodeenv', '-p'] + list(extra_args)
+    with mock.patch.object(sys, 'argv', argv):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(tmpdir), opts)
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='activate.fish is POSIX only')
+@pytest.mark.parametrize('name', sorted(VENV_PATH_LINES))
+def test_python_virtualenv_puts_bin_on_path_once(tmpdir, name):
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+    for n in FILES:
+        bin_dir.join(n).write(n)
+
+    _install_python_virtualenv(tmpdir)
+
+    assert _path_lines(bin_dir.join(name).read()) == [VENV_PATH_LINES[name]]
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='activate.fish is POSIX only')
+@pytest.mark.parametrize('name', sorted(VENV_PATH_LINES))
+def test_python_virtualenv_rerun_leaves_activate_alone(tmpdir, name):
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+    bin_dir.join('node').write('')
+    for n in FILES:
+        bin_dir.join(n).write(n)
+
+    _install_python_virtualenv(tmpdir)
+    content = bin_dir.join(name).read()
+    _install_python_virtualenv(tmpdir)
+
+    assert bin_dir.join(name).read() == content
+
+
+@pytest.mark.skipif(nodeenv.is_WIN, reason='activate.fish is POSIX only')
+@pytest.mark.parametrize('name', sorted(PATH_LINES))
+def test_python_virtualenv_own_activate_keeps_bin(tmpdir, name):
+    # a conda env has no bin/activate: nodeenv -p writes it from scratch
+    # and puts bin/ on PATH itself, also when a rerun with other options
+    # appends to the file nodeenv wrote
+    bin_dir = tmpdir.join('bin')
+    bin_dir.mkdir()
+    bin_dir.join('node').write('')
+
+    _install_python_virtualenv(tmpdir)
+    _install_python_virtualenv(tmpdir, '--isolate-npm')
+
+    assert _path_lines(bin_dir.join(name).read()) == [PATH_LINES[name]] * 2
 
 
 @pytest.mark.parametrize('extra_args', ([], ['--isolate-npm']))
@@ -545,6 +621,12 @@ def test_win_python_virtualenv_appends_to_activate(tmpdir, fake_win):
     content = bin_dir.join('activate').read()
     assert content.startswith('# python venv activate\n')
     assert 'NODE_VIRTUAL_ENV_DISABLE_PROMPT=1' in content
+    # and still puts Scripts on PATH: before python 3.12 the venv's
+    # activate puts it there as a `C:\...` path, which the shell splits
+    # at the colon (#332)
+    # https://github.com/python/cpython/issues/103088
+    assert ('PATH="$NODE_VIRTUAL_ENV/Scripts/node_modules/.bin:'
+            '$NODE_VIRTUAL_ENV/Scripts:$PATH"') in content
 
 
 # python's venv writes these for cmd and PowerShell, and `nodeenv -p`

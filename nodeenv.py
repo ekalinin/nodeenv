@@ -96,7 +96,8 @@ class Config(object):
             if not os.path.exists(configfile):
                 continue
 
-            ini_file = ConfigParser()
+            # No interpolation: a percent-encoded mirror URL is valid, #440
+            ini_file = ConfigParser(interpolation=None)
             ini_file.read(configfile)
             section = "nodeenv"
             if not ini_file.has_section(section):

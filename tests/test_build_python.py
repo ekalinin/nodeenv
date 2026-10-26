@@ -1,4 +1,3 @@
-import os
 from types import SimpleNamespace
 
 import pytest
@@ -44,7 +43,7 @@ def test_legacy_build_selects_python_without_reusing_a_link(
     monkeypatch.setenv('PYTHON_LOG', str(log))
     monkeypatch.chdir(tmp_path)
     path = str(tools) if case != 'relative-path' else tools.name
-    monkeypatch.setenv('PATH', path + os.pathsep + '/usr/bin:/bin')
+    monkeypatch.setenv('PATH', path)
 
     launcher = tmp_path / 'src' / 'tmpbin' / 'python'
     old = tmp_path / 'old' / 'python2'
@@ -69,6 +68,6 @@ def test_legacy_build_refreshes_launcher_on_retry(tmp_path, monkeypatch):
         tools = tmp_path / label
         _script(tools / 'python2',
                 'printf "%s\\n" "' + label + '" >> "$PYTHON_LOG"\n')
-        monkeypatch.setenv('PATH', str(tools) + os.pathsep + '/usr/bin:/bin')
+        monkeypatch.setenv('PATH', str(tools))
         _build(tmp_path)
     assert log.read_text().splitlines() == ['first', 'second']

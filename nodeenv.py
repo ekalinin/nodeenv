@@ -132,7 +132,7 @@ class Config(object):
         print("    [nodeenv]")
         print("    " + "\n    ".join(
             "%s = %s" % (k, v) for k, v in sorted(vars(cls).items())
-            if not k.startswith('_')))
+            if not k.startswith('_') and v is not None))
 
 
 Config._default = dict(

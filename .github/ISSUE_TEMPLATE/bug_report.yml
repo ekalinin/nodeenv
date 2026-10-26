@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a problem with nodeenv
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: nodeenv version
+      description: The output of `nodeenv --version`.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The full command you ran.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The full output, including the traceback if there is one.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and architecture
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: The output of `python --version`.
+  - type: dropdown
+    id: install
+    attributes:
+      label: How nodeenv was installed
+      options:
+        - pip in a virtual environment
+        - pipx
+        - source checkout
+        - Debian package
+        - other
+  - type: input
+    id: shell
+    attributes:
+      label: Shell
+      description: >-
+        For activation problems: sh, bash, zsh, fish, cmd, PowerShell or
+        git-bash.

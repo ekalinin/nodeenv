@@ -107,7 +107,7 @@ Dependency
 For nodeenv
 ^^^^^^^^^^^
 
-* Python 3 (CI tests CPython 3.10 through 3.14)
+* Python 3.10 or later (CI tests CPython 3.10 through 3.14)
 * make
 * tail
 
@@ -115,6 +115,9 @@ For node.js
 ^^^^^^^^^^^
 
 * libssl-dev
+* Python 2.7 as a ``python2`` or ``python2.7`` command when building Node.js
+  versions older than 13 from source; this is separate from the Python 3.10+
+  interpreter that runs nodeenv.
 
 Usage
 -----
@@ -512,6 +515,15 @@ There are several alternatives that create isolated environments:
 * virtualenv_ - Virtual Python Environment builder. For python only.
 
 .. _`virtualenv`: https://github.com/pypa/virtualenv
+
+Contributing
+------------
+
+See `CONTRIBUTING.md`_ for how to set up nodeenv for development, which
+checks a change has to pass, and how to send it.
+
+.. _`CONTRIBUTING.md`:
+   https://github.com/ekalinin/nodeenv/blob/master/CONTRIBUTING.md
 
 LICENSE
 =======

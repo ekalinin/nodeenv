@@ -4,6 +4,13 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--source` builds of node.js before 13 also accept `python2.7` when there
+  is no `python2`. For node.js before 8.8, `python` in `PATH` is now a small
+  launcher script instead of a link: it runs the selected python2 by its
+  absolute path and its own name, so a pyenv shim or a relative `PATH` entry
+  works, and a stale or dangling link left by an earlier run is replaced
+  instead of reused
+  `#435 <https://github.com/ekalinin/nodeenv/issues/435>`_
 - Require Python 3.10 or later, matching the minimum version tested in CI.
   Update package classifiers and wheel tags, and remove the unused Python 2
   compatibility paths. Old Node.js source builds still require Python 2.7
@@ -11,7 +18,7 @@ Version [unreleased]
   `#436 <https://github.com/ekalinin/nodeenv/issues/436>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
-  own, so the `python` to python2 link in `PATH` is only set up for older
+  own, so the `python` to python2 launcher in `PATH` is only set up for older
   versions, and versions before 13 still fail early with a clear error
   when `python2` is missing
   `#419 <https://github.com/ekalinin/nodeenv/issues/419>`_

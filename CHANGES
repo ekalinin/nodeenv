@@ -4,6 +4,9 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--prebuilt` installs no longer mistake a cached source tree for a
+  prebuilt archive, or fail when both trees remain in `src/`
+  `#443 <https://github.com/ekalinin/nodeenv/issues/443>`_
 - `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
   a second time: the venv's own `activate` and `activate.fish` put it there
   already. Envs without those scripts, such as conda envs, and the git-bash

@@ -1013,7 +1013,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     else:
         dest = env_dir
 
-    src_folder_tpl = src_dir + '/node-v%s*' % node_version
+    src_folder_tpl = src_dir + '/node-v%s-*' % node_version
     src_folder, = glob.glob(src_folder_tpl)
     copytree(src_folder, dest, True)
 
@@ -1141,8 +1141,8 @@ def install_node_wrapped(env_dir, src_dir, args):
         # if arm64 not found, try x64
         node_urls.append(node_url.replace('arm64', 'x64'))
 
-    # get src if not downloaded yet
-    if not os.path.exists(node_src_dir):
+    # Only source builds can reuse the source directory.
+    if args.prebuilt or not os.path.exists(node_src_dir):
         errors = []
         # retry outside the handler, so that a second failure is not
         # reported as "during handling of the above exception"

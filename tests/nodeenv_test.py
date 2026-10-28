@@ -3014,11 +3014,13 @@ class TestWritefile:
         dest.write_binary(b'# existing\n')
         raw = b"NODE_VIRTUAL_ENV='/tmp/caf\xe9/env'\n"
 
-        nodeenv.writefile(str(dest), os.fsdecode(raw), append=append)
+        nodeenv.writefile(
+            str(dest), raw.decode('utf-8', 'surrogateescape'), append=append)
 
         expected = b'# existing\n' + raw if append else raw
         assert dest.read_binary() == expected
-        nodeenv.writefile(str(dest), os.fsdecode(raw), append=append)
+        nodeenv.writefile(
+            str(dest), raw.decode('utf-8', 'surrogateescape'), append=append)
         assert dest.read_binary() == expected
 
     @pytest.mark.parametrize('content, expected', [

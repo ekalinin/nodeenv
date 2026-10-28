@@ -62,6 +62,29 @@ def test_write(tmpdir, name, content_var):
     assert bin_dir.join(name).read() == fix_content(content, tmpdir)
 
 
+@pytest.mark.skipif(not sys.platform.startswith('linux'),
+                    reason='non-UTF-8 filesystem paths need Linux')
+def test_activate_with_surrogateescaped_path(tmp_path):
+    """Keep a raw filesystem path intact in generated scripts and sh."""
+    env_dir = tmp_path / os.fsdecode(b'caf\xe9')
+    bin_dir = env_dir / 'bin'
+    bin_dir.mkdir(parents=True)
+    node = bin_dir / 'node'
+    node.write_bytes(b'#!/bin/sh\necho stub\n')
+    node.chmod(0o755)
+    with mock.patch.object(sys, 'argv', ['nodeenv', str(env_dir)]):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(env_dir), opts)
+
+    activate = bin_dir / 'activate'
+    assert os.fsencode(str(env_dir)) in activate.read_bytes()
+    output = subprocess.check_output([
+        'sh', '-c', '. "$1"; printf "%s" "$NODE_VIRTUAL_ENV"',
+        'sh', str(activate),
+    ])
+    assert output == os.fsencode(str(env_dir))
+
+
 @pytest.mark.skipif(nodeenv.is_WIN, reason='activate.fish is POSIX only')
 def test_activate_fish_has_no_caret_redirect(tmpdir):
     """Generated activate.fish must not contain caret stderr redirects.

@@ -3007,6 +3007,35 @@ class TestCertifi:
 class TestWritefile:
     """Tests for writefile()"""
 
+    @pytest.mark.parametrize('append', [False, True])
+    def test_preserves_surrogateescaped_bytes(self, tmpdir, append):
+        """Filesystem bytes in activation content must round-trip."""
+        dest = tmpdir.join('activate')
+        dest.write_binary(b'# existing\n')
+        raw = b"NODE_VIRTUAL_ENV='/tmp/caf\xe9/env'\n"
+
+        nodeenv.writefile(str(dest), os.fsdecode(raw), append=append)
+
+        expected = b'# existing\n' + raw if append else raw
+        assert dest.read_binary() == expected
+        nodeenv.writefile(str(dest), os.fsdecode(raw), append=append)
+        assert dest.read_binary() == expected
+
+    @pytest.mark.parametrize('content, expected', [
+        ('caf\u00e9', b'caf\xc3\xa9'),
+        (b'caf\xe9', b'caf\xe9'),
+    ])
+    def test_preserves_utf8_text_and_bytes(self, tmpdir, content, expected):
+        """Regular Unicode stays UTF-8 and bytes stay unchanged."""
+        dest = tmpdir.join('activate')
+        nodeenv.writefile(str(dest), content)
+        assert dest.read_binary() == expected
+
+    def test_rejects_non_filesystem_surrogate(self, tmpdir):
+        """surrogateescape must not conceal arbitrary invalid Unicode."""
+        with pytest.raises(UnicodeEncodeError):
+            nodeenv.writefile(str(tmpdir.join('activate')), '\ud800')
+
     def test_append_starts_on_its_own_line(self, tmpdir):
         """A file not ending with a newline must not swallow the first
         appended line: `:END` plus `@echo off` is a label, not a command

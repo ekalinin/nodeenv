@@ -4,6 +4,9 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- Preserve non-UTF-8 filesystem bytes when writing activation scripts, so
+  environments in such paths can be activated on Linux
+  `#442 <https://github.com/ekalinin/nodeenv/issues/442>`_
 - `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
   a second time: the venv's own `activate` and `activate.fish` put it there
   already. Envs without those scripts, such as conda envs, and the git-bash

@@ -653,7 +653,7 @@ def writefile(dest, content, overwrite=True, append=False):
     Create file and write content in it
     """
     if not isinstance(content, bytes):
-        content = bytes(content, 'utf-8')
+        content = content.encode('utf-8', 'surrogateescape')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
         with open(dest, 'wb') as f:

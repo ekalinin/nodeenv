@@ -7,6 +7,7 @@ if sys.version_info < (3, 3):
 else:
     from shlex import quote as _quote
 import io
+import json
 import os.path
 import pathlib
 import shutil
@@ -194,6 +195,29 @@ def mock_index_json():
     with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
         with mock.patch.object(nodeenv, 'urlopen', return_value=f):
             yield
+
+
+@pytest.fixture
+def mock_index_json_alpha():
+    # the first entry of nodejs.org's index.json on 2026-10-29
+    # https://github.com/ekalinin/nodeenv/issues/453
+    alpha = {
+        'version': 'v27.0.0-alpha.0.0.0', 'date': '2026-10-29',
+        'files': [
+            'aix-ppc64', 'headers', 'linux-arm64', 'linux-ppc64le',
+            'linux-s390x', 'linux-x64', 'linux-x64-musl', 'osx-arm64-tar',
+            'osx-x64-pkg', 'src', 'win-arm64-7z', 'win-arm64-zip',
+            'win-x64-7z', 'win-x64-exe', 'win-x64-msi', 'win-x64-zip',
+        ],
+        'npm': '12.1.0', 'v8': '15.6.75.25', 'uv': '1.52.1',
+        'zlib': '1.3.2.1-motley', 'openssl': '4.1.0', 'modules': '153',
+        'lts': False, 'security': False,
+    }
+    with open(os.path.join(HERE, 'nodejs_index.json'), 'rb') as f:
+        index = json.load(f)
+    body = io.BytesIO(json.dumps([alpha] + index).encode('utf-8'))
+    with mock.patch.object(nodeenv, 'urlopen', return_value=body):
+        yield
 
 
 @pytest.fixture
@@ -405,6 +429,11 @@ def test_get_latest_node_version():
     assert nodeenv.get_last_stable_node_version() == '13.5.0'
 
 
+@pytest.mark.usefixtures('mock_index_json_alpha', 'mock_host_platform')
+def test_get_latest_node_version_skips_prerelease():
+    assert nodeenv.get_last_stable_node_version() == '13.5.0'
+
+
 @pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')
 def test_get_lts_node_version():
     assert nodeenv.get_last_lts_node_version() == '12.14.0'
@@ -540,6 +569,7 @@ def test_parse_version():
     assert nodeenv.parse_version("v21.7") == (21, 7)
     assert nodeenv.parse_version("v21.7.3") == (21, 7, 3)
     assert nodeenv.parse_version("v21.7.3+0-b20240228T18452699") == (21, 7, 3)
+    assert nodeenv.parse_version("v27.0.0-alpha.0.0.0") == (27, 0, 0)
 
 
 def test_pad_version():
@@ -670,6 +700,11 @@ def test_match_node_range(spec, version, expected):
 )
 def test_resolve_node_version(spec, expected):
     assert nodeenv.resolve_node_version(spec) == expected
+
+
+@pytest.mark.usefixtures('mock_index_json_alpha', 'mock_host_platform')
+def test_resolve_node_version_skips_prerelease():
+    assert nodeenv.resolve_node_version('*') == '13.5.0'
 
 
 @pytest.mark.usefixtures('mock_index_json', 'mock_host_platform')

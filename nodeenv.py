@@ -177,9 +177,10 @@ def parse_version(version_str):
     Parse version string to a tuple of integer parts
     """
     v = version_str.replace('v', '').split('.')[:3]
-    # remove all after '+' in the PATCH part of the version
+    # remove all after '+' or '-' in the PATCH part of the version,
+    # e.g. 27.0.0-alpha.0.0.0
     if len(v) >= 3:
-        v[2] = v[2].split('+')[0]
+        v[2] = re.split('[+-]', v[2])[0]
     return tuple(map(int, v))
 
 
@@ -1506,6 +1507,13 @@ def _has_platform_build(version_entry):
     return True
 
 
+def _is_prerelease(version_entry):
+    """
+    Check that the version is a pre-release, e.g. 27.0.0-alpha.0.0.0
+    """
+    return '-' in version_entry['version']
+
+
 def _get_last_node_version(lts=False):
     """
     Return last node.js version matching the filter
@@ -1516,6 +1524,8 @@ def _get_last_node_version(lts=False):
 
     def version_filter(v):
         if lts and not v['lts']:
+            return False
+        if _is_prerelease(v):
             return False
 
         return _has_platform_build(v)
@@ -1551,6 +1561,8 @@ def resolve_node_version(spec):
 
     matched = []
     for version_entry in _get_versions_json():
+        if _is_prerelease(version_entry):
+            continue
         if not _has_platform_build(version_entry):
             continue
         version = _pad_version(parse_version(version_entry['version']))

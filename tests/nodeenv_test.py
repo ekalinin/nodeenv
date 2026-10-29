@@ -614,15 +614,19 @@ def test_config_strips_quotes(tmpdir):
         nodeenv.Config.mirror = nodeenv.Config._default['mirror']
 
 
-def test_config_keeps_percent_signs(tmpdir):
-    """A % in a value is read as is, not as interpolation, see #440"""
+@pytest.mark.parametrize('mirror, expected', [
+    ('https://user:p%40ss@mirror.example/nodejs',
+     'https://user:p%40ss@mirror.example/nodejs'),
+    ('https://user:p%%40ss@mirror.example/nodejs',
+     'https://user:p%40ss@mirror.example/nodejs'),
+])
+def test_config_keeps_percent_signs(tmpdir, mirror, expected):
+    """A % that ConfigParser can't interpolate is read as is, see #440"""
     rc = tmpdir.join('nodeenvrc')
-    rc.write('[nodeenv]\n'
-             'mirror = https://user:p%40ss@mirror.example/nodejs\n')
+    rc.write('[nodeenv]\nmirror = %s\n' % mirror)
     try:
         nodeenv.Config._load([str(rc)])
-        assert nodeenv.Config.mirror == \
-            'https://user:p%40ss@mirror.example/nodejs'
+        assert nodeenv.Config.mirror == expected
     finally:
         nodeenv.Config.mirror = nodeenv.Config._default['mirror']
 

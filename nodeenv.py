@@ -33,7 +33,7 @@ import socket
 import sysconfig
 import glob
 
-from configparser import ConfigParser
+from configparser import ConfigParser, InterpolationError
 from http.client import IncompleteRead
 import urllib.request as urllib2
 from urllib.parse import unquote, urlsplit, urlunsplit
@@ -96,8 +96,7 @@ class Config(object):
             if not os.path.exists(configfile):
                 continue
 
-            # No interpolation: a percent-encoded mirror URL is valid, #440
-            ini_file = ConfigParser(interpolation=None)
+            ini_file = ConfigParser()
             ini_file.read(configfile)
             section = "nodeenv"
             if not ini_file.has_section(section):
@@ -111,7 +110,11 @@ class Config(object):
                 if isinstance(val, bool):
                     val = ini_file.getboolean(section, attr)
                 else:
-                    val = ini_file.get(section, attr)
+                    try:
+                        val = ini_file.get(section, attr)
+                    except InterpolationError:
+                        # A percent-encoded mirror login, #440
+                        val = ini_file.get(section, attr, raw=True)
                     # ConfigParser keeps the quotes the README shows, #321
                     if len(val) > 1 and val[0] == val[-1] and val[0] in '\'"':
                         val = val[1:-1]

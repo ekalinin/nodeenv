@@ -293,6 +293,10 @@ and add a node virtual environment to this existing new_venv::
 
     $ nodeenv -p
 
+To move an already populated standalone Windows Node environment into a
+Python venv without downloading Node again, see the optional
+`migration utility <utils/README.md>`_ in a source checkout.
+
 If you need to set the path to make used to build node::
 
 	$ nodeenv -m /usr/local/bin/gmake ENV

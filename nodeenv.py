@@ -1768,30 +1768,26 @@ NPM_UNISOLATE = {
         unset _OLD_npm_config_init_module
 """,
     'activate.fish': """
-    # Skip the "deactivate_node nondestructive" pass at the top of
-    # activate.fish: the variables are only saved after it has run
-    if set -q NODE_VIRTUAL_ENV
-        if test -n "$_OLD_npm_config_cache"
+        if set -q _OLD_npm_config_cache
             set -gx npm_config_cache $_OLD_npm_config_cache
             set -e _OLD_npm_config_cache
         else
             set -e npm_config_cache
         end
 
-        if test -n "$_OLD_npm_config_userconfig"
+        if set -q _OLD_npm_config_userconfig
             set -gx npm_config_userconfig $_OLD_npm_config_userconfig
             set -e _OLD_npm_config_userconfig
         else
             set -e npm_config_userconfig
         end
 
-        if test -n "$_OLD_npm_config_init_module"
+        if set -q _OLD_npm_config_init_module
             set -gx npm_config_init_module $_OLD_npm_config_init_module
             set -e _OLD_npm_config_init_module
         else
             set -e npm_config_init_module
         end
-    end
 """,
 }
 
@@ -2130,29 +2126,31 @@ function deactivate_node -d 'Exit nodeenv and return to normal environment.'
     if test -n "$_OLD_NODE_VIRTUAL_PATH"
         set -gx PATH $_OLD_NODE_VIRTUAL_PATH
         set -e _OLD_NODE_VIRTUAL_PATH
-    end
 
-    if test -n "$_OLD_NODE_PATH"
-        set -gx NODE_PATH $_OLD_NODE_PATH
-        set -e _OLD_NODE_PATH
-    else
-        set -e NODE_PATH
-    end
+        # Activation saves PATH before changing the other variables, so this
+        # also restores them if NODE_VIRTUAL_ENV was removed by the caller.
+        if set -q _OLD_NODE_PATH
+            set -gx NODE_PATH $_OLD_NODE_PATH
+            set -e _OLD_NODE_PATH
+        else
+            set -e NODE_PATH
+        end
 
-    if test -n "$_OLD_NPM_CONFIG_PREFIX"
-        set -gx NPM_CONFIG_PREFIX $_OLD_NPM_CONFIG_PREFIX
-        set -e _OLD_NPM_CONFIG_PREFIX
-    else
-        set -e NPM_CONFIG_PREFIX
-    end
+        if set -q _OLD_NPM_CONFIG_PREFIX
+            set -gx NPM_CONFIG_PREFIX $_OLD_NPM_CONFIG_PREFIX
+            set -e _OLD_NPM_CONFIG_PREFIX
+        else
+            set -e NPM_CONFIG_PREFIX
+        end
 
-    if test -n "$_OLD_npm_config_prefix"
-        set -gx npm_config_prefix $_OLD_npm_config_prefix
-        set -e _OLD_npm_config_prefix
-    else
-        set -e npm_config_prefix
-    end
+        if set -q _OLD_npm_config_prefix
+            set -gx npm_config_prefix $_OLD_npm_config_prefix
+            set -e _OLD_npm_config_prefix
+        else
+            set -e npm_config_prefix
+        end
 __NPM_UNISOLATE__
+    end
 
     if test -n "$_OLD_NODE_FISH_PROMPT_OVERRIDE"
         # Set an empty local `$fish_function_path` to allow the removal of
@@ -2226,10 +2224,8 @@ set -gx PATH "$NODE_VIRTUAL_ENV/__MOD_NAME__/.bin" "$NODE_VIRTUAL_ENV/__BIN_NAME
 
 if set -q NODE_PATH
     set -gx _OLD_NODE_PATH $NODE_PATH
-    set -gx NODE_PATH "$NODE_VIRTUAL_ENV/__MOD_NAME__" $NODE_PATH
-else
-    set -gx NODE_PATH "$NODE_VIRTUAL_ENV/__MOD_NAME__"
 end
+set -gx NODE_PATH "$NODE_VIRTUAL_ENV/__MOD_NAME__"
 
 if set -q NPM_CONFIG_PREFIX
     set -gx _OLD_NPM_CONFIG_PREFIX $NPM_CONFIG_PREFIX

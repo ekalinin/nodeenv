@@ -53,6 +53,14 @@ Version [unreleased]
   of the host; the password stays out of error messages and redirects
   `#321 <https://github.com/ekalinin/nodeenv/issues/321>`_
 
+Version 1.11.1
+--------------
+- `latest`, the default, and semver ranges such as `--node=26` no longer
+  pick pre-releases: once nodejs.org listed `27.0.0-alpha.0.0.0`, both
+  stopped with a traceback. An exact pre-release, such as
+  `--node=27.0.0-alpha.0.0.0`, installs instead of crashing as well
+  `#453 <https://github.com/ekalinin/nodeenv/issues/453>`_
+
 Version 1.11.0
 --------------
 - Fixed zsh `source bin/activate` aborting on the direct-call guard `#398 <https://github.com/ekalinin/nodeenv/issues/398>`_

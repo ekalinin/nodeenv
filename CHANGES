@@ -4,6 +4,12 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `activate.fish` restores the caller's `NODE_PATH` and npm configuration
+  on deactivation, including empty values and when `NODE_VIRTUAL_ENV` has
+  been removed. Existing environments keep their old `activate.fish`;
+  recreate them with the same options to get the fix. With `-p`, remove the
+  old nodeenv part from the virtualenv's `activate.fish` first
+  `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
 - `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
   a second time: the venv's own `activate` and `activate.fish` put it there
   already. Envs without those scripts, such as conda envs, and the git-bash

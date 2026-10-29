@@ -1,5 +1,6 @@
 Nodeenv changelog
-==========
+=================
+
 Version [unreleased]
 --------------------
 
@@ -9,6 +10,17 @@ Version [unreleased]
   recreate them with the same options to get the fix. With `-p`, remove the
   old nodeenv part from the virtualenv's `activate.fish` first
   `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
+- `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
+  a second time: the venv's own `activate` and `activate.fish` put it there
+  already. Envs without those scripts, such as conda envs, and the git-bash
+  `activate` on Windows keep it, and running `nodeenv -p` again fixes an
+  existing venv
+  `#332 <https://github.com/ekalinin/nodeenv/issues/332>`_
+- Require Python 3.10 or later, matching the minimum version tested in CI.
+  Update package classifiers and wheel tags, and remove the unused Python 2
+  compatibility paths. Old Node.js source builds still require Python 2.7
+  as their build interpreter
+  `#436 <https://github.com/ekalinin/nodeenv/issues/436>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
   own, so the `python` to python2 link in `PATH` is only set up for older

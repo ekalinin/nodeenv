@@ -25,10 +25,7 @@ import argparse
 import subprocess
 import tarfile
 import time
-if sys.version_info < (3, 3):
-    from pipes import quote as _quote
-else:
-    from shlex import quote as _quote
+from shlex import quote as _quote
 import platform
 import zipfile
 import shutil
@@ -36,23 +33,10 @@ import socket
 import sysconfig
 import glob
 
-try:  # pragma: no cover (py2 only)
-    from ConfigParser import SafeConfigParser as ConfigParser  # pyright: ignore[reportMissingImports]  # noqa: E501
-    # noinspection PyCompatibility
-    import urllib2  # pyright: ignore[reportMissingImports]
-    from urlparse import urlsplit, urlunsplit  # pyright: ignore[reportMissingImports]  # noqa: E501
-    from urllib import unquote  # pyright: ignore[reportAttributeAccessIssue]
-    iteritems = operator.methodcaller('iteritems')
-    import httplib  # pyright: ignore[reportMissingImports]
-    IncompleteRead = httplib.IncompleteRead
-except ImportError:  # pragma: no cover (py3 only)
-    from configparser import ConfigParser
-    # noinspection PyUnresolvedReferences
-    import urllib.request as urllib2
-    from urllib.parse import unquote, urlsplit, urlunsplit
-    iteritems = operator.methodcaller('items')
-    import http
-    IncompleteRead = http.client.IncompleteRead
+from configparser import ConfigParser
+from http.client import IncompleteRead
+import urllib.request as urllib2
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 nodeenv_version = '1.11.0'
 
@@ -60,7 +44,6 @@ join = os.path.join
 abspath = os.path.abspath
 src_base_url = None
 
-is_PY3 = sys.version_info[0] >= 3
 is_WIN = platform.system() == 'Windows'
 is_CYGWIN = platform.system().startswith(('CYGWIN', 'MSYS'))
 
@@ -77,27 +60,6 @@ download_timeout = 60
 
 # ---------------------------------------------------------
 # Utils
-
-
-# https://github.com/jhermann/waif/blob/master/python/to_uft8.py
-def to_utf8(text):
-    """Convert given text to UTF-8 encoding (as far as possible)."""
-    if not text or is_PY3:
-        return text
-
-    try:           # unicode or pure ascii
-        return text.encode("utf8")
-    except UnicodeDecodeError:
-        try:       # successful UTF-8 decode means it's pretty sure UTF-8
-            text.decode("utf8")
-            return text
-        except UnicodeDecodeError:
-            try:   # get desperate; and yes, this has a western hemisphere bias
-                return text.decode("cp1252").encode("utf8")
-            except UnicodeDecodeError:
-                pass
-
-    return text    # return unchanged, hope for the best
 
 
 class Config(object):
@@ -140,7 +102,7 @@ class Config(object):
             if not ini_file.has_section(section):
                 continue
 
-            for attr, val in iteritems(vars(cls)):
+            for attr, val in vars(cls).items():
                 if attr.startswith('_') or not \
                    ini_file.has_option(section, attr):
                     continue
@@ -169,12 +131,12 @@ class Config(object):
         """
         print("    [nodeenv]")
         print("    " + "\n    ".join(
-            "%s = %s" % (k, v) for k, v in sorted(iteritems(vars(cls)))
+            "%s = %s" % (k, v) for k, v in sorted(vars(cls).items())
             if not k.startswith('_')))
 
 
 Config._default = dict(
-    (attr, val) for attr, val in iteritems(vars(Config))
+    (attr, val) for attr, val in vars(Config).items()
     if not attr.startswith('_')
 )
 
@@ -428,7 +390,7 @@ def create_logger():
     def emit(self, record):
         msg = self.format(record)
         fs = "%s" if getattr(record, "continued", False) else "%s\n"
-        self.stream.write(fs % to_utf8(msg))
+        self.stream.write(fs % msg)
         self.flush()
     logging.StreamHandler.emit = emit
 
@@ -690,8 +652,7 @@ def writefile(dest, content, overwrite=True, append=False):
     """
     Create file and write content in it
     """
-    content = to_utf8(content)
-    if is_PY3 and not isinstance(content, bytes):
+    if not isinstance(content, bytes):
         content = bytes(content, 'utf-8')
     if not os.path.exists(dest):
         logger.debug(' * Writing %s ... ', dest, extra=dict(continued=True))
@@ -1052,7 +1013,7 @@ def copy_node_from_prebuilt(env_dir, src_dir, node_version):
     else:
         dest = env_dir
 
-    src_folder_tpl = src_dir + to_utf8('/node-v%s*' % node_version)
+    src_folder_tpl = src_dir + '/node-v%s*' % node_version
     src_folder, = glob.glob(src_folder_tpl)
     copytree(src_folder, dest, True)
 
@@ -1164,7 +1125,7 @@ def report_node_download_error(errors, args):
 
 def install_node_wrapped(env_dir, src_dir, args):
     env_dir = abspath(env_dir)
-    node_src_dir = join(src_dir, to_utf8('node-v%s' % args.node))
+    node_src_dir = join(src_dir, 'node-v%s' % args.node)
     src_type = "prebuilt" if args.prebuilt else "source"
 
     logger.info(' * Install %s node (%s) ' % (src_type, args.node),
@@ -1333,6 +1294,31 @@ PYTHON_VIRTUALENV_FILES = frozenset((
     'Activate.ps1',
 ))
 
+# the bin/ entry `activate` and `activate.fish` put on PATH: the python
+# venv's own scripts they are appended to put it there already.  Windows
+# keeps it: before python 3.12 the venv's `activate` puts a `C:\...` path
+# there, which git-bash splits at the colon, and the cmd and PowerShell
+# scripts reset PATH to the venv's saved one first
+# https://github.com/ekalinin/nodeenv/issues/332
+# https://github.com/python/cpython/issues/103088
+VENV_BIN_PATH = {
+    'activate': '$NODE_VIRTUAL_ENV/__BIN_NAME__:',
+    'activate.fish': ' "$NODE_VIRTUAL_ENV/__BIN_NAME__"',
+}
+
+
+def is_python_venv_script(file_path, name):
+    """
+    Whether `nodeenv -p` appends to a script of the python venv.  An env
+    without one (conda) gets it written from scratch, starting with the
+    DISABLE_PROMPT part, and a rerun appends to that file
+    """
+    if not os.path.exists(file_path):
+        return False
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    return not content.startswith(DISABLE_PROMPT[name].encode('utf-8'))
+
 
 def install_activate(env_dir, args):
     """
@@ -1377,6 +1363,10 @@ def install_activate(env_dir, args):
 
     for name, content in files.items():
         file_path = join(bin_dir, name)
+        if args.python_virtualenv and not is_WIN and \
+                name in VENV_BIN_PATH and \
+                is_python_venv_script(file_path, name):
+            content = content.replace(VENV_BIN_PATH[name], '')
         isolate = NPM_ISOLATE.get(name, '') if args.isolate_npm else ''
         unisolate = NPM_UNISOLATE.get(name, '') if args.isolate_npm else ''
         content = content.replace('__NPM_ISOLATE__', isolate)
@@ -1454,7 +1444,7 @@ def create_environment(env_dir, args):
         logger.info(' * Environment already exists: %s', env_dir)
         if not args.force:
             sys.exit(2)
-    src_dir = to_utf8(abspath(join(env_dir, 'src')))
+    src_dir = abspath(join(env_dir, 'src'))
     mkdir(src_dir)
 
     if args.node == "system":
@@ -1602,7 +1592,7 @@ def get_env_dir(args):
             sys.exit(2)
     else:
         res = args.env_dir
-    return to_utf8(res)
+    return res
 
 
 # noinspection PyProtectedMember

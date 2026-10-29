@@ -10,10 +10,7 @@ import shutil
 import subprocess
 import sys
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # pyright: ignore[reportMissingModuleSource]
+from unittest import mock
 import pytest
 
 import nodeenv
@@ -208,6 +205,27 @@ def env(request, tmpdir):
                str(dumper), bool(request.param))
 
 
+@pytest.fixture
+def python_venv(tmpdir):
+    """
+    A python venv with the activation of `nodeenv -p` appended to its own
+    activate scripts.
+    """
+    venv_dir = tmpdir.join('venv')
+    subprocess.check_call(
+        [sys.executable, '-m', 'venv', '--without-pip', str(venv_dir)])
+
+    dumper = tmpdir.join('dump.py')
+    dumper.write(DUMPER)
+
+    with mock.patch.object(sys, 'argv', ['nodeenv', '-p']):
+        opts = nodeenv.parse_args()
+        nodeenv.install_activate(str(venv_dir), opts)
+
+    return Env(str(venv_dir), str(tmpdir.join('home').ensure(dir=True)),
+               str(dumper), False)
+
+
 def _child_env(env):
     """
     A clean environment: no leftovers from a nodeenv active in the shell
@@ -283,6 +301,20 @@ def test_activate_sets_env(shell, env):
         _real(os.path.join(env.path, 'lib', 'node_modules'))
     assert _real(dump['NPM_CONFIG_PREFIX']) == _real(env.path)
     assert _real(dump['npm_config_prefix']) == _real(env.path)
+
+
+@every_shell
+def test_python_virtualenv_puts_bin_on_path_once(shell, python_venv):
+    # the venv's own activate has put bin/ on PATH already, the part
+    # nodeenv -p appends adds only node_modules/.bin in front of it
+    # https://github.com/ekalinin/nodeenv/issues/332
+    dump = run(shell, python_venv)
+    baseline = run(shell, python_venv, source=False)
+
+    assert [_real(p) for p in dump['PATH'].split(os.pathsep)] == [
+        _real(os.path.join(python_venv.path, 'lib', 'node_modules', '.bin')),
+        _real(os.path.join(python_venv.path, 'bin')),
+    ] + [_real(p) for p in baseline['PATH'].split(os.pathsep)]
 
 
 @every_shell

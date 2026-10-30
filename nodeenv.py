@@ -11,6 +11,7 @@
 """
 
 import base64
+import concurrent.futures
 import contextlib
 import io
 import json
@@ -57,6 +58,9 @@ src_auth = None
 # Seconds to wait for a server to answer or to send more of the body,
 # so that a stalled download fails instead of hanging forever
 download_timeout = 60
+# Files of the node.js zip archive extracted at once: on Windows, scanners
+# that check every new file make a one by one extraction slow
+extract_workers = 32
 
 # ---------------------------------------------------------
 # Utils
@@ -862,6 +866,40 @@ def _download_node_file(node_url, n_attempt=3, delay=3):
             time.sleep(delay)
 
 
+def _extract_zip(archive, path, names):
+    """
+    Extract the names of a zip archive extract_workers files at a time
+
+    Scanners that check every new file make a one by one extraction take
+    hours on Windows https://github.com/ekalinin/nodeenv/issues/366
+    """
+    # Create the directories first, so that threads never create the same
+    # one: before Python 3.13 zipfile fails if another thread did it first
+    files = [name for name in names if not name.endswith('/')]
+    dirs = set(name for name in names if name.endswith('/'))
+    dirs.update(name.rpartition('/')[0] + '/' for name in files
+                if '/' in name)
+    for name in sorted(dirs):
+        archive.extract(zipfile.ZipInfo(name), path)
+
+    with concurrent.futures.ThreadPoolExecutor(extract_workers) as pool:
+        try:
+            pending = [pool.submit(archive.extract, name, path)
+                       for name in files]
+            while pending:
+                # Wake up now and then: before Python 3.14 Ctrl+C does not
+                # interrupt waiting on a lock on Windows
+                done, pending = concurrent.futures.wait(
+                    pending, timeout=0.1,
+                    return_when=concurrent.futures.FIRST_EXCEPTION)
+                for future in done:
+                    future.result()
+        except BaseException:
+            # Drop the files that have not started yet
+            pool.shutdown(cancel_futures=True)
+            raise
+
+
 def download_node_src(node_url, src_dir, args):
     """
     Download source code
@@ -888,8 +926,9 @@ def download_node_src(node_url, src_dir, args):
             for member in members(archive)
             if re.match(rexp_string, member_name(member)) is None
         ]
-        # filter= is a tarfile-only argument, zipfile has no such option
-        if sys.version_info >= (3, 12) and not (is_WIN or is_CYGWIN):
+        if is_WIN or is_CYGWIN:
+            _extract_zip(archive, src_dir, extract_list)
+        elif sys.version_info >= (3, 12):
             archive.extractall(src_dir, extract_list, filter="data")
         else:
             archive.extractall(src_dir, extract_list)

@@ -6,7 +6,9 @@ Version [unreleased]
 
 - On Windows, Cygwin and MSYS the node.js zip archive is extracted 32 files
   at a time instead of one by one, so a security scanner that checks every
-  new file no longer makes the install wait for each file in turn
+  new file no longer makes the install wait for each file in turn.
+  `--no-parallel-extract`, or `parallel_extract = False` in `~/.nodeenvrc`,
+  extracts it one file at a time again
   `#366 <https://github.com/ekalinin/nodeenv/issues/366>`_
 - `--prebuilt` installs no longer mistake a cached source tree for a
   prebuilt archive, or fail when both trees remain in `src/`

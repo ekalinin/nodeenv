@@ -87,6 +87,7 @@ class Config(object):
     prefer_system = False
     isolate_npm = False
     clean_src = True
+    parallel_extract = True
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -577,6 +578,17 @@ def make_parser():
         help='Keep "src" directory after installation')
 
     parser.add_argument(
+        '--parallel-extract', dest='parallel_extract',
+        action='store_true', default=Config.parallel_extract,
+        help='Extract the node.js zip archive on Windows, Cygwin and MSYS '
+        '%d files at a time (default)' % extract_workers)
+
+    parser.add_argument(
+        '--no-parallel-extract', dest='parallel_extract',
+        action='store_false',
+        help='Extract the node.js zip archive one file at a time')
+
+    parser.add_argument(
         '--force', dest='force',
         action='store_true', default=False,
         help='Force installation in a pre-existing directory')
@@ -926,9 +938,10 @@ def download_node_src(node_url, src_dir, args):
             for member in members(archive)
             if re.match(rexp_string, member_name(member)) is None
         ]
-        if is_WIN or is_CYGWIN:
+        if (is_WIN or is_CYGWIN) and args.parallel_extract:
             _extract_zip(archive, src_dir, extract_list)
-        elif sys.version_info >= (3, 12):
+        # filter= is a tarfile-only argument, zipfile has no such option
+        elif sys.version_info >= (3, 12) and not (is_WIN or is_CYGWIN):
             archive.extractall(src_dir, extract_list, filter="data")
         else:
             archive.extractall(src_dir, extract_list)

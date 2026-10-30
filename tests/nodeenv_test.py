@@ -947,6 +947,7 @@ def test_download_node_src_zip(tmpdir):
     """On Windows the archive is a zip, which has no extractall(filter=...)"""
     class args:
         node = '22.14.0'
+        parallel_extract = True
 
     with mock.patch.object(nodeenv, 'is_WIN', True), \
             mock.patch.object(nodeenv, '_download_node_file',
@@ -1011,10 +1012,11 @@ def _on_zip_file(callback):
     return mock.patch.object(zipfile.ZipFile, 'extract', wrapper)
 
 
-def _download_zip(tmpdir, archive):
+def _download_zip(tmpdir, archive, parallel_extract=True):
     class args:
         node = '22.14.0'
 
+    args.parallel_extract = parallel_extract
     with mock.patch.object(nodeenv, 'is_WIN', True), \
             mock.patch.object(nodeenv, '_download_node_file',
                               return_value=archive):
@@ -1033,6 +1035,16 @@ def test_download_node_src_zip_tree(tmpdir, dir_entries):
     empty = os.path.join(tmpdir.strpath, 'node-v22.14.0-win-x64',
                          'node_modules', 'npm', 'empty')
     assert os.path.isdir(empty) == dir_entries
+
+
+def test_download_node_src_zip_parallel_extract_off(tmpdir):
+    """--no-parallel-extract extracts the zip as before, one by one #366"""
+    archive, files = _zip_tree('22.14.0', 100)
+    with mock.patch.object(nodeenv, '_extract_zip') as extract_zip:
+        _download_zip(tmpdir, archive, parallel_extract=False)
+
+    extract_zip.assert_not_called()
+    assert _extracted_tree(tmpdir.strpath) == files
 
 
 def test_download_node_src_zip_extract_workers_at_once(tmpdir):
@@ -1545,6 +1557,35 @@ def test_parse_args_clean_src():
         assert nodeenv.parse_args().clean_src is True
     with mock.patch.object(sys, 'argv', ['nodeenv', '--no-clean-src', 'env']):
         assert nodeenv.parse_args().clean_src is False
+
+
+def test_parallel_extract_default():
+    assert nodeenv.Config._default['parallel_extract'] is True
+
+
+def test_parallel_extract_is_configurable(tmpdir):
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nparallel_extract = false\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.parallel_extract is False
+    finally:
+        nodeenv.Config.parallel_extract = True
+
+
+def test_parse_args_parallel_extract():
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().parallel_extract is True
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--no-parallel-extract', 'env']):
+        assert nodeenv.parse_args().parallel_extract is False
+    # the flag turns it back on over the config
+    with mock.patch.object(nodeenv.Config, 'parallel_extract', False):
+        with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+            assert nodeenv.parse_args().parallel_extract is False
+        with mock.patch.object(
+                sys, 'argv', ['nodeenv', '--parallel-extract', 'env']):
+            assert nodeenv.parse_args().parallel_extract is True
 
 
 def _run_create_environment(tmpdir, extra):

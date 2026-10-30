@@ -4,6 +4,9 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--prebuilt` installs no longer mistake a cached source tree for a
+  prebuilt archive, or fail when both trees remain in `src/`
+  `#443 <https://github.com/ekalinin/nodeenv/issues/443>`_
 - `activate.fish` restores the caller's `NODE_PATH` and npm configuration
   on deactivation, including empty values and when `NODE_VIRTUAL_ENV` has
   been removed. Existing environments keep their old `activate.fish`;

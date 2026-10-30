@@ -1892,6 +1892,107 @@ class TestGetNodeBinUrl:
             assert url == expected
 
 
+@pytest.mark.parametrize('source_exists', [False, True])
+@pytest.mark.parametrize('prebuilt_exists', [False, True])
+def test_prebuilt_ignores_source_cache(
+        tmp_path, monkeypatch, source_exists, prebuilt_exists):
+    args = mock.Mock(node='18.0.0', prebuilt=True, verbose=False)
+    env_dir = tmp_path / 'env'
+    src_dir = tmp_path / 'src'
+    src_dir.mkdir()
+    source = src_dir / 'node-v18.0.0'
+    if source_exists:
+        source.mkdir()
+        (source / 'source-only').write_text('source', encoding='utf-8')
+    prebuilt = src_dir / 'node-v18.0.0-linux-x64'
+
+    def write_binary(contents):
+        (prebuilt / 'bin').mkdir(parents=True, exist_ok=True)
+        (prebuilt / 'bin' / 'node').write_text(contents, encoding='utf-8')
+
+    if prebuilt_exists:
+        write_binary('cached prebuilt')
+    url = 'https://example.com/node-v18.0.0-linux-x64.tar.gz'
+    monkeypatch.setattr(nodeenv, 'get_node_bin_url', lambda version: url)
+    monkeypatch.setattr(nodeenv, 'is_WIN', False)
+    monkeypatch.setattr(nodeenv, 'is_CYGWIN', False)
+
+    def download(url, directory, options):
+        write_binary('downloaded prebuilt')
+
+    with mock.patch.object(
+            nodeenv, 'download_node_src',
+            side_effect=download) as mock_download:
+        nodeenv.install_node_wrapped(str(env_dir), str(src_dir), args)
+
+    mock_download.assert_called_once_with(url, str(src_dir), args)
+    assert (env_dir / 'bin' / 'node').read_text() == 'downloaded prebuilt'
+    assert not (env_dir / 'source-only').exists()
+    if source_exists:
+        assert (source / 'source-only').read_text() == 'source'
+
+
+@pytest.mark.parametrize('system, archive_platform, binary', [
+    ('posix', 'linux-x64', 'bin/node'),
+    ('windows', 'win-x64', 'node.exe'),
+    ('cygwin', 'win-x64', 'node.exe'),
+])
+def test_copy_prebuilt_ignores_source_tree(
+        tmp_path, monkeypatch, system, archive_platform, binary):
+    env_dir = tmp_path / 'env'
+    src_dir = tmp_path / 'src'
+    source = src_dir / 'node-v18.0.1'
+    source.mkdir(parents=True)
+    (source / 'source-only').write_text('source', encoding='utf-8')
+    for version, contents in [('18.0.1', 'prebuilt'), ('18.0.10', 'other')]:
+        prebuilt = src_dir / ('node-v%s-%s' % (version, archive_platform))
+        node = prebuilt / binary
+        node.parent.mkdir(parents=True)
+        node.write_text(contents, encoding='utf-8')
+    monkeypatch.setattr(nodeenv, 'is_WIN', system == 'windows')
+    monkeypatch.setattr(nodeenv, 'is_CYGWIN', system == 'cygwin')
+
+    nodeenv.copy_node_from_prebuilt(str(env_dir), str(src_dir), '18.0.1')
+
+    if system == 'posix':
+        dest = env_dir
+    else:
+        dest = env_dir / ('Scripts' if system == 'windows' else 'bin')
+    assert (dest / binary).read_text() == 'prebuilt'
+    assert not (dest / 'source-only').exists()
+    assert (source / 'source-only').read_text() == 'source'
+
+
+def test_arm64_fallback_copies_x64_prebuilt(tmp_path, monkeypatch):
+    args = mock.Mock(node='18.0.0', prebuilt=True, verbose=False)
+    env_dir = tmp_path / 'env'
+    src_dir = tmp_path / 'src'
+    src_dir.mkdir()
+    arm_url = 'https://example.com/node-v18.0.0-darwin-arm64.tar.gz'
+    x64_url = arm_url.replace('arm64', 'x64')
+    monkeypatch.setattr(nodeenv, 'get_node_bin_url', lambda version: arm_url)
+    monkeypatch.setattr(nodeenv, 'is_WIN', False)
+    monkeypatch.setattr(nodeenv, 'is_CYGWIN', False)
+
+    def download(url, directory, options):
+        if url == arm_url:
+            raise nodeenv.urllib2.HTTPError(url, 404, 'Not Found', None, None)
+        node = src_dir / 'node-v18.0.0-darwin-x64' / 'bin' / 'node'
+        node.parent.mkdir(parents=True)
+        node.write_text('x64 prebuilt', encoding='utf-8')
+
+    with mock.patch.object(
+            nodeenv, 'download_node_src',
+            side_effect=download) as mock_download:
+        nodeenv.install_node_wrapped(str(env_dir), str(src_dir), args)
+
+    assert mock_download.call_args_list == [
+        mock.call(arm_url, str(src_dir), args),
+        mock.call(x64_url, str(src_dir), args),
+    ]
+    assert (env_dir / 'bin' / 'node').read_text() == 'x64 prebuilt'
+
+
 class TestInstallNode:
     """Tests for install_node and install_node_wrapped functions"""
 
@@ -2069,11 +2170,11 @@ class TestInstallNode:
         # Verify download was called only once (no fallback for x64)
         mock_download.assert_called_once()
 
-    def test_install_node_wrapped_skips_download_if_exists(self, tmpdir):
-        """Test that download is skipped if node source dir exists"""
+    def test_install_node_wrapped_reuses_cached_source(self, tmpdir):
+        """Source builds reuse an existing source directory."""
         args = mock.Mock()
         args.node = '18.0.0'
-        args.prebuilt = True
+        args.prebuilt = False
         args.verbose = False
 
         env_dir = tmpdir.join('env').strpath
@@ -2083,28 +2184,28 @@ class TestInstallNode:
         node_src_dir = os.path.join(src_dir, 'node-v18.0.0')
         os.makedirs(node_src_dir)
 
-        bin_url = (
+        src_url = (
             'https://nodejs.org/download/release/v18.0.0/'
-            'node-v18.0.0-linux-x64.tar.gz'
+            'node-v18.0.0.tar.gz'
         )
         with mock.patch.object(
-                nodeenv, 'get_node_bin_url',
-                return_value=bin_url
+                nodeenv, 'get_node_src_url',
+                return_value=src_url
         ), \
              mock.patch.object(
                  nodeenv, 'download_node_src'
              ) as mock_download, \
              mock.patch.object(
-                 nodeenv, 'copy_node_from_prebuilt'
-             ) as mock_copy, \
+                 nodeenv, 'build_node_from_src'
+             ) as mock_build, \
              mock.patch.object(nodeenv.logger, 'info'):
             nodeenv.install_node_wrapped(env_dir, src_dir, args)
 
             # Verify download was NOT called
             mock_download.assert_not_called()
 
-            # Verify copy was still called
-            mock_copy.assert_called_once()
+            mock_build.assert_called_once_with(
+                env_dir, src_dir, node_src_dir, args)
 
     def test_install_node_restores_newline_on_exception(self, tmpdir):
         """Test that install_node restores newline on exception"""

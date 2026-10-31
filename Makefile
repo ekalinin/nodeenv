@@ -1,4 +1,4 @@
-.PHONY: default deploy deploy-github deploy-pypi update-pypi clean env
+.PHONY: default deploy deploy-github deploy-pypi update-pypi clean env site
 PYTHON=python3
 TEST_ENV=env
 DEV_TEST_ENV=env-dev
@@ -56,6 +56,17 @@ coverage: env-dev
 		coverage run -p -m pytest -m 'not integration' && \
 		coverage report -m && \
 		coverage html
+
+# site/ with the changelog page rendered from CHANGES. rst2html5 comes
+# from docutils and is taken from PATH, as CI has no env-dev. Single
+# backticks in CHANGES mean code, so they are rendered as literals; the
+# two lines added for that put the reported line numbers two ahead.
+site:
+	@rm -rf _site
+	@cp -R site _site
+	@(printf '.. default-role:: literal\n\n'; cat CHANGES) | \
+		rst2html5 --halt=warning --no-raw --no-file-insertion \
+		--template=site/changes.html - _site/changes.html
 
 contributors:
 	@echo "Nodeenv is written and maintained by Eugene Kalinin." > AUTHORS

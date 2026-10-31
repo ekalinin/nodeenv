@@ -10,6 +10,7 @@ env-dev
 /TODO
 /build/
 /dist/
+/_site/
 /bin/
 /include/
 /lib/

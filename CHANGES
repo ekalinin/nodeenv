@@ -27,8 +27,9 @@ Version [unreleased]
   `#399 <https://github.com/ekalinin/nodeenv/issues/399>`_
 - A ``%`` in a ``[nodeenv]`` config value, such as a percent-encoded
   mirror login, no longer crashes nodeenv: a value that can't be
-  interpolated is read as written. ``%%`` still gives ``%``, which
-  ``setup.cfg`` needs, as setuptools reads that file too
+  interpolated and has no ``%(name)s`` reference is read as written.
+  ``%%`` still gives ``%``, which ``setup.cfg`` needs, as setuptools
+  reads that file too
   `#440 <https://github.com/ekalinin/nodeenv/issues/440>`_
 - `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
   a second time: the venv's own `activate` and `activate.fish` put it there

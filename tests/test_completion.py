@@ -2,8 +2,8 @@
 Tests for `nodeenv --print-completion SHELL`.
 
 The unit tests check the flag itself.  The behavioural tests load the
-printed script into bash, zsh, fish and PowerShell, ask the shell for the
-candidates of a command line and check what it offers.
+printed script into bash, zsh and fish, ask the shell for the candidates
+of a command line and check what it offers.
 """
 import os
 import select
@@ -24,11 +24,9 @@ shtab = pytest.importorskip('shtab')
 REQUIRE_SHELLS = os.environ.get('NODEENV_REQUIRE_SHELLS') == '1'
 
 # Require CI shells at collection time, before launching any subprocess
-if REQUIRE_SHELLS:
-    _required = ('bash', 'zsh', 'fish', 'pwsh')
-    if nodeenv.is_WIN:
-        _required = ('pwsh',)
-    _missing = [name for name in _required if not shutil.which(name)]
+if REQUIRE_SHELLS and not nodeenv.is_WIN:
+    _missing = [name for name in ('bash', 'zsh', 'fish')
+                if not shutil.which(name)]
     if _missing:
         raise RuntimeError('missing shells: %s' % ', '.join(_missing))
 
@@ -44,14 +42,11 @@ NO_OPTIONS = {'--no-clean-src', '--no-npm-clean', '--no-parallel-extract'}
 # not be); None in place of the second set means nothing else may be offered
 CASES = {
     'nodeenv --no-': (NO_OPTIONS, None),
-    'nodeenv --clean': ({'--clean-src'}, None),
     'nodeenv -C ': ({'requirements.txt'}, set()),
     'nodeenv -r ': ({'requirements.txt'}, set()),
     'nodeenv -p ': ({'envs'}, {'requirements.txt'}),
     'nodeenv --force ': ({'envs'}, set()),
-    'nodeenv --node ': (
-        {'latest', 'lts'} if nodeenv.is_WIN else {'latest', 'lts', 'system'},
-        None),
+    'nodeenv --node ': ({'latest', 'lts', 'system'}, None),
     'nodeenv -n l': ({'latest', 'lts'}, None),
     'nodeenv --npm ': ({'latest'}, None),
 }
@@ -63,7 +58,6 @@ SCRIPT_NAMES = {
     'bash': 'nodeenv.bash',
     'zsh': '_nodeenv',
     'fish': 'nodeenv.fish',
-    'powershell': 'nodeenv.ps1',
 }
 
 
@@ -76,16 +70,8 @@ def _binary(name):
 
 
 def _names(candidates):
-    """Candidates without `./` or `.\\` in front and `/` or `\\` at the end."""
-    result = set()
-    for candidate in candidates:
-        for prefix in ('./', '.\\'):
-            if candidate.startswith(prefix):
-                candidate = candidate[len(prefix):]
-        candidate = candidate.rstrip('/\\')
-        if candidate:
-            result.add(candidate)
-    return result
+    """Candidates as a set, without the `/` fish puts after directories."""
+    return set(c.rstrip('/') for c in candidates if c)
 
 
 def _check(line, candidates):
@@ -142,20 +128,16 @@ def workdir(tmpdir):
     A directory with one file and one directory to complete, an empty
     home and a stub `nodeenv` on PATH.
 
-    The fish header of shtab asks for the command on PATH, and PowerShell
-    may not call a native completer for a command it cannot find.
+    The fish header of shtab asks for the command on PATH.
     """
     work = tmpdir.join('work').ensure(dir=True)
     work.join('requirements.txt').write('')
     work.join('envs').ensure(dir=True)
     home = tmpdir.join('home').ensure(dir=True)
     stub_dir = tmpdir.join('bin').ensure(dir=True)
-    if nodeenv.is_WIN:
-        stub_dir.join('nodeenv.cmd').write('@exit /b 0\r\n')
-    else:
-        stub = stub_dir.join('nodeenv')
-        stub.write('#!/bin/sh\nexit 0\n')
-        stub.chmod(0o755)
+    stub = stub_dir.join('nodeenv')
+    stub.write('#!/bin/sh\nexit 0\n')
+    stub.chmod(0o755)
 
     # no user rc files, and bash sources BASH_ENV for `bash -c`
     env = dict(os.environ)
@@ -196,23 +178,6 @@ def _bash(script, line, workdir):
         [_binary('bash'), '-c', BASH_DRIVER, 'bash', script] +
         line.split(' '),
         cwd=workdir.path, env=workdir.env)
-    return out.decode('utf-8').splitlines()
-
-
-PWSH_DRIVER = (
-    '. $env:NODEENV_TEST_SCRIPT; '
-    '$line = $env:NODEENV_TEST_LINE; '
-    '(TabExpansion2 -inputScript $line -cursorColumn $line.Length)'
-    '.CompletionMatches | ForEach-Object CompletionText')
-
-
-def _pwsh(script, line, workdir):
-    env = dict(workdir.env, NODEENV_TEST_SCRIPT=script,
-               NODEENV_TEST_LINE=line)
-    out = subprocess.check_output(
-        [_binary('pwsh'), '-NoProfile', '-NonInteractive', '-Command',
-         PWSH_DRIVER],
-        cwd=workdir.path, env=env)
     return out.decode('utf-8').splitlines()
 
 
@@ -323,17 +288,21 @@ def test_help_shows_the_flag_without_shtab():
     with mock.patch.dict(sys.modules, {'shtab': None}):
         help_text = nodeenv.make_parser().format_help()
     assert '--print-completion SHELL' in help_text
-    assert 'powershell' in help_text
+    # argparse wraps the help, so compare it with whitespace collapsed
+    assert '(bash, zsh or fish)' in ' '.join(help_text.split())
 
 
-def test_unknown_shell_is_rejected(capsys):
+@pytest.mark.parametrize('shell', ('tcsh', 'powershell'))
+def test_unsupported_shell_is_rejected(shell, capsys):
     with pytest.raises(SystemExit) as excinfo:
-        nodeenv.make_parser().parse_args(['--print-completion', 'tcsh'])
+        nodeenv.make_parser().parse_args(['--print-completion', shell])
     assert excinfo.value.code == 2
-    assert 'powershell' in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert 'invalid choice' in err
+    assert 'fish' in err
 
 
-@pytest.mark.parametrize('shell', ('bash', 'zsh', 'fish', 'powershell'))
+@pytest.mark.parametrize('shell', ('bash', 'zsh', 'fish'))
 def test_main_prints_the_script_without_dest_dir(
         shell, tmpdir, monkeypatch, capsys):
     monkeypatch.chdir(tmpdir)
@@ -356,11 +325,10 @@ def test_without_shtab_names_the_extra(capsys):
     assert 'pip install "nodeenv[completion]"' in err
 
 
-def _shtab_without_powershell(monkeypatch):
-    # shtab 1.11 knows fish, but not PowerShell (1.12)
-    monkeypatch.setattr(
-        shtab, 'SUPPORTED_SHELLS', ['bash', 'zsh', 'tcsh', 'fish'])
-    return 'powershell'
+def _shtab_without_fish(monkeypatch):
+    # shtab 1.8 knows bash, zsh and tcsh, but not fish (1.9)
+    monkeypatch.setattr(shtab, 'SUPPORTED_SHELLS', ['bash', 'zsh', 'tcsh'])
+    return 'fish'
 
 
 def _shtab_without_cmd(monkeypatch):
@@ -370,8 +338,8 @@ def _shtab_without_cmd(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    'make_old', (_shtab_without_powershell, _shtab_without_cmd),
-    ids=('no-powershell', 'no-cmd'))
+    'make_old', (_shtab_without_fish, _shtab_without_cmd),
+    ids=('no-fish', 'no-cmd'))
 def test_old_shtab_asks_for_an_upgrade(make_old, monkeypatch, capsys):
     shell = make_old(monkeypatch)
     with pytest.raises(SystemExit) as excinfo:
@@ -421,11 +389,6 @@ def test_zsh(line, scripts, workdir):
 def test_zsh_eval(scripts, workdir):
     line = 'nodeenv --no-'
     _check(line, _zsh(scripts('zsh'), line, workdir, load='eval'))
-
-
-@every_case
-def test_pwsh(line, scripts, workdir):
-    _check(line, _pwsh(scripts('powershell'), line, workdir))
 
 
 @posix_only

@@ -456,11 +456,6 @@ class PrintCompletionAction(argparse.Action):
                 action.complete = shtab.cmd(node_versions)
             elif action.dest == 'npm':
                 action.complete = shtab.cmd('echo latest')
-            # shtab keys its PowerShell tables by option string, and
-            # PowerShell keys ignore case, so -c would clash with -C
-            if values == 'powershell' and action.dest == 'clean_src':
-                action.option_strings = [
-                    s for s in action.option_strings if s != '-c']
 
         # complete `nodeenv`, whatever command line started this run
         parser.prog = 'nodeenv'
@@ -480,10 +475,9 @@ def make_parser():
 
     parser.add_argument(
         '--print-completion', action=PrintCompletionAction,
-        choices=('bash', 'zsh', 'fish', 'powershell'), metavar='SHELL',
-        help='Print the completion script for SHELL (bash, zsh, fish or '
-        'powershell) and exit. Needs shtab: '
-        'pip install "nodeenv[completion]"')
+        choices=('bash', 'zsh', 'fish'), metavar='SHELL',
+        help='Print the completion script for SHELL (bash, zsh or fish) '
+        'and exit. Needs shtab: pip install "nodeenv[completion]"')
 
     parser.add_argument(
         '-n', '--node', dest='node', metavar='NODE_VER', default=Config.node,

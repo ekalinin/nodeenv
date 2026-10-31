@@ -104,8 +104,7 @@ Shell completion
 ^^^^^^^^^^^^^^^^
 
 ``nodeenv --print-completion SHELL`` prints a completion script for bash,
-zsh, fish or PowerShell. It needs `shtab`_, which the ``completion`` extra
-installs::
+zsh or fish. It needs `shtab`_, which the ``completion`` extra installs::
 
     $ python -m pip install "nodeenv[completion]"
 
@@ -138,15 +137,6 @@ work in zsh.
 fish::
 
     $ nodeenv --print-completion fish > ~/.config/fish/completions/nodeenv.fish
-
-PowerShell::
-
-    PS> mkdir -Force ~\.config\powershell\completions
-    PS> nodeenv --print-completion powershell > ~\.config\powershell\completions\nodeenv.ps1
-
-and in ``$PROFILE``::
-
-    . ~\.config\powershell\completions\nodeenv.ps1
 
 .. _shtab: https://pypi.org/project/shtab/
 
@@ -529,8 +519,8 @@ Other options
         $ SSL_CERT_FILE=$(python -c 'import certifi; print(certifi.where())') nodeenv env
 
 ``--print-completion=SHELL``
-    Print the completion script for ``bash``, ``zsh``, ``fish`` or
-    ``powershell`` and exit. Needs shtab, see `Shell completion`_.
+    Print the completion script for ``bash``, ``zsh`` or ``fish`` and
+    exit. Needs shtab, see `Shell completion`_.
 
 ``--version``
     Show program version and exit.

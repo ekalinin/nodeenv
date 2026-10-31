@@ -37,7 +37,7 @@ setup(
     author='Eugene Kalinin',
     author_email='e.v.kalinin@gmail.com',
     install_requires=[],
-    extras_require={'certifi': ['certifi'], 'completion': ['shtab>=1.12.1']},
+    extras_require={'certifi': ['certifi'], 'completion': ['shtab>=1.11']},
     python_requires='>=3.10',
     description="Node.js virtual environment builder",
     long_description=ldesc,

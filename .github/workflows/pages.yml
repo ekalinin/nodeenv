@@ -6,37 +6,65 @@ on:
     - master
     paths:
     - 'site/**'
+    - 'CHANGES'
+    - 'Makefile'
+    - '.github/workflows/pages.yml'
+  pull_request:
+    paths:
+    - 'site/**'
+    - 'CHANGES'
+    - 'Makefile'
     - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-# One deployment at a time; a queued run waits instead of cancelling
-# the one in progress.
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy site
+  build:
+    name: Build site
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - uses: actions/checkout@v7
 
-    - uses: actions/configure-pages@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.14'
 
-    # The files in site/ are served as is, there is no build step.
+    # site/ is copied as is, and the changelog page is rendered from
+    # CHANGES with docutils.
+    - name: Build site
+      run: |
+        python -m pip install docutils
+        make site
+
     - uses: actions/upload-pages-artifact@v5
       with:
-        path: site
+        path: _site
+
+  deploy:
+    name: Deploy site
+    needs: build
+    # Pull requests only build the site: the github-pages environment
+    # takes deployments from master only.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # One deployment at a time; a queued run waits instead of cancelling
+    # the one in progress.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    steps:
+    - uses: actions/configure-pages@v6
 
     - id: deployment
       uses: actions/deploy-pages@v5

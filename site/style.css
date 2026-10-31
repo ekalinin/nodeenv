@@ -1,4 +1,4 @@
-/* nodeenv landing page. No build step: this file is served as is. */
+/* nodeenv landing and changelog pages. make site copies this file as is. */
 
 :root {
   color-scheme: light dark;
@@ -297,6 +297,38 @@ p {
   .sources {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Changelog. docutils renders code as span.literal, not as code. */
+
+.changelog {
+  padding-top: clamp(2rem, 6vw, 4rem);
+}
+
+.changelog > section {
+  padding: 1.75rem 0;
+}
+
+.changelog ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.changelog li > p {
+  margin-bottom: 0.5rem;
+}
+
+.literal {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
+
+/* docutils puts tokens with a hyphen, such as --prebuilt, in span.pre. */
+.literal .pre {
+  white-space: nowrap;
 }
 
 /* Links and footer */

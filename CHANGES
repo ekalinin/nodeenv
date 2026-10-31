@@ -4,6 +4,9 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--prebuilt` installs no longer fail when the environment path or the
+  node.js version contains `[`, `*` or `?`
+  `#441 <https://github.com/ekalinin/nodeenv/issues/441>`_
 - On Windows, Cygwin and MSYS the node.js zip archive is extracted 32 files
   at a time instead of one by one, so a security scanner that checks every
   new file no longer makes the install wait for each file in turn.
@@ -35,9 +38,6 @@ Version [unreleased]
   compatibility paths. Old Node.js source builds still require Python 2.7
   as their build interpreter
   `#436 <https://github.com/ekalinin/nodeenv/issues/436>`_
-- Prebuilt node.js installs treat environment paths and versions literally,
-  with a trailing ``-`` separating the version from the platform suffix
-  `#441 <https://github.com/ekalinin/nodeenv/issues/441>`_
 - `--source` builds of node.js 13 and later no longer need a `python2`
   command; 8.8 to 12.x still need one but point `python` at it on their
   own, so the `python` to python2 link in `PATH` is only set up for older

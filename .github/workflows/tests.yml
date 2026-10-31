@@ -64,6 +64,12 @@ jobs:
         run: |
           pytest tests/test_activate_shells.py -v
 
+      - name: Run shell completion tests
+        env:
+          NODEENV_REQUIRE_SHELLS: '1'
+        run: |
+          pytest tests/test_completion.py -v
+
   # The only job that builds real node environments: the tests marked
   # `integration` are deselected everywhere else.  Deliberately ubuntu
   # only - the install path is also platform specific, so macOS and

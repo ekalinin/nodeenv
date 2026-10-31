@@ -1,5 +1,6 @@
 from shlex import quote as _quote
 import _thread
+import configparser
 import contextlib
 import http.server
 import io
@@ -629,6 +630,23 @@ def test_config_keeps_percent_signs(tmpdir, mirror, expected):
     try:
         nodeenv.Config._load([str(rc)])
         assert nodeenv.Config.mirror == expected
+    finally:
+        nodeenv.Config.mirror = nodeenv.Config._default['mirror']
+
+
+@pytest.mark.parametrize('mirror, error', [
+    ('%(bsae)s/nodejs', configparser.InterpolationMissingOptionError),
+    ('%(mirror)s/nodejs', configparser.InterpolationDepthError),
+    ('%(base)/nodejs', configparser.InterpolationSyntaxError),
+])
+def test_config_reports_bad_references(tmpdir, mirror, error):
+    """A bad %(name)s reference still raises, see #456"""
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[DEFAULT]\nbase = https://mirror.example\n\n'
+             '[nodeenv]\nmirror = %s\n' % mirror)
+    try:
+        with pytest.raises(error):
+            nodeenv.Config._load([str(rc)])
     finally:
         nodeenv.Config.mirror = nodeenv.Config._default['mirror']
 

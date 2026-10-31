@@ -34,7 +34,7 @@ import socket
 import sysconfig
 import glob
 
-from configparser import ConfigParser, InterpolationError
+from configparser import ConfigParser, InterpolationSyntaxError
 from http.client import IncompleteRead
 import urllib.request as urllib2
 from urllib.parse import unquote, urlsplit, urlunsplit
@@ -117,9 +117,11 @@ class Config(object):
                 else:
                     try:
                         val = ini_file.get(section, attr)
-                    except InterpolationError:
+                    except InterpolationSyntaxError:
                         # A percent-encoded mirror login, #440
                         val = ini_file.get(section, attr, raw=True)
+                        if '%(' in val:
+                            raise
                     # ConfigParser keeps the quotes the README shows, #321
                     if len(val) > 1 and val[0] == val[-1] and val[0] in '\'"':
                         val = val[1:-1]

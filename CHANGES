@@ -24,6 +24,9 @@ Version [unreleased]
   interpolated is read as written. ``%%`` still gives ``%``, which
   ``setup.cfg`` needs, as setuptools reads that file too
   `#440 <https://github.com/ekalinin/nodeenv/issues/440>`_
+- Add an optional Windows utility, ``utils/integrate_nodeenv.py``, to move
+  an existing standalone Node environment into a Python venv without
+  overwriting destination files or downloading Node again.
 - `nodeenv -p` no longer puts the python venv's `bin` directory on `PATH`
   a second time: the venv's own `activate` and `activate.fish` put it there
   already. Envs without those scripts, such as conda envs, and the git-bash

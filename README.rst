@@ -399,6 +399,15 @@ Installation options
     Keep "src" directory after installation. With ``--source`` it holds the
     downloaded source tree, so a repeated ``--force`` build reuses it.
 
+``--parallel-extract``
+    Extract the node.js zip archive on Windows, Cygwin and MSYS 32 files at
+    a time, so that a security scanner that checks every new file does not
+    hold up the whole install. This is the default.
+
+``--no-parallel-extract``
+    Extract the zip archive one file at a time. Set
+    ``parallel_extract = False`` in ``~/.nodeenvrc`` to make this the default.
+
 NPM options
 ^^^^^^^^^^^
 
@@ -495,6 +504,7 @@ These are the available options and their defaults::
     prefer_system = False
     isolate_npm = False
     clean_src = True
+    parallel_extract = True
 
 Alternatives
 ------------

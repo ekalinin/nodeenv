@@ -1,4 +1,5 @@
 from shlex import quote as _quote
+import _thread
 import contextlib
 import http.server
 import io
@@ -13,6 +14,7 @@ import platform
 import ssl
 import tarfile
 import threading
+import time
 import zipfile
 
 from unittest import mock
@@ -945,6 +947,7 @@ def test_download_node_src_zip(tmpdir):
     """On Windows the archive is a zip, which has no extractall(filter=...)"""
     class args:
         node = '22.14.0'
+        parallel_extract = True
 
     with mock.patch.object(nodeenv, 'is_WIN', True), \
             mock.patch.object(nodeenv, '_download_node_file',
@@ -956,6 +959,175 @@ def test_download_node_src_zip(tmpdir):
     assert os.path.exists(os.path.join(node_dir, 'node.exe'))
     # docs are excluded from the extract list
     assert not os.path.exists(os.path.join(node_dir, 'README.md'))
+
+
+def _zip_tree(node_version, n_files, dir_entries=True):
+    """
+    A zip shaped like the node.js Windows archive: nested directories,
+    many files in one directory and the docs that are not extracted.
+    Return the archive and the content of each file it should extract.
+    """
+    top = 'node-v%s-win-x64/' % node_version
+    lib = top + 'node_modules/npm/lib/'
+    files = {top + 'node.exe': b'binary'}
+    for i in range(n_files - 1):
+        files[lib + 'f%03d.js' % i] = b'file %d' % i
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w') as zf:
+        if dir_entries:
+            for name in (top, top + 'node_modules/', top + 'node_modules/npm/',
+                         lib, top + 'node_modules/npm/empty/'):
+                zf.writestr(name, '')
+        for name in ('README.md', 'CHANGELOG.md', 'LICENSE'):
+            zf.writestr(top + name, 'doc')
+        for name, data in files.items():
+            zf.writestr(name, data)
+    return io.BytesIO(buf.getvalue()), files
+
+
+def _extracted_tree(root):
+    """Map each file under root, as a `/`-separated path, to its content"""
+    tree = {}
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for filename in filenames:
+            path = os.path.join(dirpath, filename)
+            with open(path, 'rb') as f:
+                tree[os.path.relpath(path, root).replace(os.sep, '/')] = \
+                    f.read()
+    return tree
+
+
+def _on_zip_file(callback):
+    """
+    Patch ZipFile.extract to call callback(name, path) before it extracts
+    a file; directories are extracted as is.
+    """
+    extract = zipfile.ZipFile.extract
+
+    def wrapper(self, member, path=None, pwd=None):
+        name = getattr(member, 'filename', member)
+        if not name.endswith('/'):
+            callback(name, path)
+        return extract(self, member, path, pwd)
+    return mock.patch.object(zipfile.ZipFile, 'extract', wrapper)
+
+
+def _download_zip(tmpdir, archive, parallel_extract=True):
+    class args:
+        node = '22.14.0'
+
+    args.parallel_extract = parallel_extract
+    with mock.patch.object(nodeenv, 'is_WIN', True), \
+            mock.patch.object(nodeenv, '_download_node_file',
+                              return_value=archive):
+        nodeenv.download_node_src('https://dummy/node.zip',
+                                  tmpdir.strpath, args)
+
+
+@pytest.mark.parametrize('dir_entries', [True, False],
+                         ids=['dir-entries', 'no-dir-entries'])
+def test_download_node_src_zip_tree(tmpdir, dir_entries):
+    """Every file of the zip is extracted, except the top-level docs #366"""
+    archive, files = _zip_tree('22.14.0', 100, dir_entries)
+    _download_zip(tmpdir, archive)
+
+    assert _extracted_tree(tmpdir.strpath) == files
+    empty = os.path.join(tmpdir.strpath, 'node-v22.14.0-win-x64',
+                         'node_modules', 'npm', 'empty')
+    assert os.path.isdir(empty) == dir_entries
+
+
+def test_download_node_src_zip_parallel_extract_off(tmpdir):
+    """--no-parallel-extract extracts the zip as before, one by one #366"""
+    archive, files = _zip_tree('22.14.0', 100)
+    with mock.patch.object(nodeenv, '_extract_zip') as extract_zip:
+        _download_zip(tmpdir, archive, parallel_extract=False)
+
+    extract_zip.assert_not_called()
+    assert _extracted_tree(tmpdir.strpath) == files
+
+
+def test_download_node_src_zip_extract_workers_at_once(tmpdir):
+    """
+    The zip files are extracted extract_workers at a time and never more,
+    each into a directory that already exists #366
+    """
+    workers = nodeenv.extract_workers
+    assert workers == 32
+    archive, files = _zip_tree('22.14.0', 2 * workers, dir_entries=False)
+    # lets files through only when extract_workers of them run at once
+    barrier = threading.Barrier(workers, timeout=10)
+    lock = threading.Lock()
+    running = []
+    most_running = [0]
+    no_parent = []
+
+    def on_file(name, path):
+        if not os.path.isdir(os.path.dirname(os.path.join(path, name))):
+            no_parent.append(name)
+        with lock:
+            running.append(name)
+            most_running[0] = max(most_running[0], len(running))
+        barrier.wait()
+        # stay running, so that a file over the limit would be counted
+        time.sleep(0.05)
+        with lock:
+            running.remove(name)
+
+    with _on_zip_file(on_file):
+        _download_zip(tmpdir, archive)
+
+    assert most_running[0] == workers
+    assert no_parent == []
+    assert _extracted_tree(tmpdir.strpath) == files
+
+
+def test_download_node_src_zip_stops_on_error(tmpdir):
+    """
+    A file that fails to extract fails the download, and the files that
+    have not started yet are not extracted #366
+    """
+    archive, _files = _zip_tree('22.14.0', 300)
+    lock = threading.Lock()
+    started = []
+
+    def on_file(name, path):
+        with lock:
+            started.append(name)
+            first = len(started) == 1
+        if first:
+            raise OSError('cannot write %s' % name)
+        time.sleep(0.5)
+
+    with _on_zip_file(on_file), pytest.raises(OSError, match='cannot write'):
+        _download_zip(tmpdir, archive)
+
+    assert len(started) <= 2 * nodeenv.extract_workers
+
+
+def test_download_node_src_zip_stops_on_interrupt(tmpdir):
+    """
+    Ctrl+C stops the extraction without waiting for the files that have
+    not started yet #366
+    """
+    archive, _files = _zip_tree('22.14.0', 300)
+    lock = threading.Lock()
+    started = []
+
+    def on_file(name, path):
+        with lock:
+            started.append(name)
+            first = len(started) == 1
+        if first:
+            # like Ctrl+C on Windows before Python 3.14, this does not
+            # wake up the main thread blocked on a lock
+            threading.Timer(0.1, _thread.interrupt_main).start()
+        time.sleep(0.5)
+
+    with _on_zip_file(on_file), pytest.raises(KeyboardInterrupt):
+        _download_zip(tmpdir, archive)
+
+    assert len(started) <= 2 * nodeenv.extract_workers
 
 
 def test_download_node_src_tar_keeps_data_filter(tmpdir):
@@ -1385,6 +1557,35 @@ def test_parse_args_clean_src():
         assert nodeenv.parse_args().clean_src is True
     with mock.patch.object(sys, 'argv', ['nodeenv', '--no-clean-src', 'env']):
         assert nodeenv.parse_args().clean_src is False
+
+
+def test_parallel_extract_default():
+    assert nodeenv.Config._default['parallel_extract'] is True
+
+
+def test_parallel_extract_is_configurable(tmpdir):
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nparallel_extract = false\n')
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.parallel_extract is False
+    finally:
+        nodeenv.Config.parallel_extract = True
+
+
+def test_parse_args_parallel_extract():
+    with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+        assert nodeenv.parse_args().parallel_extract is True
+    with mock.patch.object(
+            sys, 'argv', ['nodeenv', '--no-parallel-extract', 'env']):
+        assert nodeenv.parse_args().parallel_extract is False
+    # the flag turns it back on over the config
+    with mock.patch.object(nodeenv.Config, 'parallel_extract', False):
+        with mock.patch.object(sys, 'argv', ['nodeenv', 'env']):
+            assert nodeenv.parse_args().parallel_extract is False
+        with mock.patch.object(
+                sys, 'argv', ['nodeenv', '--parallel-extract', 'env']):
+            assert nodeenv.parse_args().parallel_extract is True
 
 
 def _run_create_environment(tmpdir, extra):

@@ -4,6 +4,10 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--print-completion SHELL` prints a completion script for bash, zsh,
+  fish or PowerShell. It needs shtab, installed with
+  `pip install "nodeenv[completion]"`
+  `#351 <https://github.com/ekalinin/nodeenv/issues/351>`_
 - `--prebuilt` installs no longer fail when the environment path or the
   node.js version contains `[`, `*` or `?`
   `#441 <https://github.com/ekalinin/nodeenv/issues/441>`_

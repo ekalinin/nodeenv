@@ -422,6 +422,47 @@ def create_logger():
 logger = create_logger()
 
 
+class PrintCompletionAction(argparse.Action):
+    """
+    Print the shell completion script made by shtab and exit.
+
+    shtab is imported only here, so nodeenv works without it.
+    """
+    # options completed with file and with directory names
+    file_dests = ('requirements', 'local_requirements', 'config_file',
+                  'make_path')
+    dir_dests = ('python_virtualenv', 'env_dir')
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        try:
+            import shtab
+        except ImportError:
+            parser.error('shtab is not installed, run: '
+                         'pip install "nodeenv[completion]"')
+        if values not in shtab.SUPPORTED_SHELLS or not hasattr(shtab, 'cmd'):
+            parser.error('the installed shtab cannot complete %s, run: '
+                         'pip install -U "nodeenv[completion]"' % values)
+
+        node_versions = 'echo latest; echo lts'
+        if not is_WIN:
+            # system node.js is not supported on Windows
+            node_versions += '; echo system'
+        for action in parser._actions:
+            if action.dest in self.file_dests:
+                action.complete = shtab.FILE
+            elif action.dest in self.dir_dests:
+                action.complete = shtab.DIRECTORY
+            elif action.dest == 'node':
+                action.complete = shtab.cmd(node_versions)
+            elif action.dest == 'npm':
+                action.complete = shtab.cmd('echo latest')
+
+        # complete `nodeenv`, whatever command line started this run
+        parser.prog = 'nodeenv'
+        print(shtab.complete(parser, values))
+        parser.exit()
+
+
 def make_parser():
     """
     Make a command line argument parser.
@@ -431,6 +472,13 @@ def make_parser():
 
     parser.add_argument(
         '--version', action='version', version=nodeenv_version)
+
+    parser.add_argument(
+        '--print-completion', action=PrintCompletionAction,
+        choices=('bash', 'zsh', 'fish', 'powershell'), metavar='SHELL',
+        help='Print the completion script for SHELL (bash, zsh, fish or '
+        'powershell) and exit. Needs shtab: '
+        'pip install "nodeenv[completion]"')
 
     parser.add_argument(
         '-n', '--node', dest='node', metavar='NODE_VER', default=Config.node,

@@ -100,6 +100,56 @@ In an unactivated PowerShell environment, use
 .. _pip: https://pypi.org/project/pip/
 .. _pipx: https://pipx.pypa.io/
 
+Shell completion
+^^^^^^^^^^^^^^^^
+
+``nodeenv --print-completion SHELL`` prints a completion script for bash,
+zsh, fish or PowerShell. It needs `shtab`_, which the ``completion`` extra
+installs::
+
+    $ python -m pip install "nodeenv[completion]"
+
+With pipx, add shtab to nodeenv's environment instead::
+
+    $ pipx inject nodeenv shtab
+
+Then save the script where your shell loads it from.
+
+bash::
+
+    $ mkdir -p ~/.local/share/bash_completion
+    $ nodeenv --print-completion bash > ~/.local/share/bash_completion/nodeenv
+    $ echo 'source ~/.local/share/bash_completion/nodeenv' >> ~/.bashrc
+
+zsh, as ``_nodeenv`` in a directory on ``fpath``::
+
+    $ mkdir -p ~/.zfunc
+    $ nodeenv --print-completion zsh > ~/.zfunc/_nodeenv
+
+and in ``~/.zshrc``, before ``compinit`` runs::
+
+    fpath=(~/.zfunc $fpath)
+
+Instead of the file, ``~/.zshrc`` can run
+``eval "$(nodeenv --print-completion zsh)"`` after ``compinit``, at the
+cost of starting nodeenv in every new shell. Sourcing the script does not
+work in zsh.
+
+fish::
+
+    $ nodeenv --print-completion fish > ~/.config/fish/completions/nodeenv.fish
+
+PowerShell::
+
+    PS> mkdir -Force ~\.config\powershell\completions
+    PS> nodeenv --print-completion powershell > ~\.config\powershell\completions\nodeenv.ps1
+
+and in ``$PROFILE``::
+
+    . ~\.config\powershell\completions\nodeenv.ps1
+
+.. _shtab: https://pypi.org/project/shtab/
+
 
 Dependency
 ----------
@@ -477,6 +527,10 @@ Other options
     ``SSL_CERT_FILE`` at the bundle::
 
         $ SSL_CERT_FILE=$(python -c 'import certifi; print(certifi.where())') nodeenv env
+
+``--print-completion=SHELL``
+    Print the completion script for ``bash``, ``zsh``, ``fish`` or
+    ``powershell`` and exit. Needs shtab, see `Shell completion`_.
 
 ``--version``
     Show program version and exit.

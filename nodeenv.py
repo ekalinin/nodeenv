@@ -456,6 +456,11 @@ class PrintCompletionAction(argparse.Action):
                 action.complete = shtab.cmd(node_versions)
             elif action.dest == 'npm':
                 action.complete = shtab.cmd('echo latest')
+            # shtab keys its PowerShell tables by option string, and
+            # PowerShell keys ignore case, so -c would clash with -C
+            if values == 'powershell' and action.dest == 'clean_src':
+                action.option_strings = [
+                    s for s in action.option_strings if s != '-c']
 
         # complete `nodeenv`, whatever command line started this run
         parser.prog = 'nodeenv'

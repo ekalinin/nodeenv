@@ -44,6 +44,8 @@ NO_OPTIONS = {'--no-clean-src', '--no-npm-clean', '--no-parallel-extract'}
 # not be); None in place of the second set means nothing else may be offered
 CASES = {
     'nodeenv --no-': (NO_OPTIONS, None),
+    'nodeenv --clean': ({'--clean-src'}, None),
+    'nodeenv -C ': ({'requirements.txt'}, set()),
     'nodeenv -r ': ({'requirements.txt'}, set()),
     'nodeenv -p ': ({'envs'}, {'requirements.txt'}),
     'nodeenv --force ': ({'envs'}, set()),

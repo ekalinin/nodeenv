@@ -1172,6 +1172,58 @@ def test_copytree_keeps_existing_symlink(tmpdir):
     assert os.readlink(tmpdir.join('dst', 'bin', 'npm').strpath) == target
 
 
+@pytest.mark.parametrize(
+    'dirname',
+    (
+        'proj[1]',
+        pytest.param('proj*', marks=pytest.mark.skipif(
+            nodeenv.is_WIN, reason='* is not a valid Windows filename')),
+        pytest.param('proj?', marks=pytest.mark.skipif(
+            nodeenv.is_WIN, reason='? is not a valid Windows filename')),
+    ),
+)
+def test_copy_node_from_prebuilt_literal_path(tmpdir, monkeypatch, dirname):
+    monkeypatch.setattr(nodeenv, 'is_WIN', False)
+    monkeypatch.setattr(nodeenv, 'is_CYGWIN', False)
+    env_dir = tmpdir.join(dirname, 'env').ensure(dir=True)
+    src_dir = env_dir.join('src').ensure(dir=True)
+    archive = 'node-v18.0.0-test-platform'
+    source = src_dir.join(archive, 'bin', 'node').ensure()
+    source.write('literal source')
+    env_dir.join('keep.txt').write('keep this file')
+    decoy = tmpdir.join('proj1', 'env', 'src', archive, 'bin', 'node').ensure()
+    decoy.write('neighbor source')
+
+    nodeenv.copy_node_from_prebuilt(env_dir.strpath, src_dir.strpath, '18.0.0')
+
+    assert env_dir.join('bin', 'node').read() == 'literal source'
+    assert env_dir.join('keep.txt').read() == 'keep this file'
+    assert source.read() == 'literal source'
+    assert decoy.read() == 'neighbor source'
+
+
+def test_copy_node_from_prebuilt_literal_version(tmp_path, monkeypatch):
+    monkeypatch.setattr(nodeenv, 'is_WIN', False)
+    monkeypatch.setattr(nodeenv, 'is_CYGWIN', False)
+    version = '18.0.0+build[1]'
+    env_dir = tmp_path / 'env'
+    env_dir.mkdir()
+    src_dir = tmp_path / 'src'
+    archive = src_dir / ('node-v%s-linux-x64' % version)
+    neighbor = src_dir / 'node-v18.0.0+build1-linux-x64'
+    for directory, contents in (
+            (archive, 'literal version'),
+            (neighbor, 'neighbor version')):
+        directory.mkdir(parents=True)
+        (directory / 'payload').write_text(contents, encoding='utf-8')
+
+    nodeenv.copy_node_from_prebuilt(str(env_dir), str(src_dir), version)
+
+    assert (env_dir / 'payload').read_text() == 'literal version'
+    assert (archive / 'payload').read_text() == 'literal version'
+    assert (neighbor / 'payload').read_text() == 'neighbor version'
+
+
 def test_parse_version():
     assert nodeenv.parse_version("v21.7") == (21, 7)
     assert nodeenv.parse_version("v21.7.3") == (21, 7, 3)

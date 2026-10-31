@@ -4,6 +4,9 @@ Nodeenv changelog
 Version [unreleased]
 --------------------
 
+- `--prebuilt` installs no longer fail when the environment path or the
+  node.js version contains `[`, `*` or `?`
+  `#441 <https://github.com/ekalinin/nodeenv/issues/441>`_
 - On Windows, Cygwin and MSYS the node.js zip archive is extracted 32 files
   at a time instead of one by one, so a security scanner that checks every
   new file no longer makes the install wait for each file in turn.

@@ -1,9 +1,8 @@
 Nodeenv changelog
 =================
 
-Version [unreleased]
---------------------
-
+Version 1.12.0
+--------------
 - `--print-completion SHELL` prints a completion script for bash, zsh or
   fish. It needs shtab, installed with `pip install "nodeenv[completion]"`
   `#351 <https://github.com/ekalinin/nodeenv/issues/351>`_

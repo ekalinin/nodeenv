@@ -39,7 +39,7 @@ from http.client import IncompleteRead
 import urllib.request as urllib2
 from urllib.parse import unquote, urlsplit, urlunsplit
 
-nodeenv_version = '1.11.0'
+nodeenv_version = '1.12.0'
 
 join = os.path.join
 abspath = os.path.abspath

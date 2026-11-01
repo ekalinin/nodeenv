@@ -40,7 +40,7 @@ Any of `py310` to `py314` works, depending on the Python versions you have.
 
 ```sh
 coverage run -p -m pytest -m 'not integration' tests
-flake8 --extend-ignore=E127 nodeenv.py tests setup.py
+flake8 --extend-ignore=E127 nodeenv.py tests
 ```
 
 CI runs them on Python 3.10 to 3.14 on Ubuntu, macOS and Windows.

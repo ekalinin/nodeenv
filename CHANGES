@@ -1,6 +1,14 @@
 Nodeenv changelog
 =================
 
+Version [unreleased]
+--------------------
+- The package metadata moved from `setup.py` to `pyproject.toml`, and
+  `setup.py` is gone: build nodeenv with a PEP 517 frontend such as `pip`
+  or `python -m build`. Building needs setuptools 77 or later. The license
+  is declared as the SPDX expression `BSD-3-Clause`
+  `#374 <https://github.com/ekalinin/nodeenv/issues/374>`_
+
 Version 1.12.0
 --------------
 - `--print-completion SHELL` prints a completion script for bash, zsh or

@@ -1,5 +1,6 @@
 -e .[completion]
 
+build
 coverage
 flake8
 pytest

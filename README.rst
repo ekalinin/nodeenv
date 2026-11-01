@@ -529,6 +529,8 @@ Configuration
 -------------
 You can use the INI-style file ``~/.nodeenvrc`` to set default values for many options,
 the keys in that file are the long command-line option names.
+``env_dir`` sets ``DEST_DIR`` for runs that pass neither ``DEST_DIR`` nor ``-p``:
+an absolute path, or a path relative to the current directory.
 
 These are the available options and their defaults::
 

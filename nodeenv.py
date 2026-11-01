@@ -88,6 +88,7 @@ class Config(object):
     isolate_npm = False
     clean_src = True
     parallel_extract = True
+    env_dir = None
 
     @classmethod
     def _load(cls, configfiles, verbose=False):
@@ -659,8 +660,8 @@ def make_parser():
         'if certifi is installed. Ignored with --ignore_ssl_certs.')
 
     parser.add_argument(
-        metavar='DEST_DIR', dest='env_dir', nargs='?',
-        help='Destination directory')
+        metavar='DEST_DIR', dest='env_dir', nargs='?', default=Config.env_dir,
+        help='Destination directory, defaults to env_dir from the config file')
 
     return parser
 
@@ -690,8 +691,8 @@ def parse_args(check=True):
 
     if not args.list:
         if not args.python_virtualenv and not args.env_dir:
-            parser.error('You must provide a DEST_DIR or '
-                         'use current python virtualenv')
+            parser.error('You must provide a DEST_DIR, set env_dir in the '
+                         'config file or use current python virtualenv')
 
     return args
 

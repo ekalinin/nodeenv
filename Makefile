@@ -1,4 +1,4 @@
-.PHONY: default deploy deploy-github deploy-pypi update-pypi clean env site
+.PHONY: default deploy deploy-github deploy-pypi clean env site
 PYTHON=python3
 TEST_ENV=env
 DEV_TEST_ENV=env-dev
@@ -13,12 +13,9 @@ deploy-github:
 deploy-pypi:
 	rm -rf dist
 	@. ${DEV_TEST_ENV}/bin/activate && \
-		pip install -U setuptools wheel twine && \
-		$(PYTHON) setup.py sdist bdist_wheel && \
+		pip install -U build twine && \
+		$(PYTHON) -m build && \
 		twine upload --repository pypi dist/*
-
-update-pypi:
-	$(PYTHON) setup.py register
 
 deploy: contributors ut deploy-github deploy-pypi
 
@@ -38,7 +35,7 @@ setup-test-env:
 
 env: clean-test-env setup-test-env
 	@. ${TEST_ENV}/bin/activate                && \
-		$(PYTHON) setup.py install
+		pip install .
 
 # https://virtualenv.pypa.io/en/legacy/reference.html#cmdoption-no-site-packages
 # https://github.com/pypa/virtualenv/issues/1681

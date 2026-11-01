@@ -35,7 +35,7 @@ jobs:
 
       - name: Run flake8
         run: |
-          flake8 --extend-ignore=E127 nodeenv.py tests setup.py
+          flake8 --extend-ignore=E127 nodeenv.py tests
 
   activate-shells:
     runs-on: ubuntu-latest

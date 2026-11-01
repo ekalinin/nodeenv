@@ -43,7 +43,7 @@ jobs:
 
     - name: Upload coverage data
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: coverage-data-${{ matrix.python-version }}
         path: .coverage.*
@@ -76,7 +76,7 @@ jobs:
           python -m coverage report --fail-under=55
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: html-report
           path: coverage-html

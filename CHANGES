@@ -3,6 +3,10 @@ Nodeenv changelog
 
 Version [unreleased]
 --------------------
+- `env_dir` in the `[nodeenv]` section of the config file sets DEST_DIR for
+  runs that pass neither DEST_DIR nor `-p`. DEST_DIR on the command line and
+  `-p` take precedence over it
+  `#377 <https://github.com/ekalinin/nodeenv/issues/377>`_
 - The package metadata moved from `setup.py` to `pyproject.toml`, and
   `setup.py` is gone: build nodeenv with a PEP 517 frontend such as `pip`
   or `python -m build`. Building needs setuptools 77 or later. The license

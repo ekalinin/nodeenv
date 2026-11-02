@@ -1658,6 +1658,75 @@ def test_parse_args_parallel_extract():
             assert nodeenv.parse_args().parallel_extract is True
 
 
+def test_env_dir_default():
+    assert nodeenv.Config._default['env_dir'] is None
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('/opt/node', '/opt/node'),
+    ('"/opt/my node"', '/opt/my node'),
+    ('~/node', '~/node'),
+    ('', ''),
+])
+def test_env_dir_is_configurable(tmpdir, value, expected):
+    """DEST_DIR is read from env_dir in the config as is, see #377"""
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nenv_dir = %s\n' % value)
+    try:
+        nodeenv.Config._load([str(rc)])
+        assert nodeenv.Config.env_dir == expected
+    finally:
+        nodeenv.Config.env_dir = None
+
+
+def test_parse_args_env_dir(tmpdir):
+    venv = str(tmpdir.mkdir('venv'))
+    with mock.patch.object(nodeenv.Config, 'env_dir', '/opt/node'):
+        with mock.patch.object(sys, 'argv', ['nodeenv']):
+            assert nodeenv.parse_args().env_dir == '/opt/node'
+        # DEST_DIR and -p win over the config
+        with mock.patch.object(sys, 'argv', ['nodeenv', './my-env']):
+            assert nodeenv.parse_args().env_dir == './my-env'
+        with mock.patch.object(sys, 'argv', ['nodeenv', '-p', venv]):
+            assert nodeenv.get_env_dir(nodeenv.parse_args()) == venv
+        with mock.patch.object(sys, 'argv', ['nodeenv', '-p']), \
+                mock.patch.dict(os.environ, {'VIRTUAL_ENV': venv}):
+            assert nodeenv.get_env_dir(nodeenv.parse_args()) == venv
+    # an empty value is the same as no env_dir
+    with mock.patch.object(nodeenv.Config, 'env_dir', ''):
+        with mock.patch.object(sys, 'argv', ['nodeenv']):
+            with pytest.raises(SystemExit):
+                nodeenv.parse_args()
+
+
+def test_parse_args_without_dest_dir(capsys):
+    with mock.patch.object(sys, 'argv', ['nodeenv']):
+        with pytest.raises(SystemExit):
+            nodeenv.parse_args()
+    err = capsys.readouterr().err
+    assert 'You must provide a DEST_DIR' in err
+    assert 'env_dir' in err
+
+
+@pytest.mark.usefixtures('mock_host_platform')
+def test_main_env_dir_from_config(tmpdir):
+    env_dir = str(tmpdir.join('env'))
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nenv_dir = %s\n' % env_dir)
+    argv = ['nodeenv', '-C', str(rc), '--node', '22.11.0']
+    try:
+        with mock.patch.object(sys, 'argv', argv), \
+                mock.patch.object(nodeenv, 'create_environment') as create:
+            nodeenv.main()
+        assert create.call_args[0][0] == env_dir
+        with mock.patch.object(sys, 'argv', argv + ['--update']), \
+                mock.patch.object(nodeenv, 'install_packages') as install:
+            nodeenv.main()
+        assert install.call_args[0][0] == env_dir
+    finally:
+        nodeenv.Config.env_dir = None
+
+
 def _run_create_environment(tmpdir, extra):
     """
     Run create_environment() in tmpdir without installing anything

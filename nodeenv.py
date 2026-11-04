@@ -128,8 +128,10 @@ class Config(object):
                         val = val[1:-1]
 
                 if verbose:
+                    # Mirrors may contain credentials, including query tokens.
+                    display_val = '<redacted>' if attr == 'mirror' else val
                     print('CONFIG {0}: {1} = {2}'.format(
-                        os.path.basename(configfile), attr, val))
+                        os.path.basename(configfile), attr, display_val))
                 setattr(cls, attr, val)
 
         if os.path.exists(".node-version"):

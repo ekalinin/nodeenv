@@ -634,6 +634,45 @@ def test_config_keeps_percent_signs(tmpdir, mirror, expected):
         nodeenv.Config.mirror = nodeenv.Config._default['mirror']
 
 
+@pytest.mark.parametrize('mirror, expected', [
+    ('https://user:secret@mirror.example/nodejs',
+     'https://user:secret@mirror.example/nodejs'),
+    ('https://user:p%40ss@mirror.example/nodejs',
+     'https://user:p%40ss@mirror.example/nodejs'),
+    ('https://user:p%%40ss@mirror.example/nodejs',
+     'https://user:p%40ss@mirror.example/nodejs'),
+    ('user:secret@mirror.example/nodejs',
+     'user:secret@mirror.example/nodejs'),
+    ('https://user:secret@[::1]:8080/nodejs',
+     'https://user:secret@[::1]:8080/nodejs'),
+    ('https://mirror.example/nodejs?token=secret',
+     'https://mirror.example/nodejs?token=secret'),
+    ('https://user:secret@[invalid', 'https://user:secret@[invalid'),
+    ('https://mirror.example/nodejs', 'https://mirror.example/nodejs'),
+])
+@pytest.mark.parametrize('verbose', (False, True))
+def test_config_verbose_redacts_mirror(tmpdir, capsys, monkeypatch,
+                                       mirror, expected, verbose):
+    """Diagnostics must not expose credentials or change the loaded mirror."""
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nnode = 22.14.0\nmirror = "%s"\n' % mirror)
+    monkeypatch.setattr(nodeenv.Config, 'node', 'latest')
+    monkeypatch.setattr(nodeenv.Config, 'mirror', None)
+    nodeenv.Config._load([str(rc)], verbose=verbose)
+    assert nodeenv.Config.mirror == expected
+    assert nodeenv.Config.node == '22.14.0'
+    out, err = capsys.readouterr()
+    assert err == ''
+    if verbose:
+        assert 'mirror = <redacted>' in out
+        assert 'node = 22.14.0' in out
+        assert expected not in out
+        assert 'secret' not in out
+        assert 'p%40ss' not in out
+    else:
+        assert out == ''
+
+
 @pytest.mark.parametrize('mirror, error', [
     ('%(bsae)s/nodejs', configparser.InterpolationMissingOptionError),
     ('%(mirror)s/nodejs', configparser.InterpolationDepthError),
@@ -717,6 +756,29 @@ def test_mirror_credentials_are_sent_as_basic_auth(auth_mirror,
         mock_logger.assert_called_with('99.0.0')
 
     assert set(seen) == {('/index.json', header)}
+
+
+def test_config_mirror_credentials_stay_out_of_verbose_output(
+        auth_mirror, tmpdir, capsys, monkeypatch):
+    """Redacting diagnostics must not remove authentication from requests."""
+    port, seen = auth_mirror
+    rc = tmpdir.join('nodeenvrc')
+    rc.write('[nodeenv]\nmirror = http://user:secret@127.0.0.1:%d\n'
+             % port)
+    monkeypatch.setattr(nodeenv.Config, 'mirror', None)
+    monkeypatch.setattr(nodeenv, 'src_base_url', None)
+    monkeypatch.setattr(nodeenv, 'src_auth', None)
+    monkeypatch.setattr(sys, 'argv', [
+        __file__, '--list', '--verbose', '--config-file', str(rc),
+    ])
+    with mock.patch.object(nodeenv.logger, 'info') as mock_logger:
+        nodeenv.main()
+        mock_logger.assert_called_with('99.0.0')
+    assert set(seen) == {('/index.json', 'Basic dXNlcjpzZWNyZXQ=')}
+    out, err = capsys.readouterr()
+    assert 'mirror = <redacted>' in out
+    for secret in ('user:secret', 'secret', 'dXNlcjpzZWNyZXQ='):
+        assert secret not in out + err
 
 
 def test_mirror_credentials_do_not_follow_redirects(auth_mirror):

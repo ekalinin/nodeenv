@@ -496,7 +496,8 @@ Other options
 ^^^^^^^^^^^^^
 
 ``-v, --verbose``
-    Verbose mode.
+    Verbose mode. Mirror configuration values are shown as ``<redacted>``
+    because they may contain credentials; the configured mirror is unchanged.
 
 ``-q, --quiet``
     Quiet mode.

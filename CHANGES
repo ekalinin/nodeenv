@@ -3,6 +3,9 @@ Nodeenv changelog
 
 Version [unreleased]
 --------------------
+- Hide mirror values in verbose configuration output to keep credentials
+  out of captured diagnostics. The configured mirror is unchanged.
+  Follow-up to `#426 <https://github.com/ekalinin/nodeenv/pull/426>`_.
 - `env_dir` in the `[nodeenv]` section of the config file sets DEST_DIR for
   runs that pass neither DEST_DIR nor `-p`. DEST_DIR on the command line and
   `-p` take precedence over it
